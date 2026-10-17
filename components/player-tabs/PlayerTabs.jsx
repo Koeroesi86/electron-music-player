@@ -7,7 +7,7 @@ import OnlineSources from '../online-sources'
 import Equalizer from '../equalizer'
 import style from './PlayerTabs.scss'
 
-function PlayerTabs ({ tab, addFiles }) {
+function PlayerTabs ({ tab = 'local', addFiles = () => {} }) {
   return (
     <div className={style.collection}>
       <div className={classNames(style.tab, {
@@ -32,11 +32,6 @@ function PlayerTabs ({ tab, addFiles }) {
       </div>
     </div>
   )
-}
-
-PlayerTabs.defaultProps = {
-  tab: 'local',
-  addFiles: () => {}
 }
 
 PlayerTabs.propTypes = {

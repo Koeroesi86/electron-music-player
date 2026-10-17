@@ -1,5 +1,4 @@
 const { app } = require('electron')
-const electronVibrancy = require('electron-vibrancy')
 const { resolve, basename } = require('path')
 const fs = require('fs')
 const fp = require('find-free-port')
@@ -107,13 +106,14 @@ const getPort = () => {
       })
 }
 
-getPort()
+app.whenReady()
+  .then(getPort)
   .then(() => {
     windows.loading = getLoadingWindow()
     windows.loading.loadURL(loadingLocation)
     windows.loading.once('ready-to-show', () => {
       windows.loading.show()
-      if (isWin) electronVibrancy.SetVibrancy(windows.loading, 0)
+      if (isWin) windows.loading.setBackgroundMaterial('acrylic')
     })
 
     return Promise.resolve()
@@ -125,8 +125,6 @@ getPort()
 
     initWindow()
     setupListeners(_database, windows, appDataPath)
-
-    app.on('ready', initWindow)
 
     app.on('window-all-closed', () => {
       if (!isMac) {

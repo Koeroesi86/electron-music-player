@@ -1,4 +1,4 @@
-import connect from 'react-redux/es/connect/connect'
+import { connect } from 'react-redux'
 import PlayerHome from './PlayerHome.jsx'
 
 const mapState = state => ({

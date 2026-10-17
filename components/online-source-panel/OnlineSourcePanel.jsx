@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import style from './OnlineSourcePanel.scss'
 
-function OnlineSourcePanel ({ src }) {
+function OnlineSourcePanel ({ src = 'about:blank' }) {
   return (
     <webview
       className={style.shoutCastPanel}
@@ -11,10 +11,6 @@ function OnlineSourcePanel ({ src }) {
       webpreferences={'webSecurity'}
     />
   )
-}
-
-OnlineSourcePanel.defaultProps = {
-  src: 'about:blank'
 }
 
 OnlineSourcePanel.propTypes = {

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import classNames from 'classnames'
 import style from './Confirm.scss'
 
-function Confirm ({ message, confirm, cancel, confirmLabel, cancelLabel }) {
+function Confirm ({ message, confirm = () => {}, cancel, confirmLabel = 'Yes', cancelLabel = 'No' }) {
   return (
     <div className={classNames(style.confirm, {
       [style.show]: message
@@ -15,12 +15,6 @@ function Confirm ({ message, confirm, cancel, confirmLabel, cancelLabel }) {
       </div>
     </div>
   )
-}
-
-Confirm.defaultProps = {
-  confirmLabel: 'Yes',
-  cancelLabel: 'No',
-  confirm: () => {}
 }
 
 Confirm.propTypes = {

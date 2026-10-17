@@ -1,11 +1,9 @@
 {
   "presets": [
-    "es2015",
-    "stage-0",
-    "react"
+    ["@babel/preset-env", { "targets": { "electron": "30" } }],
+    "@babel/preset-react"
   ],
   "plugins": [
-    "transform-runtime",
-    "transform-decorators-legacy"
+    "@babel/plugin-transform-runtime"
   ]
 }

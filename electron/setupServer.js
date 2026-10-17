@@ -57,8 +57,7 @@ function setupServer () {
       if (suspectedFile) {
         const toOptimize = path.join(global._appDataPath, './albumart/', suspectedFile)
         sharp(toOptimize)
-          .resize(250, 250)
-          .max()
+          .resize(250, 250, { fit: 'inside' })
           .png({ compressionLevel: 9, force: true })
           .toFile(current)
           .then(info => {
@@ -72,7 +71,7 @@ function setupServer () {
           )
       }
     } else {
-      response.send(404)
+      response.sendStatus(404)
     }
   })
 

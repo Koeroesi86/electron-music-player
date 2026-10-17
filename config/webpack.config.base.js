@@ -15,12 +15,10 @@ function recursiveIssuer (m) {
   }
 }
 
-const config = {
+const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
+  name,
   mode: 'production',
-  entry: {
-    client: path.resolve(__dirname, '../client/app.js'),
-    htmlGenerator: path.resolve(__dirname, '../client/htmlGenerator.js')
-  },
+  entry: { [name]: entry },
   output: {
     pathinfo: true,
     libraryTarget: 'umd',
@@ -29,14 +27,14 @@ const config = {
     globalObject: 'this',
     filename: '[name].js'
   },
-  target: 'electron-renderer',
+  target,
   module: {
     rules: [
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         loader: 'babel-loader',
-        query: {
+        options: {
           cacheDirectory: true
         }
       },
@@ -74,8 +72,7 @@ const config = {
           {
             loader: 'style-loader', // creates style nodes from JS strings
             options: {
-              // sourceMap: process.env.NODE_ENV !== 'production'
-              singleton: true
+              injectType: 'singletonStyleTag'
             }
           },
           // {
@@ -89,10 +86,12 @@ const config = {
           {
             loader: 'css-loader', // translates CSS into CommonJS
             options: {
-              modules: true,
               importLoaders: 1,
-              localIdentName: (process.env.NODE_ENV === 'production' ? '[sha1:hash:hex:4]' : '[name]__[local]')
-              // localIdentName: '[sha1:hash:hex:4]'
+              modules: {
+                namedExport: false,
+                exportLocalsConvention: 'as-is',
+                localIdentName: (process.env.NODE_ENV === 'production' ? '[sha1:hash:hex:4]' : '[name]__[local]')
+              }
             }
           },
           {
@@ -103,7 +102,8 @@ const config = {
     ]
   },
   resolve: {
-    extensions: ['.js', '.jsx']
+    extensions: ['.js', '.jsx'],
+    fallback: resolveFallback
   },
   // optimization: {
   //   splitChunks: {
@@ -123,18 +123,30 @@ const config = {
   //     }
   //   }
   // },
-  plugins: [
-    // new webpack.EnvironmentPlugin(['NODE_ENV']),
-    // new MiniCssExtractPlugin({
-    //   chunkFilename: '[id].css',
-    //   filename: '[name].css'
-    // }),
-    new StaticSiteGeneratorPlugin({
-      entry: 'htmlGenerator',
-      paths: appConfig.paths,
-      locals: appConfig.locals
-    })
-  ]
-}
+  plugins
+})
+
+// The client runs in the sandboxed renderer (no Node.js), the HTML generator runs in Node.js during the build.
+const config = [
+  createConfig({
+    name: 'client',
+    entry: path.resolve(__dirname, '../client/app.js'),
+    target: 'web',
+    resolveFallback: { path: require.resolve('path-browserify') },
+    plugins: []
+  }),
+  createConfig({
+    name: 'htmlGenerator',
+    entry: path.resolve(__dirname, '../client/htmlGenerator.js'),
+    target: 'node',
+    plugins: [
+      new StaticSiteGeneratorPlugin({
+        entry: 'htmlGenerator',
+        paths: appConfig.paths,
+        locals: appConfig.locals
+      })
+    ]
+  })
+]
 
 module.exports = config

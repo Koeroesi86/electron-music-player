@@ -1,5 +1,5 @@
 import TitleBar from './TitleBar'
-import connect from 'react-redux/es/connect/connect'
+import { connect } from 'react-redux'
 
 const mapState = state => ({})
 

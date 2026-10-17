@@ -1,4 +1,5 @@
 const { BrowserWindow, TouchBar } = require('electron')
+const { resolve } = require('path')
 const windowStateKeeper = require('electron-window-state')
 
 // const { TouchBarLabel, TouchBarSpacer } = TouchBar
@@ -32,7 +33,9 @@ const createWindow = (app) => {
     show: false,
     webPreferences: {
       // webSecurity: false,
-      backgroundThrottling: false
+      backgroundThrottling: false,
+      preload: resolve(__dirname, './preload.js'),
+      webviewTag: true
     }
   })
   mainWindowState.manage(mainWindow)
