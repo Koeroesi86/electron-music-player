@@ -16,8 +16,13 @@ TitleBarButton.propTypes = {
   onClick: PropTypes.func
 }
 
-function TitleBar (props) {
-  let { close, minimize, maximize, iconSize, title } = props
+function TitleBar ({
+  close = () => {},
+  minimize = () => {},
+  maximize = () => {},
+  iconSize = '16px',
+  title = 'eMusic'
+}) {
   return (
     <div className={style.titleBar}>
       <div className={style.buttons}>
@@ -34,14 +39,6 @@ function TitleBar (props) {
       <div className={style.title}>{title}</div>
     </div>
   )
-}
-
-TitleBar.defaultProps = {
-  iconSize: '16px',
-  title: 'eMusic',
-  close: () => {},
-  minimize: () => {},
-  maximize: () => {}
 }
 
 TitleBar.propTypes = {

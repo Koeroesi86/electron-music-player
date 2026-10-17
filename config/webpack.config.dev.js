@@ -1,8 +1,5 @@
 const baseConfig = require('./webpack.config.base')
-const { resolve } = require('path')
 
-const devConfig = Object.assign({}, baseConfig, {
+module.exports = baseConfig.map(config => Object.assign({}, config, {
   mode: 'development'
-})
-
-module.exports = devConfig
+}))

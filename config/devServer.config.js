@@ -1,17 +1,15 @@
-const errorOverlayMiddleware = require('react-dev-utils/errorOverlayMiddleware')
-const noopServiceWorkerMiddleware = require('react-dev-utils/noopServiceWorkerMiddleware')
 const { resolve } = require('path')
 const { spawn } = require('child_process')
 
-module.exports = function (proxy, allowedHost, port) {
+module.exports = function (host, port) {
   return {
+    host,
+    port,
     compress: true,
-    clientLogLevel: 'warning',
-    watchContentBase: true,
     hot: true,
-    quiet: false,
-    progress: false,
-    index: '/index.html',
+    client: {
+      logging: 'warn'
+    },
     historyApiFallback: {
       disableDotRule: true,
       index: '/index.html',
@@ -20,29 +18,7 @@ module.exports = function (proxy, allowedHost, port) {
       ],
       htmlAcceptHeaders: ['text/html', 'application/xhtml+xml']
     },
-    stats: {
-      colors: true,
-      chunks: false,
-      children: false,
-      hash: false,
-      version: false,
-      timings: false,
-      assets: true,
-      modules: false,
-      reasons: false,
-      source: false,
-      errors: true,
-      errorDetails: true,
-      warnings: true,
-      publicPath: false
-    },
-    public: allowedHost,
-    proxy,
-    before (app) {
-      app.use(errorOverlayMiddleware())
-      app.use(noopServiceWorkerMiddleware())
-    },
-    after (app) {
+    onListening () {
       const electronApp = spawn(
         'electron',
         [
@@ -58,7 +34,7 @@ module.exports = function (proxy, allowedHost, port) {
       )
       electronApp.on('close', code => process.exit(code))
       electronApp.on('error', spawnError => console.error(spawnError))
-      process.on('close', code => electronApp.exit(code))
+      process.on('exit', () => electronApp.kill())
     }
   }
 }

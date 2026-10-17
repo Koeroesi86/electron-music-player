@@ -1,11 +1,9 @@
-import { ipcRenderer } from 'electron'
+import { electronAPI } from '../../electron-api'
 import _ from 'lodash'
-import axios from 'axios'
-import { basename, extname } from 'path'
 
 function addListeners (eventNames, store) {
   eventNames.forEach(eventName => {
-    ipcRenderer.on(eventName, (event, payload) => {
+    electronAPI.on(eventName, payload => {
       store.dispatch({
         type: eventName,
         payload
@@ -29,23 +27,22 @@ const eventNames = [
 ]
 
 function rescanLibrary (forced = false) {
-  ipcRenderer.send('RESCAN_LIBRARY', { forced })
+  electronAPI.send('RESCAN_LIBRARY', { forced })
 }
 
 const appLoaded = _.debounce(() => {
-  ipcRenderer.send('APP_LOADED', {})
+  electronAPI.send('APP_LOADED', {})
 }, 500)
 
 const getLibrary = (store) => {
   const { port } = store.getState().uiState
   return Promise.resolve()
-    .then(() => axios.request({
-      url: `http://localhost:${port}/library`,
-      method: 'get'
-    }))
+    .then(() => fetch(`http://localhost:${port}/library`))
     .then(response => {
-      const library = response.data
-      return Promise.resolve(library)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch library: ${response.status}`)
+      }
+      return response.json()
     })
 }
 
@@ -66,7 +63,7 @@ const saveSettings = (uiState) => {
     equalizer
   } = uiState
 
-  ipcRenderer.send('SAVE_SETTINGS', {
+  electronAPI.send('SAVE_SETTINGS', {
     view,
     onlineView,
     tab,
@@ -86,7 +83,7 @@ const saveSettings = (uiState) => {
 const middleware = store => {
   if (window) {
     addListeners(eventNames, store)
-    ipcRenderer.send('APP_READY', 'Ready to receive')
+    electronAPI.send('APP_READY', 'Ready to receive')
 
     setInterval(() => {
       if (store.getState().uiState.scanningFolder.totalCount === 0) {
@@ -115,12 +112,12 @@ const middleware = store => {
       Array.prototype.forEach.call(fileList, file => {
         files.push({
           name: file.name,
-          path: file.path,
+          path: electronAPI.getPathForFile(file),
           lastModified: file.lastModified
         })
       })
 
-      ipcRenderer.send('ADD_FOLDERS_TO_LIBRARY', files)
+      electronAPI.send('ADD_FOLDERS_TO_LIBRARY', files)
     }
 
     if (action.type === 'RESCAN_LIBRARY') {
@@ -139,15 +136,15 @@ const middleware = store => {
 
     if (action.type === 'CLOSE_APP') {
       store.dispatch({ type: 'SAVE_SETTINGS', payload: {} })
-      ipcRenderer.send('CLOSE_APP', {})
+      electronAPI.send('CLOSE_APP', {})
     }
 
     if (action.type === 'MINIMIZE_APP') {
-      ipcRenderer.send('MINIMIZE_APP', {})
+      electronAPI.send('MINIMIZE_APP', {})
     }
 
     if (action.type === 'MAXIMIZE_APP') {
-      ipcRenderer.send('MAXIMIZE_APP', {})
+      electronAPI.send('MAXIMIZE_APP', {})
     }
 
     if (action.type === 'CLICKED_URL') {
@@ -170,7 +167,7 @@ const middleware = store => {
         }
         if (track.picture) {
           const { port } = store.getState().uiState
-          const cover = `${basename(track.picture, extname(track.picture))}-optimized.png`
+          const cover = `${track.picture.split(/[\\/]/).pop().replace(/\.[^.]*$/, '')}-optimized.png`
           const url = `http://localhost:${port}/albumart/${cover}`
           notification.icon = url
           notification.image = url
@@ -178,7 +175,7 @@ const middleware = store => {
         const myNotification = new window.Notification(notification.title, notification)
         myNotification.onclick = () => {
           store.dispatch({ type: 'CLICK_NOTIFICATION', payload: {} })
-          ipcRenderer.send('NOTIFICATION_CLICKED', { track: action.payload.track })
+          electronAPI.send('NOTIFICATION_CLICKED', { track: action.payload.track })
         }
       }
     }

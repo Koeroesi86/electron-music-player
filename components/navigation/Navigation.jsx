@@ -10,7 +10,7 @@ import {
 } from 'react-icons/md'
 import style from './Navigation.scss'
 
-function Navigation ({ setTab, tab }) {
+function Navigation ({ setTab = () => {}, tab = 'local' }) {
   return (
     <div className={style.navigation}>
       <div
@@ -60,11 +60,6 @@ function Navigation ({ setTab, tab }) {
       </div>
     </div>
   )
-}
-
-Navigation.defaultProps = {
-  setTab: () => {},
-  tab: 'local'
 }
 
 Navigation.propTypes = {

@@ -1,5 +1,5 @@
 import ScanProgress from './ScanProgress'
-import connect from 'react-redux/es/connect/connect'
+import { connect } from 'react-redux'
 
 const mapState = state => ({
   current: state.uiState.progress,

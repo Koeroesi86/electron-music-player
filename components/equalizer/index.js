@@ -1,5 +1,5 @@
 import React from 'react'
-import connect from 'react-redux/es/connect/connect'
+import { connect } from 'react-redux'
 import { Audio } from '../../client/audio/context'
 import Equalizer from './Equalizer'
 

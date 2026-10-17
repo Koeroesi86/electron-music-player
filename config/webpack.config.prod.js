@@ -1,9 +1,7 @@
 const baseConfig = require('./webpack.config.base')
 
-const prodConfig = Object.assign({}, baseConfig, {
+module.exports = baseConfig.map(config => Object.assign({}, config, {
   optimization: {
     minimize: true
   }
-})
-
-module.exports = prodConfig
+}))

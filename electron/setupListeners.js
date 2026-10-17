@@ -1,9 +1,7 @@
 const { app, ipcMain, session } = require('electron')
 const fs = require('fs')
 const { resolve } = require('path')
-const electronVibrancy = require('electron-vibrancy')
 const playlistParser = require('playlist-parser')
-const request = require('request')
 const executeQuery = require('./executeQuery')
 const executeQueries = require('./executeQueries')
 const scanFolders = require('./scanFolders')
@@ -58,7 +56,7 @@ function setupListeners (database, windows) {
     setTimeout(() => {
       windows.main.show()
       if (enableTransparency) {
-        if (isWin) electronVibrancy.SetVibrancy(windows.main, 0)
+        if (isWin) windows.main.setBackgroundMaterial('acrylic')
         else windows.main.setVibrancy('dark')
       }
       windows.loading.close()
@@ -185,13 +183,18 @@ function setupListeners (database, windows) {
   session.defaultSession.on('will-download', (event, item, webContents) => {
     event.preventDefault()
     const url = item.getURL()
-    request(url, (error, response, body) => {
-      if (error) {
-        console.error(error)
-      }
-      const playlist = playlistParser.PLS.parse(body)
-      windows.main.webContents.send('CLICKED_URL', { playlist, url })
-    })
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to download ${url}: ${response.status}`)
+        }
+        return response.text()
+      })
+      .then(body => {
+        const playlist = playlistParser.PLS.parse(body)
+        windows.main.webContents.send('CLICKED_URL', { playlist, url })
+      })
+      .catch(error => console.error(error))
   })
 
   ipcMain.on('NOTIFICATION_CLICKED', (event) => {

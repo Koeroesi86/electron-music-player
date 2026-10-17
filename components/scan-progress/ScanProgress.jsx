@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react'
 import classNames from 'classnames'
 import PropTypes from 'prop-types'
 import style from './ScanProgress.scss'
-import { shell } from 'electron'
+import { electronAPI } from '../../client/electron-api'
 
 class ScanProgress extends PureComponent {
   componentDidUpdate (prevProps) {
@@ -37,7 +37,7 @@ class ScanProgress extends PureComponent {
             Scanning&nbsp;<span ref={c => { this.current = c }} />&nbsp;/&nbsp;<span ref={t => { this.total = t }} />&nbsp;in
           </span>
           <span
-            onClick={() => shell.openItem(scanningFolder)}
+            onClick={() => electronAPI.openPath(scanningFolder)}
             title={`Click to open ${scanningFolder}`}
             className={style.link}
           >{scanningFolder}</span>

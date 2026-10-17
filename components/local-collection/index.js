@@ -1,5 +1,5 @@
 import LocalCollection from './LocalCollection'
-import connect from 'react-redux/es/connect/connect'
+import { connect } from 'react-redux'
 
 const mapState = state => ({
   view: state.uiState.view,

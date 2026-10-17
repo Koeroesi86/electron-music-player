@@ -1,4 +1,4 @@
-import connect from 'react-redux/es/connect/connect'
+import { connect } from 'react-redux'
 import NowPlaying from './NowPlaying'
 
 const mapState = state => ({

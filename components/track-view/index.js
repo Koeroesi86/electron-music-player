@@ -1,5 +1,5 @@
 import TrackView from './TrackView'
-import connect from 'react-redux/es/connect/connect'
+import { connect } from 'react-redux'
 
 const mapState = state => ({
   loaded: state.library.loaded,
