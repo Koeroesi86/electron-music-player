@@ -1,0 +1,18 @@
+import { connect } from 'react-redux'
+import type { Dispatch } from 'redux'
+import type { Track } from '../../types/library'
+import type { RootState } from '../../client/redux/reducers'
+import type { AppAction } from '../../client/redux/types'
+import AlbumDetails from './AlbumDetails'
+
+const mapState = (state: RootState) => ({
+  port: state.uiState.port,
+  album: state.uiState.selectedAlbum
+})
+
+const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
+  playTracks: (tracks: Track[]) => dispatch({ type: 'PLAY_TRACKS', payload: { tracks } }),
+  close: () => dispatch({ type: 'SELECT_ALBUM', payload: { album: null } })
+})
+
+export default connect(mapState, mapDispatch)(AlbumDetails)

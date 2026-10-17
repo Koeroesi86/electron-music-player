@@ -22,7 +22,7 @@ module.exports = function (host, port) {
       const electronApp = spawn(
         'electron',
         [
-          resolve(__dirname, '../index.js'),
+          resolve(__dirname, '../out/index.js'),
           `--webpackPort=${port}`
         ],
         {
