@@ -17,7 +17,7 @@ matrix:
 #before_cache:
 #  - rm -rf $HOME/.cache/electron-builder/wine
 cache:
-  yarn: true
+  npm: true
   directories:
     - node_modules
     - $HOME/.cache/electron
@@ -25,9 +25,9 @@ cache:
 notifications:
   email: false
 script:
-  - yarn install
-  - yarn build
-  - yarn dist
+  - npm ci
+  - npm run build
+  - npm run dist
 deploy:
   skip_cleanup: true
   provider: releases

@@ -10,6 +10,6 @@ Open-Source Lossless Audio Player
 
 | Command            | Purpose                              |
 | :----------------- | :----------------------------------- |
-| `yarn dev`         | Start development server             |
-| `yarn build`       | Compile JS `/build`.                 |
-| `yarn dist`        | Build for current OS                 |
+| `npm run dev`      | Start development server             |
+| `npm run build`    | Compile JS `/build`.                 |
+| `npm run dist`     | Build for current OS                 |

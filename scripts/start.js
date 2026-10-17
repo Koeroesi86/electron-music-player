@@ -25,7 +25,7 @@ const { resolve } = require('path')
 const config = require('../config/webpack.config.dev')
 const createDevServerConfig = require('../config/devServer.config')
 
-const useYarn = fs.existsSync(resolve(__dirname, '../yarn.lock'))
+const useYarn = false
 
 // Tools like Cloud9 rely on this.
 const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 3000

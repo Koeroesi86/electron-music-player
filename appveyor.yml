@@ -12,14 +12,13 @@ init:
   - git config --global core.autocrlf true
 install:
   - ps: Install-Product node $env:nodejs_version $env:platform
-  - yarn
+  - npm ci
 build_script:
-  - yarn build
-  - yarn dist
+  - npm run build
+  - npm run dist
   - ps: dir dist
 test: off
 cache:
-  - '%LOCALAPPDATA%\Yarn'
   - '%APPDATA%\npm-cache'
   - node_modules -> package.json
   - '%USERPROFILE%\.electron'
