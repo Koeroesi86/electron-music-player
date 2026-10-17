@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-15-intel, windows-latest]
+        os: [ubuntu-latest, macos-15-intel, windows-2022]
     runs-on: ${{ matrix.os }}
     env:
       ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
@@ -29,6 +29,11 @@ jobs:
             .cache/electron-builder
           key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: electron-${{ runner.os }}-
+      - name: Use a Python 3 compatible node-gyp
+        shell: bash
+        run: |
+          npm install -g node-gyp@8
+          echo "npm_config_node_gyp=$(npm root -g)/node-gyp/bin/node-gyp.js" >> "$GITHUB_ENV"
       - run: npm ci
       - run: npm run build
       - run: npm run dist
