@@ -7,9 +7,11 @@ const path = require('path')
 const startDevServer = () => {
   return new Promise((resolve, reject) => {
     const devServer = spawn(
-      'yarn',
+      'npm',
       [
+        'run',
         'build',
+        '--',
         '--watch'
       ],
       {
@@ -35,8 +37,9 @@ const startDevServer = () => {
 startDevServer()
   .then(() => {
     const electronApp = spawn(
-      'yarn',
+      'npm',
       [
+        'run',
         'start'
       ],
       {
