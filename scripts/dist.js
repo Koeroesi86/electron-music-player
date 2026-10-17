@@ -20,35 +20,24 @@ if (fs.existsSync(distPath)) {
   console.log('Removed previous build.')
 }
 
-if (isWin) {
-  electronBuilder
-    .build({
-      platform: 'windows'
-    })
-    .then(() => {
-      console.log('Windows package created.')
-      process.exit(0)
-    })
-}
+const platforms = [
+  [isWin, 'win', 'Windows'],
+  [isMac, 'mac', 'Mac OS'],
+  [isLinux, 'linux', 'Linux']
+]
 
-if (isMac) {
-  electronBuilder
-    .build({
-      platform: 'darwin'
-    })
-    .then(() => {
-      console.log('Mac OS package created.')
-      process.exit(0)
-    })
-}
-
-if (isLinux) {
-  electronBuilder
-    .build({
-      platform: 'linux'
-    })
-    .then(() => {
-      console.log('Linux package created.')
-      process.exit(0)
-    })
-}
+platforms
+  .filter(([enabled]) => enabled)
+  .forEach(([, option, label]) => {
+    // an empty target list makes electron-builder use the targets from package.json
+    electronBuilder
+      .build({ [option]: [] })
+      .then(() => {
+        console.log(`${label} package created.`)
+        process.exit(0)
+      })
+      .catch(error => {
+        console.error(error)
+        process.exit(1)
+      })
+  })
