@@ -10,5 +10,6 @@ Open-Source Lossless Audio Player
 | Command            | Purpose                              |
 | :----------------- | :----------------------------------- |
 | `npm run dev`      | Start development server             |
-| `npm run build`    | Compile JS `/build`.                 |
+| `npm run build`    | Compile the app to `/out` and `/build`. |
+| `npm run typecheck`| Type-check the whole project         |
 | `npm run dist`     | Build for current OS                 |

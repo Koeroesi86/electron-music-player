@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "node20",
+    "moduleResolution": "node16",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "noEmit": false,
+    "outDir": "out",
+    "rootDir": ".",
+    "sourceMap": true,
+    "isolatedModules": false,
+    "resolveJsonModule": false
+  },
+  "include": ["electron", "index.ts", "types"]
+}

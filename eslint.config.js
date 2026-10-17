@@ -1,3 +1,3 @@
 const neostandard = require('neostandard')
 
-module.exports = neostandard({ ignores: ['build', 'dist', 'icons'] })
+module.exports = neostandard({ ignores: ['build', 'dist', 'icons', 'out'] })

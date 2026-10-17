@@ -31,7 +31,7 @@ const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
+        test: /\.(js|jsx|ts|tsx)$/,
         exclude: /node_modules/,
         loader: 'babel-loader',
         options: {
@@ -102,7 +102,7 @@ const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
     ]
   },
   resolve: {
-    extensions: ['.js', '.jsx'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
     fallback: resolveFallback
   },
   // optimization: {
@@ -130,14 +130,14 @@ const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
 const config = [
   createConfig({
     name: 'client',
-    entry: path.resolve(__dirname, '../client/app.js'),
+    entry: path.resolve(__dirname, '../client/app.tsx'),
     target: 'web',
     resolveFallback: { path: require.resolve('path-browserify') },
     plugins: []
   }),
   createConfig({
     name: 'htmlGenerator',
-    entry: path.resolve(__dirname, '../client/htmlGenerator.js'),
+    entry: path.resolve(__dirname, '../client/htmlGenerator.tsx'),
     target: 'node',
     plugins: [
       new StaticSiteGeneratorPlugin({
