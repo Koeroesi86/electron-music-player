@@ -123,6 +123,15 @@ html, body {
     background: rgba(0, 0, 0, 0.3);
   }
 
+  // no window blur on Linux, so use a darker tint to keep text readable
+  &.opaque.noBlur {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  &.maximized.opaque.noBlur {
+    background: rgba(0, 0, 0, 0.75);
+  }
+
   &.loaded {
     // some effects?
   }
