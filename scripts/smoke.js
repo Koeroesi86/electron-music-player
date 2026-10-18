@@ -1,4 +1,5 @@
-const { _electron: electron } = require('playwright-core')
+const { spawn, spawnSync } = require('child_process')
+const { createServer } = require('net')
 const { existsSync, mkdtempSync, rmSync } = require('fs')
 const { tmpdir } = require('os')
 const { join, resolve } = require('path')
@@ -28,30 +29,46 @@ const home = mkdtempSync(join(tmpdir(), 'emusic-smoke-'))
 const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env
 const env = { ...inherited, HOME: home, USERPROFILE: home, APPDATA: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production' }
 
-// the window may open before the listener is attached, so the open ones are checked as well
-const findWindow = async app => {
+const freePort = () =>
+  new Promise((done, fail) => {
+    const server = createServer().once('error', fail)
+    server.listen(0, '127.0.0.1', () => {
+      const { port } = server.address()
+      server.close(() => done(port))
+    })
+  })
+
+// the window may open after the app started, so the debugging endpoint of the chromium is polled
+const findWindowUrl = async (port, child) => {
   const deadline = Date.now() + timeout
+  let open = 'none'
   while (Date.now() < deadline) {
-    const page = app.windows().find(candidate => candidate.url().includes('/app/index.html'))
-    if (page) return page
+    if (child.exitCode !== null) throw new Error(`The app exited with ${child.exitCode} before a window opened`)
+    const targets = await fetch(`http://127.0.0.1:${port}/json`).then(response => response.json(), () => [])
+    const target = targets.find(candidate => candidate.url.includes('/app/index.html'))
+    if (target) return target.url
+    open = targets.map(candidate => candidate.url).join(', ') || open
     await new Promise(done => setTimeout(done, 500))
   }
-  throw new Error(`No main window, open: ${app.windows().map(candidate => candidate.url()).join(', ') || 'none'}`)
+  throw new Error(`No main window, open: ${open}`)
 }
 
+// taskkill also takes the helper processes down on windows
+const stop = child =>
+  process.platform === 'win32' ? spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F']) : child.kill()
+
 const run = async () => {
-  const app = await electron.launch({ executablePath, args, env, timeout })
+  const port = await freePort()
+  const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`], { env, stdio: 'inherit' })
   try {
-    const page = await findWindow(app)
-    await page.waitForLoadState('load', { timeout })
-    const { origin } = new URL(page.url())
-    const response = await fetch(`${origin}/library`)
+    const url = await findWindowUrl(port, child)
+    const response = await fetch(`${new URL(url).origin}/library`)
     if (!response.ok) throw new Error(`/library answered ${response.status}`)
     const library = await response.json()
     if (!Array.isArray(library)) throw new Error('/library did not answer a list')
-    console.log(`Smoke test passed: ${page.url()}, ${library.length} tracks`)
+    console.log(`Smoke test passed: ${url}, ${library.length} tracks`)
   } finally {
-    await app.close()
+    stop(child)
   }
 }
 
