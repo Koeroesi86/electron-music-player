@@ -54,7 +54,7 @@ function Navigation ({ setTab = () => {}, tab = 'local' }: NavigationProps) {
         <span className={style.label}>Equalizer</span>
       </div>
       <div
-        onClick={() => {}}
+        onClick={() => setTab('settings')}
         className={classNames(style.item, {
           [style.active]: tab === 'settings'
         })}
