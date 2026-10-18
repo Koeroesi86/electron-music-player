@@ -1,6 +1,11 @@
 const { resolve } = require('path')
 const rimraf = require('rimraf')
 const fs = require('fs')
+const cache = require('../config/cache')
+
+process.env.ELECTRON_CACHE = process.env.ELECTRON_CACHE || cache.electron
+process.env.ELECTRON_BUILDER_CACHE = process.env.ELECTRON_BUILDER_CACHE || cache.electronBuilder
+
 const electronBuilder = require('electron-builder')
 
 const cwd = resolve(__dirname, '../')

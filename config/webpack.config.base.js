@@ -3,6 +3,7 @@ const webpack = require('webpack')
 const StaticSiteGeneratorPlugin = require('static-site-generator-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const appConfig = require('./appConfig')
+const cache = require('./cache')
 
 function recursiveIssuer (m) {
   if (m.issuer) {
@@ -28,6 +29,14 @@ const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
     filename: '[name].js'
   },
   target,
+  cache: {
+    type: 'filesystem',
+    cacheDirectory: cache.webpack,
+    version: process.env.NODE_ENV || 'development',
+    buildDependencies: {
+      config: [__filename, require.resolve('./cache'), require.resolve('./appConfig')]
+    }
+  },
   module: {
     rules: [
       {
@@ -35,7 +44,7 @@ const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
         exclude: /node_modules/,
         loader: 'babel-loader',
         options: {
-          cacheDirectory: true
+          cacheDirectory: cache.babel
         }
       },
       // {

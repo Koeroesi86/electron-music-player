@@ -7,11 +7,11 @@
   "scripts": {
     "prebuild": "node scripts/prebuild.js",
     "postinstall": "node scripts/postinstall.js",
-    "dev": "node scripts/prebuild.js && tsc -p tsconfig.main.json && node --max_old_space_size=2048 scripts/start.js",
-    "build": "tsc -p tsconfig.main.json && node scripts/build.js",
+    "dev": "node scripts/prebuild.js && node scripts/tsc.js tsconfig.main.json out && node --max_old_space_size=2048 scripts/start.js",
+    "build": "node scripts/tsc.js tsconfig.main.json out && node scripts/build.js",
     "start": "electron out/index.js",
     "dist": "node scripts/dist.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "node scripts/tsc.js tsconfig.json"
   },
   "author": {
     "name": "Krisztian Korosi",
