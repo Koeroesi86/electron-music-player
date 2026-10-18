@@ -1,6 +1,6 @@
-import { BrowserWindow } from 'electron'
+import { BrowserWindow } from 'electron';
 
-function getLoadingWindow () {
+function getLoadingWindow() {
   const loadingWindow = new BrowserWindow({
     // x: 0,
     // y: 0,
@@ -14,17 +14,17 @@ function getLoadingWindow () {
     show: false,
     webPreferences: {
       backgroundThrottling: false,
-      webSecurity: false
-    }
-  })
+      webSecurity: false,
+    },
+  });
   // loadingWindow.setSize(400, 300)
-  loadingWindow.setResizable(false)
-  loadingWindow.setMaximizable(false)
-  loadingWindow.setFullScreenable(false)
+  loadingWindow.setResizable(false);
+  loadingWindow.setMaximizable(false);
+  loadingWindow.setFullScreenable(false);
   // loadingWindow.setClosable(false)
-  loadingWindow.setVibrancy('under-window')
+  loadingWindow.setVibrancy('under-window');
 
-  return loadingWindow
+  return loadingWindow;
 }
 
-export default getLoadingWindow
+export default getLoadingWindow;

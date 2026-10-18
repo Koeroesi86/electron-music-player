@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
-import type { Album, Track } from '../../../types/library'
-import type { AppAction, UiState } from '../types'
-import reducer from './reducer'
+import { describe, expect, it } from 'vitest';
+import type { Album, Track } from '../../../types/library';
+import type { AppAction, UiState } from '../types';
+import reducer from './reducer';
 
 const track = (path: string): Track => ({
   path,
@@ -13,11 +13,11 @@ const track = (path: string): Track => ({
   disk: '',
   genre: '',
   picture: null,
-  duration: null
-})
+  duration: null,
+});
 
-const initial = reducer(undefined, { type: '@@INIT' })
-const run = (action: AppAction, state: UiState = initial) => reducer(state, action)
+const initial = reducer(undefined, { type: '@@INIT' });
+const run = (action: AppAction, state: UiState = initial) => reducer(state, action);
 
 describe('uiState reducer', () => {
   it('provides sensible defaults', () => {
@@ -29,97 +29,99 @@ describe('uiState reducer', () => {
       isPlaying: false,
       shuffle: false,
       repeat: false,
-      currentSong: null
-    })
-    expect(initial.equalizer).toHaveLength(12)
-  })
+      currentSong: null,
+    });
+    expect(initial.equalizer).toHaveLength(12);
+  });
 
   it('returns the same state for unknown actions', () => {
-    expect(reducer(initial, { type: 'UNKNOWN' })).toBe(initial)
-    expect(reducer(initial, null as never)).toBe(initial)
-  })
+    expect(reducer(initial, { type: 'UNKNOWN' })).toBe(initial);
+    expect(reducer(initial, null as never)).toBe(initial);
+  });
 
   it('switches views and tabs', () => {
-    expect(run({ type: 'SET_VIEW', payload: { view: 'tracks' } }).view).toBe('tracks')
-    expect(run({ type: 'SET_ONLINE_VIEW', payload: { view: 'spotify' } }).onlineView).toBe('spotify')
-    expect(run({ type: 'SET_TAB', payload: { tab: 'settings' } }).tab).toBe('settings')
-  })
+    expect(run({ type: 'SET_VIEW', payload: { view: 'tracks' } }).view).toBe('tracks');
+    expect(run({ type: 'SET_ONLINE_VIEW', payload: { view: 'spotify' } }).onlineView).toBe('spotify');
+    expect(run({ type: 'SET_TAB', payload: { tab: 'settings' } }).tab).toBe('settings');
+  });
 
   it('replaces the queue and clears history on PLAY_TRACKS', () => {
-    const state = run({ type: 'PLAY_TRACKS', payload: { tracks: [track('a')] } }, { ...initial, played: [track('old')] })
+    const state = run({ type: 'PLAY_TRACKS', payload: { tracks: [track('a')] } }, { ...initial, played: [track('old')] });
 
-    expect(state.nowPlaying).toEqual([track('a')])
-    expect(state.played).toEqual([])
-  })
+    expect(state.nowPlaying).toEqual([track('a')]);
+    expect(state.played).toEqual([]);
+  });
 
   it('starts playing on PLAY_TRACK and falls back to no song', () => {
-    const playing = run({ type: 'PLAY_TRACK', payload: { track: track('a') } })
-    expect(playing).toMatchObject({ currentSong: track('a'), isPlaying: true })
-    expect(run({ type: 'PLAY_TRACK', payload: { track: null } }).currentSong).toBeNull()
-  })
+    const playing = run({ type: 'PLAY_TRACK', payload: { track: track('a') } });
+    expect(playing).toMatchObject({ currentSong: track('a'), isPlaying: true });
+    expect(run({ type: 'PLAY_TRACK', payload: { track: null } }).currentSong).toBeNull();
+  });
 
   it('parses the volume and defaults invalid values to 0', () => {
-    expect(run({ type: 'SET_VOLUME', payload: { volume: '0.8' } }).volume).toBe(0.8)
-    expect(run({ type: 'SET_VOLUME', payload: { volume: 0 } }).volume).toBe(0)
-  })
+    expect(run({ type: 'SET_VOLUME', payload: { volume: '0.8' } }).volume).toBe(0.8);
+    expect(run({ type: 'SET_VOLUME', payload: { volume: 0 } }).volume).toBe(0);
+  });
 
   it('keeps the same state when the current time did not change', () => {
-    const state = run({ type: 'SET_CURRENT_TIME', payload: { currentTime: '12.5' } })
+    const state = run({ type: 'SET_CURRENT_TIME', payload: { currentTime: '12.5' } });
 
-    expect(state.currentTime).toBe(12.5)
-    expect(reducer(state, { type: 'SET_CURRENT_TIME', payload: { currentTime: 12.5 } })).toBe(state)
-  })
+    expect(state.currentTime).toBe(12.5);
+    expect(reducer(state, { type: 'SET_CURRENT_TIME', payload: { currentTime: 12.5 } })).toBe(state);
+  });
 
   it('selecting an album closes the equalizer, deselecting keeps it', () => {
-    const album = { id: 'a' } as Album
-    const open = { ...initial, showEqualizer: true }
+    const album = { id: 'a' } as Album;
+    const open = { ...initial, showEqualizer: true };
 
-    expect(run({ type: 'SELECT_ALBUM', payload: { album } }, open)).toMatchObject({ selectedAlbum: album, showEqualizer: false })
-    expect(run({ type: 'SELECT_ALBUM', payload: { album: null } }, open)).toMatchObject({ selectedAlbum: null, showEqualizer: true })
-  })
+    expect(run({ type: 'SELECT_ALBUM', payload: { album } }, open)).toMatchObject({ selectedAlbum: album, showEqualizer: false });
+    expect(run({ type: 'SELECT_ALBUM', payload: { album: null } }, open)).toMatchObject({ selectedAlbum: null, showEqualizer: true });
+  });
 
   it('opening the equalizer deselects the album, closing hides it', () => {
-    const state = run({ type: 'OPEN_EQUALIZER' }, { ...initial, selectedAlbum: { id: 'a' } as Album })
-    expect(state).toMatchObject({ showEqualizer: true, selectedAlbum: null })
-    expect(run({ type: 'CLOSE_EQUALIZER' }, state).showEqualizer).toBe(false)
-  })
+    const state = run({ type: 'OPEN_EQUALIZER' }, { ...initial, selectedAlbum: { id: 'a' } as Album });
+    expect(state).toMatchObject({ showEqualizer: true, selectedAlbum: null });
+    expect(run({ type: 'CLOSE_EQUALIZER' }, state).showEqualizer).toBe(false);
+  });
 
   it('sets a single equalizer gain scaled by 100 without mutating the previous state', () => {
-    const state = run({ type: 'SET_GAIN', payload: { value: '50', index: 2 } })
+    const state = run({ type: 'SET_GAIN', payload: { value: '50', index: 2 } });
 
-    expect(state.equalizer[2]).toBe(0.5)
-    expect(state.equalizer[1]).toBe(-40)
-    expect(initial.equalizer[2]).toBe(-40)
-  })
+    expect(state.equalizer[2]).toBe(0.5);
+    expect(state.equalizer[1]).toBe(-40);
+    expect(initial.equalizer[2]).toBe(-40);
+  });
 
   it('tracks scanning progress and ends scanning when the library is stored', () => {
-    const scanning = run({ type: 'SCANNING_FOLDER', payload: { folder: '/music' } })
-    expect(scanning.scanningFolder).toBe('/music')
-    expect(run({ type: 'SCANNING_FILE', payload: { fileName: 'a', progress: 3, totalCount: 10 } }, scanning))
-      .toMatchObject({ progress: 3, totalCount: 10 })
-    expect(run({ type: 'STORE_LIBRARY', payload: { library: [], finished: true } }, scanning).scanningFolder).toBeNull()
-  })
+    const scanning = run({ type: 'SCANNING_FOLDER', payload: { folder: '/music' } });
+    expect(scanning.scanningFolder).toBe('/music');
+    expect(run({ type: 'SCANNING_FILE', payload: { fileName: 'a', progress: 3, totalCount: 10 } }, scanning)).toMatchObject({ progress: 3, totalCount: 10 });
+    expect(run({ type: 'STORE_LIBRARY', payload: { library: [], finished: true } }, scanning).scanningFolder).toBeNull();
+  });
 
   it('toggles repeat and shuffle', () => {
-    expect(run({ type: 'TOGGLE_REPEAT' }).repeat).toBe(true)
-    expect(run({ type: 'TOGGLE_SHUFFLE' }).shuffle).toBe(true)
-    expect(run({ type: 'TOGGLE_REPEAT' }, { ...initial, repeat: true }).repeat).toBe(false)
-  })
+    expect(run({ type: 'TOGGLE_REPEAT' }).repeat).toBe(true);
+    expect(run({ type: 'TOGGLE_SHUFFLE' }).shuffle).toBe(true);
+    expect(run({ type: 'TOGGLE_REPEAT' }, { ...initial, repeat: true }).repeat).toBe(false);
+  });
 
   it('records and clears played tracks, ignoring null tracks', () => {
-    const one = run({ type: 'ADD_PLAYED', payload: { track: track('a') } })
-    expect(one.played).toEqual([track('a')])
-    expect(run({ type: 'ADD_PLAYED', payload: { track: null } }, one).played).toEqual([track('a')])
-    expect(run({ type: 'CLEAR_PLAYED' }, one).played).toEqual([])
-  })
+    const one = run({ type: 'ADD_PLAYED', payload: { track: track('a') } });
+    expect(one.played).toEqual([track('a')]);
+    expect(run({ type: 'ADD_PLAYED', payload: { track: null } }, one).played).toEqual([track('a')]);
+    expect(run({ type: 'CLEAR_PLAYED' }, one).played).toEqual([]);
+  });
 
   it('updates maximized and playing flags', () => {
-    expect(run({ type: 'MAXIMIZED_APP', payload: { maximized: true } }).maximized).toBe(true)
-    expect(run({ type: 'SET_PLAYING', payload: { isPlaying: true } }).isPlaying).toBe(true)
-  })
+    expect(run({ type: 'MAXIMIZED_APP', payload: { maximized: true } }).maximized).toBe(true);
+    expect(run({ type: 'SET_PLAYING', payload: { isPlaying: true } }).isPlaying).toBe(true);
+  });
 
   it('merges restored settings', () => {
-    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.2, tab: 'equalizer' } } }))
-      .toMatchObject({ volume: 0.2, tab: 'equalizer', view: 'albums' })
-  })
-})
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.2, tab: 'equalizer' } } })).toMatchObject({
+      volume: 0.2,
+      tab: 'equalizer',
+      view: 'albums',
+    });
+  });
+});

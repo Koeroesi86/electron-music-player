@@ -1,10 +1,10 @@
-import path from 'path'
-import { defineConfig } from 'vitest/config'
+import path from 'path';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   oxc: { jsx: { runtime: 'automatic' } },
   resolve: {
-    alias: [{ find: /^.+\.scss$/, replacement: path.resolve(__dirname, 'test-utils-style-stub.ts') }]
+    alias: [{ find: /^.+\.scss$/, replacement: path.resolve(__dirname, 'test-utils-style-stub.ts') }],
   },
   test: {
     projects: [
@@ -13,17 +13,17 @@ export default defineConfig({
         test: {
           name: 'backend',
           environment: 'node',
-          include: ['electron/**/*.test.ts']
-        }
+          include: ['electron/**/*.test.ts'],
+        },
       },
       {
         extends: true,
         test: {
           name: 'frontend',
           environment: 'jsdom',
-          include: ['client/**/*.test.{ts,tsx}', 'components/**/*.test.{ts,tsx}']
-        }
-      }
-    ]
-  }
-})
+          include: ['client/**/*.test.{ts,tsx}', 'components/**/*.test.{ts,tsx}'],
+        },
+      },
+    ],
+  },
+});

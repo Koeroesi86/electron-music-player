@@ -1,6 +1,6 @@
-import { BrowserWindow } from 'electron'
-import { resolve } from 'path'
-import windowStateKeeper from 'electron-window-state'
+import { BrowserWindow } from 'electron';
+import { resolve } from 'path';
+import windowStateKeeper from 'electron-window-state';
 
 // const { TouchBarLabel, TouchBarSpacer } = TouchBar
 
@@ -20,8 +20,8 @@ const createWindow = () => {
   const mainWindowState = windowStateKeeper({
     defaultWidth: 1200,
     defaultHeight: 800,
-    maximize: false
-  })
+    maximize: false,
+  });
   const mainWindow = new BrowserWindow({
     x: mainWindowState.x,
     y: mainWindowState.y,
@@ -35,12 +35,12 @@ const createWindow = () => {
       // webSecurity: false,
       backgroundThrottling: false,
       preload: resolve(__dirname, './preload.js'),
-      webviewTag: true
-    }
-  })
-  mainWindowState.manage(mainWindow)
+      webviewTag: true,
+    },
+  });
+  mainWindowState.manage(mainWindow);
   // mainWindow.setTouchBar(touchBar)
-  mainWindow.setFullScreenable(false)
+  mainWindow.setFullScreenable(false);
 
   // app.updateTouchBar = metadata => {
   //   artist.label = metadata.artist
@@ -51,7 +51,7 @@ const createWindow = () => {
   //   time.label = duration
   // }
 
-  return mainWindow
-}
+  return mainWindow;
+};
 
-export default createWindow
+export default createWindow;

@@ -1,15 +1,15 @@
-import sqlite3 from 'sqlite3'
+import sqlite3 from 'sqlite3';
 
-function connectDatabase (libraryLocation: string): Promise<sqlite3.Database> {
+function connectDatabase(libraryLocation: string): Promise<sqlite3.Database> {
   return new Promise((resolve, reject) => {
-    const database: sqlite3.Database = new (sqlite3.verbose().Database)(libraryLocation, err => {
+    const database: sqlite3.Database = new (sqlite3.verbose().Database)(libraryLocation, (err) => {
       if (err) {
-        reject(err.message)
+        reject(err.message);
       } else {
-        resolve(database)
+        resolve(database);
       }
-    })
-  })
+    });
+  });
 }
 
-export default connectDatabase
+export default connectDatabase;

@@ -1,15 +1,15 @@
-import type { Reducer } from 'redux'
-import type { Folder } from '../../../types/library'
-import { isAppAction } from '../types'
+import type { Reducer } from 'redux';
+import type { Folder } from '../../../types/library';
+import { isAppAction } from '../types';
 
 const reducer: Reducer<Folder[]> = (state = [], action) => {
-  if (!isAppAction(action)) return state
+  if (!isAppAction(action)) return state;
 
   if (action.type === 'STORE_FOLDERS') {
-    return action.payload.folders
+    return action.payload.folders;
   }
 
-  return state
-}
+  return state;
+};
 
-export default reducer
+export default reducer;
