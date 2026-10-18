@@ -1,1 +1,1 @@
-export const electronAPI = window.electronAPI
+export const electronAPI = window.electronAPI;

@@ -1,7 +1,7 @@
-import 'csstype'
+import 'csstype';
 
 declare module 'csstype' {
   interface Properties {
-    WebkitAppRegion?: 'drag' | 'no-drag'
+    WebkitAppRegion?: 'drag' | 'no-drag';
   }
 }

@@ -1,18 +1,18 @@
-import { connect } from 'react-redux'
-import type { Dispatch } from 'redux'
-import type { Track } from '../../types/library'
-import type { RootState } from '../../client/redux/reducers'
-import type { AppAction } from '../../client/redux/types'
-import NowPlaying from './NowPlaying'
+import { connect } from 'react-redux';
+import type { Dispatch } from 'redux';
+import type { Track } from '../../types/library';
+import type { RootState } from '../../client/redux/reducers';
+import type { AppAction } from '../../client/redux/types';
+import NowPlaying from './NowPlaying';
 
 const mapState = (state: RootState) => ({
   port: state.uiState.port,
   currentSong: state.uiState.currentSong,
-  nowPlaying: state.uiState.nowPlaying
-})
+  nowPlaying: state.uiState.nowPlaying,
+});
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
-  playTrack: (track: Track) => dispatch({ type: 'FORCE_PLAY_TRACK', payload: { track } })
-})
+  playTrack: (track: Track) => dispatch({ type: 'FORCE_PLAY_TRACK', payload: { track } }),
+});
 
-export default connect(mapState, mapDispatch)(NowPlaying)
+export default connect(mapState, mapDispatch)(NowPlaying);

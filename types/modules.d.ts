@@ -1,52 +1,48 @@
 declare module 'playlist-parser' {
   export interface PlaylistEntry {
-    file: string
-    title?: string
-    length?: number
+    file: string;
+    title?: string;
+    length?: number;
   }
 
   export const PLS: {
-    parse: (body: string) => PlaylistEntry[]
-  }
+    parse: (body: string) => PlaylistEntry[];
+  };
 }
 
 declare module 'windows-shortcuts-appid' {
-  type Callback = (error?: Error) => void
+  type Callback = (error?: Error) => void;
 
-  export function create (
-    shortcutPath: string,
-    options: { target: string, desc?: string, workingDir?: string, icon?: string },
-    callback: Callback
-  ): void
-  export function addAppId (shortcutPath: string, appId: string, callback: Callback): void
+  export function create(shortcutPath: string, options: { target: string; desc?: string; workingDir?: string; icon?: string }, callback: Callback): void;
+  export function addAppId(shortcutPath: string, appId: string, callback: Callback): void;
 }
 
 declare module 'find-free-port' {
-  export default function findFreePort (start: number, host?: string): Promise<number[]>
+  export default function findFreePort(start: number, host?: string): Promise<number[]>;
 }
 
 declare module 'in-view' {
   interface InViewHandlers {
-    on: (event: 'enter' | 'exit', handler: (element: Element) => void) => InViewHandlers
-    check: () => InViewHandlers
+    on: (event: 'enter' | 'exit', handler: (element: Element) => void) => InViewHandlers;
+    check: () => InViewHandlers;
   }
 
   interface InView {
-    (selector: string): InViewHandlers
-    offset: (offset: number) => void
-    threshold: (threshold: number) => void
+    (selector: string): InViewHandlers;
+    offset: (offset: number) => void;
+    threshold: (threshold: number) => void;
   }
 
-  const inView: InView
-  export default inView
+  const inView: InView;
+  export default inView;
 }
 
 declare module '*.scss' {
-  const classNames: Record<string, string>
-  export default classNames
+  const classNames: Record<string, string>;
+  export default classNames;
 }
 
 declare module '*.svg' {
-  const src: string
-  export default src
+  const src: string;
+  export default src;
 }

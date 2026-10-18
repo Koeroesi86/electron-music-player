@@ -1,16 +1,16 @@
-import type { Database } from 'sqlite3'
-import type { Query } from '../types/library'
+import type { Database } from 'sqlite3';
+import type { Query } from '../types/library';
 
-function executeQuery<T = unknown> (db: Database, query: Query): Promise<T[]> {
+function executeQuery<T = unknown>(db: Database, query: Query): Promise<T[]> {
   return new Promise((resolve, reject) => {
     db.all(query.query, query.variables, (err, result: T[]) => {
       if (err) {
-        reject(err.message)
+        reject(err.message);
       } else {
-        resolve(result)
+        resolve(result);
       }
-    })
-  })
+    });
+  });
 }
 
-export default executeQuery
+export default executeQuery;

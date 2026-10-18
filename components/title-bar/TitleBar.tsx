@@ -1,30 +1,24 @@
-import type { MouseEventHandler, ReactNode } from 'react'
-import style from './TitleBar.scss'
-import { FiMaximize as MaximizeIcon, FiMinimize2 as MinimizeIcon, FiX as CloseIcon } from 'react-icons/fi'
+import type { MouseEventHandler, ReactNode } from 'react';
+import style from './TitleBar.scss';
+import { FiMaximize as MaximizeIcon, FiMinimize2 as MinimizeIcon, FiX as CloseIcon } from 'react-icons/fi';
 
-function TitleBarButton ({ onClick, children }: { onClick?: MouseEventHandler<HTMLSpanElement>, children?: ReactNode }) {
+function TitleBarButton({ onClick, children }: { onClick?: MouseEventHandler<HTMLSpanElement>; children?: ReactNode }) {
   return (
     <span className={style.button} onClick={onClick}>
       {children}
     </span>
-  )
+  );
 }
 
 interface TitleBarProps {
-  iconSize?: string
-  title?: string
-  maximize?: () => void
-  minimize?: () => void
-  close?: () => void
+  iconSize?: string;
+  title?: string;
+  maximize?: () => void;
+  minimize?: () => void;
+  close?: () => void;
 }
 
-function TitleBar ({
-  close = () => {},
-  minimize = () => {},
-  maximize = () => {},
-  iconSize = '16px',
-  title = 'eMusic'
-}: TitleBarProps) {
+function TitleBar({ close = () => {}, minimize = () => {}, maximize = () => {}, iconSize = '16px', title = 'eMusic' }: TitleBarProps) {
   return (
     <div className={style.titleBar}>
       <div className={style.buttons}>
@@ -40,7 +34,7 @@ function TitleBar ({
       </div>
       <div className={style.title}>{title}</div>
     </div>
-  )
+  );
 }
 
-export default TitleBar
+export default TitleBar;

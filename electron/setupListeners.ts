@@ -1,40 +1,40 @@
-import { ipcMain, nativeImage, session } from 'electron'
-import fs from 'fs'
-import { resolve } from 'path'
-import playlistParser from 'playlist-parser'
-import type { Database } from 'sqlite3'
-import type { AppWindows } from '../types/global'
-import type { Folder } from '../types/library'
-import executeQuery from './executeQuery'
-import executeQueries from './executeQueries'
-import scanFolders from './scanFolders'
-import rescanLibrary from './rescanLibrary'
+import { ipcMain, nativeImage, session } from 'electron';
+import fs from 'fs';
+import { resolve } from 'path';
+import playlistParser from 'playlist-parser';
+import type { Database } from 'sqlite3';
+import type { AppWindows } from '../types/global';
+import type { Folder } from '../types/library';
+import executeQuery from './executeQuery';
+import executeQueries from './executeQueries';
+import scanFolders from './scanFolders';
+import rescanLibrary from './rescanLibrary';
 
 interface AddedFile {
-  path: string
-  lastModified: number
+  path: string;
+  lastModified: number;
 }
 
-const isWin = process.platform === 'win32'
-const enableTransparency = true
+const isWin = process.platform === 'win32';
+const enableTransparency = true;
 
-function setupListeners (database: Database, windows: AppWindows) {
+function setupListeners(database: Database, windows: AppWindows) {
   const getMain = () => {
-    if (!windows.main) throw new Error('Main window is not available')
-    return windows.main
-  }
+    if (!windows.main) throw new Error('Main window is not available');
+    return windows.main;
+  };
 
   // loading.openDevTools()
 
   ipcMain.once('APP_LOADED', () => {
     setTimeout(() => {
-      getMain().show()
+      getMain().show();
       if (enableTransparency) {
-        if (isWin) getMain().setBackgroundMaterial('acrylic')
-        else getMain().setVibrancy('under-window')
+        if (isWin) getMain().setBackgroundMaterial('acrylic');
+        else getMain().setVibrancy('under-window');
       }
-      windows.loading?.close()
-      windows.loading = null
+      windows.loading?.close();
+      windows.loading = null;
 
       // getMain().webContents.openDevTools()
 
@@ -43,149 +43,155 @@ function setupListeners (database: Database, windows: AppWindows) {
           {
             tooltip: 'Play',
             icon: nativeImage.createFromPath(resolve(__dirname, '../../assets/icons_play.png')),
-            click () {
-              console.log('play clicked')
-              getMain().webContents.send('SET_PLAYING', { isPlaying: true })
-            }
+            click() {
+              console.log('play clicked');
+              getMain().webContents.send('SET_PLAYING', { isPlaying: true });
+            },
           },
           {
             tooltip: 'Pause',
             icon: nativeImage.createFromPath(resolve(__dirname, '../../assets/icons_pause.png')),
-            click () {
-              console.log('pause clicked.')
-              getMain().webContents.send('SET_PLAYING', { isPlaying: false })
-            }
-          }
-        ])
+            click() {
+              console.log('pause clicked.');
+              getMain().webContents.send('SET_PLAYING', { isPlaying: false });
+            },
+          },
+        ]);
       }
-    }, 200)
-  })
+    }, 200);
+  });
 
   ipcMain.on('CLOSE_APP', () => {
-    getMain().close()
-  })
+    getMain().close();
+  });
 
   ipcMain.on('MINIMIZE_APP', () => {
-    getMain().minimize()
-  })
+    getMain().minimize();
+  });
 
-  let isMaximized = false
+  let isMaximized = false;
   ipcMain.on('MAXIMIZE_APP', () => {
     // getMain().isMaximized() is not working
     if (isMaximized) {
-      getMain().unmaximize()
+      getMain().unmaximize();
     } else {
-      getMain().maximize()
+      getMain().maximize();
     }
-  })
+  });
 
   getMain().on('maximize', () => {
-    isMaximized = true
-    getMain().webContents.send('MAXIMIZED_APP', { maximized: isMaximized })
-  })
+    isMaximized = true;
+    getMain().webContents.send('MAXIMIZED_APP', { maximized: isMaximized });
+  });
 
   getMain().on('unmaximize', () => {
-    isMaximized = false
-    getMain().webContents.send('MAXIMIZED_APP', { maximized: isMaximized })
-  })
+    isMaximized = false;
+    getMain().webContents.send('MAXIMIZED_APP', { maximized: isMaximized });
+  });
 
   ipcMain.on('APP_READY', (event) => {
     // main.openDevTools()
     Promise.resolve()
-      .then(() => executeQuery<Folder>(database, {
-        query: `SELECT * FROM folders ORDER BY path ASC`,
-        variables: []
-      }))
-      .then(folders => {
-        event.sender.send('STORE_FOLDERS', { folders })
+      .then(() =>
+        executeQuery<Folder>(database, {
+          query: `SELECT * FROM folders ORDER BY path ASC`,
+          variables: [],
+        })
+      )
+      .then((folders) => {
+        event.sender.send('STORE_FOLDERS', { folders });
       })
-      .then(() => executeQuery<{ settings: string }>(database, {
-        query: `SELECT settings FROM settings WHERE id = ?`,
-        variables: [1]
-      }))
-      .then(s => {
+      .then(() =>
+        executeQuery<{ settings: string }>(database, {
+          query: `SELECT settings FROM settings WHERE id = ?`,
+          variables: [1],
+        })
+      )
+      .then((s) => {
         if (s[0]) {
-          const { settings } = s[0]
-          event.sender.send('RESTORE_SETTINGS', { settings: JSON.parse(settings) })
+          const { settings } = s[0];
+          event.sender.send('RESTORE_SETTINGS', { settings: JSON.parse(settings) });
         }
       })
-      .catch(e => console.error(e))
-  })
+      .catch((e) => console.error(e));
+  });
 
   ipcMain.on('ADD_FOLDERS_TO_LIBRARY', (event, files: AddedFile[]) => {
-    const folders = files.filter(file => fs.statSync(file.path).isDirectory())
-    const toRemoveQueries = files.map(file => ({
+    const folders = files.filter((file) => fs.statSync(file.path).isDirectory());
+    const toRemoveQueries = files.map((file) => ({
       query: `SELECT * FROM folders WHERE path LIKE ?`,
-      variables: [file.path + '%']
-    }))
+      variables: [file.path + '%'],
+    }));
     executeQueries<Folder>(database, toRemoveQueries)
-      .then(results => {
-        if (!results.length) return
-        const removeQueries = results[0].map(result => ({
+      .then((results) => {
+        if (!results.length) return;
+        const removeQueries = results[0].map((result) => ({
           query: `DELETE FROM folders WHERE path = ?`,
-          variables: [result.path]
-        }))
+          variables: [result.path],
+        }));
 
-        return executeQueries(database, removeQueries)
+        return executeQueries(database, removeQueries);
       })
       .then(() => {
-        const queries = files.map(file => ({
+        const queries = files.map((file) => ({
           query: `INSERT OR REPLACE INTO folders (path, lastModified) VALUES (?, ?)`,
-          variables: [file.path, file.lastModified]
-        }))
+          variables: [file.path, file.lastModified],
+        }));
 
-        return executeQueries(database, queries)
+        return executeQueries(database, queries);
       })
       .then(() => {
-        event.sender.send('FOLDERS_ADDED_TO_LIBRARY', { folders })
+        event.sender.send('FOLDERS_ADDED_TO_LIBRARY', { folders });
 
-        return scanFolders(folders, event.sender)
+        return scanFolders(folders, event.sender);
       })
       .then(() => {
-        event.sender.send('TRACKS_ADDED_TO_LIBRARY', {})
+        event.sender.send('TRACKS_ADDED_TO_LIBRARY', {});
       })
-      .catch(e => console.error(e))
-  })
+      .catch((e) => console.error(e));
+  });
 
   ipcMain.on('RESCAN_LIBRARY', (event, { forced }: { forced: boolean }) => {
-    rescanLibrary(event.sender, forced)
-  })
+    rescanLibrary(event.sender, forced);
+  });
 
   session.defaultSession.on('will-download', (event, item) => {
-    event.preventDefault()
-    const url = item.getURL()
+    event.preventDefault();
+    const url = item.getURL();
     fetch(url)
-      .then(response => {
+      .then((response) => {
         if (!response.ok) {
-          throw new Error(`Failed to download ${url}: ${response.status}`)
+          throw new Error(`Failed to download ${url}: ${response.status}`);
         }
-        return response.text()
+        return response.text();
       })
-      .then(body => {
-        const playlist = playlistParser.PLS.parse(body)
-        getMain().webContents.send('CLICKED_URL', { playlist, url })
+      .then((body) => {
+        const playlist = playlistParser.PLS.parse(body);
+        getMain().webContents.send('CLICKED_URL', { playlist, url });
       })
-      .catch(error => console.error(error))
-  })
+      .catch((error) => console.error(error));
+  });
 
   ipcMain.on('NOTIFICATION_CLICKED', () => {
-    getMain().setAlwaysOnTop(true)
-    getMain().show()
-    getMain().focus()
-    getMain().setAlwaysOnTop(false)
-  })
+    getMain().setAlwaysOnTop(true);
+    getMain().show();
+    getMain().focus();
+    getMain().setAlwaysOnTop(false);
+  });
 
   ipcMain.on('SAVE_SETTINGS', (event, settings) => {
     Promise.resolve()
-      .then(() => executeQuery(database, {
-        query: `INSERT OR REPLACE INTO settings (id, settings) VALUES (?, ?)`,
-        variables: [1, JSON.stringify(settings)]
-      }))
+      .then(() =>
+        executeQuery(database, {
+          query: `INSERT OR REPLACE INTO settings (id, settings) VALUES (?, ?)`,
+          variables: [1, JSON.stringify(settings)],
+        })
+      )
       .then(() => {
-        event.sender.send('SETTINGS_SAVED', { settings })
+        event.sender.send('SETTINGS_SAVED', { settings });
       })
-      .catch(e => console.error(e))
-  })
+      .catch((e) => console.error(e));
+  });
 }
 
-export default setupListeners
+export default setupListeners;

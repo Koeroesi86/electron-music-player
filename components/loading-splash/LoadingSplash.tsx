@@ -1,10 +1,10 @@
-import type { CSSProperties } from 'react'
-import type { PageLocals } from '../index-page/Index'
-import loading from './assets/loading.svg'
+import type { CSSProperties } from 'react';
+import type { PageLocals } from '../index-page/Index';
+import loading from './assets/loading.svg';
 
 const style: Record<'body' | 'container' | 'wrapper' | 'text', CSSProperties> = {
   body: {
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
   },
   container: {
     WebkitAppRegion: 'drag',
@@ -21,25 +21,25 @@ const style: Record<'body' | 'container' | 'wrapper' | 'text', CSSProperties> = 
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     fontFamily: 'sans-serif',
     color: '#ffffff',
-    borderRadius: '6px'
+    borderRadius: '6px',
   },
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   text: {
     marginTop: '20px',
     textAlign: 'center',
-    fontWeight: '100'
-  }
-}
+    fontWeight: '100',
+  },
+};
 
-function LoadingSplash (props: { locals: Pick<PageLocals, 'title'> }) {
+function LoadingSplash(props: { locals: Pick<PageLocals, 'title'> }) {
   return (
-    <html lang='en'>
+    <html lang="en">
       <head>
-        <meta charSet='utf-8' />
+        <meta charSet="utf-8" />
         <title>{props.locals.title}</title>
       </head>
       <body style={style.body}>
@@ -51,7 +51,7 @@ function LoadingSplash (props: { locals: Pick<PageLocals, 'title'> }) {
         </div>
       </body>
     </html>
-  )
+  );
 }
 
-export default LoadingSplash
+export default LoadingSplash;

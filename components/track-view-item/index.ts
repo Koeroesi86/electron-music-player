@@ -1,3 +1,3 @@
-import TrackViewItem from './TrackViewItem'
+import TrackViewItem from './TrackViewItem';
 
-export default TrackViewItem
+export default TrackViewItem;

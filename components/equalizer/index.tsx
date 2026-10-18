@@ -1,9 +1,9 @@
-import { Audio } from '../../client/audio/context'
-import Equalizer from './Equalizer'
+import { Audio } from '../../client/audio/context';
+import Equalizer from './Equalizer';
 
 const ContextualEqualizer = () => (
   <Audio.Consumer>
-    {({ connectToSource, createBiquadFilter, createGain, connectDestination, onAudioMounted }) =>
+    {({ connectToSource, createBiquadFilter, createGain, connectDestination, onAudioMounted }) => (
       <Equalizer
         connectToSource={connectToSource}
         createBiquadFilter={createBiquadFilter}
@@ -11,8 +11,8 @@ const ContextualEqualizer = () => (
         connectDestination={connectDestination}
         onAudioMounted={onAudioMounted}
       />
-    }
+    )}
   </Audio.Consumer>
-)
+);
 
-export default ContextualEqualizer
+export default ContextualEqualizer;

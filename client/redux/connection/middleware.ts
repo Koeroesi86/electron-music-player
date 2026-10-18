@@ -1,85 +1,71 @@
-import type { Dispatch, Middleware, MiddlewareAPI } from 'redux'
-import _ from 'lodash'
-import type { Folder, Track } from '../../../types/library'
-import { electronAPI } from '../../electron-api'
-import type { RootState } from '../reducers'
-import { isAppAction } from '../types'
-import type { AppAction, PersistedSettings, PlaylistItem, UiState } from '../types'
+import type { Dispatch, Middleware, MiddlewareAPI } from 'redux';
+import _ from 'lodash';
+import type { Folder, Track } from '../../../types/library';
+import { electronAPI } from '../../electron-api';
+import type { RootState } from '../reducers';
+import { isAppAction } from '../types';
+import type { AppAction, PersistedSettings, PlaylistItem, UiState } from '../types';
 
-type EmptyPayload = Record<string, never>
+type EmptyPayload = Record<string, never>;
 
-function addListeners (store: MiddlewareAPI<Dispatch<AppAction>, RootState>) {
-  electronAPI.on<{ folders: Folder[] }>('STORE_FOLDERS', payload => {
-    store.dispatch({ type: 'STORE_FOLDERS', payload })
-  })
-  electronAPI.on<EmptyPayload>('RESCAN_COMPLETE', payload => {
-    store.dispatch({ type: 'RESCAN_COMPLETE', payload })
-  })
-  electronAPI.on<{ folders: Folder[] }>('FOLDERS_ADDED_TO_LIBRARY', payload => {
-    store.dispatch({ type: 'FOLDERS_ADDED_TO_LIBRARY', payload })
-  })
-  electronAPI.on<EmptyPayload>('TRACKS_ADDED_TO_LIBRARY', payload => {
-    store.dispatch({ type: 'TRACKS_ADDED_TO_LIBRARY', payload })
-  })
-  electronAPI.on<unknown>('LIBRARY_SIZE', payload => {
-    store.dispatch({ type: 'LIBRARY_SIZE', payload })
-  })
-  electronAPI.on<{ maximized: boolean }>('MAXIMIZED_APP', payload => {
-    store.dispatch({ type: 'MAXIMIZED_APP', payload })
-  })
-  electronAPI.on<{ playlist: PlaylistItem[], url: string }>('CLICKED_URL', payload => {
-    store.dispatch({ type: 'CLICKED_URL', payload })
-  })
-  electronAPI.on<{ isPlaying: boolean }>('SET_PLAYING', payload => {
-    store.dispatch({ type: 'SET_PLAYING', payload })
-  })
-  electronAPI.on<{ settings: Partial<PersistedSettings> }>('RESTORE_SETTINGS', payload => {
-    store.dispatch({ type: 'RESTORE_SETTINGS', payload })
-  })
-  electronAPI.on<{ fileName: string, progress: number, totalCount: number }>('SCANNING_FILE', payload => {
-    store.dispatch({ type: 'SCANNING_FILE', payload })
-  })
-  electronAPI.on<{ folder: string }>('SCANNING_FOLDER', payload => {
-    store.dispatch({ type: 'SCANNING_FOLDER', payload })
-  })
+function addListeners(store: MiddlewareAPI<Dispatch<AppAction>, RootState>) {
+  electronAPI.on<{ folders: Folder[] }>('STORE_FOLDERS', (payload) => {
+    store.dispatch({ type: 'STORE_FOLDERS', payload });
+  });
+  electronAPI.on<EmptyPayload>('RESCAN_COMPLETE', (payload) => {
+    store.dispatch({ type: 'RESCAN_COMPLETE', payload });
+  });
+  electronAPI.on<{ folders: Folder[] }>('FOLDERS_ADDED_TO_LIBRARY', (payload) => {
+    store.dispatch({ type: 'FOLDERS_ADDED_TO_LIBRARY', payload });
+  });
+  electronAPI.on<EmptyPayload>('TRACKS_ADDED_TO_LIBRARY', (payload) => {
+    store.dispatch({ type: 'TRACKS_ADDED_TO_LIBRARY', payload });
+  });
+  electronAPI.on<unknown>('LIBRARY_SIZE', (payload) => {
+    store.dispatch({ type: 'LIBRARY_SIZE', payload });
+  });
+  electronAPI.on<{ maximized: boolean }>('MAXIMIZED_APP', (payload) => {
+    store.dispatch({ type: 'MAXIMIZED_APP', payload });
+  });
+  electronAPI.on<{ playlist: PlaylistItem[]; url: string }>('CLICKED_URL', (payload) => {
+    store.dispatch({ type: 'CLICKED_URL', payload });
+  });
+  electronAPI.on<{ isPlaying: boolean }>('SET_PLAYING', (payload) => {
+    store.dispatch({ type: 'SET_PLAYING', payload });
+  });
+  electronAPI.on<{ settings: Partial<PersistedSettings> }>('RESTORE_SETTINGS', (payload) => {
+    store.dispatch({ type: 'RESTORE_SETTINGS', payload });
+  });
+  electronAPI.on<{ fileName: string; progress: number; totalCount: number }>('SCANNING_FILE', (payload) => {
+    store.dispatch({ type: 'SCANNING_FILE', payload });
+  });
+  electronAPI.on<{ folder: string }>('SCANNING_FOLDER', (payload) => {
+    store.dispatch({ type: 'SCANNING_FOLDER', payload });
+  });
 }
 
-function rescanLibrary (forced = false) {
-  electronAPI.send('RESCAN_LIBRARY', { forced })
+function rescanLibrary(forced = false) {
+  electronAPI.send('RESCAN_LIBRARY', { forced });
 }
 
 const appLoaded = _.debounce(() => {
-  electronAPI.send('APP_LOADED', {})
-}, 500)
+  electronAPI.send('APP_LOADED', {});
+}, 500);
 
 const getLibrary = (store: MiddlewareAPI<Dispatch<AppAction>, RootState>): Promise<Track[]> => {
-  const { port } = store.getState().uiState
+  const { port } = store.getState().uiState;
   return Promise.resolve()
     .then(() => fetch(`http://localhost:${port}/library`))
-    .then(response => {
+    .then((response) => {
       if (!response.ok) {
-        throw new Error(`Failed to fetch library: ${response.status}`)
+        throw new Error(`Failed to fetch library: ${response.status}`);
       }
-      return response.json()
-    })
-}
+      return response.json();
+    });
+};
 
 const saveSettings = (uiState: UiState) => {
-  const {
-    view,
-    onlineView,
-    tab,
-    nowPlaying,
-    played,
-    currentSong,
-    currentTime,
-    volume,
-    selectedAlbum,
-    maximized,
-    shuffle,
-    repeat,
-    equalizer
-  } = uiState
+  const { view, onlineView, tab, nowPlaying, played, currentSong, currentTime, volume, selectedAlbum, maximized, shuffle, repeat, equalizer } = uiState;
 
   electronAPI.send('SAVE_SETTINGS', {
     view,
@@ -94,54 +80,57 @@ const saveSettings = (uiState: UiState) => {
     maximized,
     shuffle,
     repeat,
-    equalizer
-  })
-}
+    equalizer,
+  });
+};
 
-const middleware: Middleware<object, RootState> = store => {
+const middleware: Middleware<object, RootState> = (store) => {
   if (window) {
-    addListeners(store)
-    electronAPI.send('APP_READY', 'Ready to receive')
+    addListeners(store);
+    electronAPI.send('APP_READY', 'Ready to receive');
 
-    setInterval(() => {
-      if (store.getState().uiState.totalCount === 0) {
-        rescanLibrary(false)
-      }
-    }, 1000 * 60 * 60)
+    setInterval(
+      () => {
+        if (store.getState().uiState.totalCount === 0) {
+          rescanLibrary(false);
+        }
+      },
+      1000 * 60 * 60
+    );
 
     // rescanLibrary(false)
 
-    getLibrary(store).then(library => {
-      appLoaded()
-      store.dispatch({ type: 'STORE_LIBRARY', payload: { library, finished: true } })
-    })
+    getLibrary(store).then((library) => {
+      appLoaded();
+      store.dispatch({ type: 'STORE_LIBRARY', payload: { library, finished: true } });
+    });
   }
 
-  return next => action => {
-    if (!isAppAction(action)) return next(action)
+  return (next) => (action) => {
+    if (!isAppAction(action)) return next(action);
 
     // if (!['SET_CURRENT_TIME', 'SCANNING_FOLDER', 'SCANNING_FILE'].includes(action.type)) {
     //   console.log(action.type, action.payload)
     // }
 
     if (action.type === 'FILES_ADDED') {
-      const files = Array.from(action.payload.fileList).map(file => ({
+      const files = Array.from(action.payload.fileList).map((file) => ({
         name: file.name,
         path: electronAPI.getPathForFile(file),
-        lastModified: file.lastModified
-      }))
+        lastModified: file.lastModified,
+      }));
 
-      electronAPI.send('ADD_FOLDERS_TO_LIBRARY', files)
+      electronAPI.send('ADD_FOLDERS_TO_LIBRARY', files);
     }
 
     if (action.type === 'RESCAN_LIBRARY') {
-      rescanLibrary(true)
+      rescanLibrary(true);
     }
 
     if (action.type === 'RESCAN_COMPLETE') {
-      getLibrary(store).then(library => {
-        store.dispatch({ type: 'STORE_LIBRARY', payload: { library, finished: true } })
-      })
+      getLibrary(store).then((library) => {
+        store.dispatch({ type: 'STORE_LIBRARY', payload: { library, finished: true } });
+      });
     }
 
     // if (action.type === 'STORE_LIBRARY') {
@@ -149,20 +138,20 @@ const middleware: Middleware<object, RootState> = store => {
     // }
 
     if (action.type === 'CLOSE_APP') {
-      store.dispatch({ type: 'SAVE_SETTINGS', payload: {} })
-      electronAPI.send('CLOSE_APP', {})
+      store.dispatch({ type: 'SAVE_SETTINGS', payload: {} });
+      electronAPI.send('CLOSE_APP', {});
     }
 
     if (action.type === 'MINIMIZE_APP') {
-      electronAPI.send('MINIMIZE_APP', {})
+      electronAPI.send('MINIMIZE_APP', {});
     }
 
     if (action.type === 'MAXIMIZE_APP') {
-      electronAPI.send('MAXIMIZE_APP', {})
+      electronAPI.send('MAXIMIZE_APP', {});
     }
 
     if (action.type === 'CLICKED_URL') {
-      const tracks: Track[] = action.payload.playlist.map(item => ({
+      const tracks: Track[] = action.payload.playlist.map((item) => ({
         path: item.file,
         title: item.title ?? '',
         artist: '',
@@ -172,39 +161,39 @@ const middleware: Middleware<object, RootState> = store => {
         disk: '',
         genre: '',
         picture: null,
-        duration: 0
-      }))
-      store.dispatch({ type: 'PLAY_TRACKS', payload: { tracks } })
+        duration: 0,
+      }));
+      store.dispatch({ type: 'PLAY_TRACKS', payload: { tracks } });
     }
 
     if (action.type === 'PLAY_TRACK') {
-      const { track } = action.payload
+      const { track } = action.payload;
       if (track) {
         const notification: NotificationOptions & { image?: string } = {
           body: `${track.artist}\n${track.album}`,
-          silent: false
-        }
+          silent: false,
+        };
         if (track.picture) {
-          const { port } = store.getState().uiState
-          const cover = `${(track.picture.split(/[\\/]/).pop() ?? '').replace(/\.[^.]*$/, '')}-optimized.png`
-          const url = `http://localhost:${port}/albumart/${cover}`
-          notification.icon = url
-          notification.image = url
+          const { port } = store.getState().uiState;
+          const cover = `${(track.picture.split(/[\\/]/).pop() ?? '').replace(/\.[^.]*$/, '')}-optimized.png`;
+          const url = `http://localhost:${port}/albumart/${cover}`;
+          notification.icon = url;
+          notification.image = url;
         }
-        const myNotification = new window.Notification(track.title, notification)
+        const myNotification = new window.Notification(track.title, notification);
         myNotification.onclick = () => {
-          store.dispatch({ type: 'CLICK_NOTIFICATION', payload: {} })
-          electronAPI.send('NOTIFICATION_CLICKED', { track: action.payload.track })
-        }
+          store.dispatch({ type: 'CLICK_NOTIFICATION', payload: {} });
+          electronAPI.send('NOTIFICATION_CLICKED', { track: action.payload.track });
+        };
       }
     }
 
     if (action.type === 'SAVE_SETTINGS') {
-      saveSettings(store.getState().uiState)
+      saveSettings(store.getState().uiState);
     }
 
-    return next(action)
-  }
-}
+    return next(action);
+  };
+};
 
-export default middleware
+export default middleware;

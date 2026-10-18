@@ -1,7 +1,7 @@
-import { PureComponent } from 'react'
-import type { CSSProperties } from 'react'
-import classNames from 'classnames'
-import { basename, extname } from 'path'
+import { PureComponent } from 'react';
+import type { CSSProperties } from 'react';
+import classNames from 'classnames';
+import { basename, extname } from 'path';
 import {
   FiBarChart2 as EQIcon,
   FiVolumeX as VolumeOffIcon,
@@ -9,98 +9,92 @@ import {
   FiSkipForward as ForwardIcon,
   FiSkipBack as BackIcon,
   FiShuffle as ShuffleIcon,
-  FiRepeat as RepeatIcon
-} from 'react-icons/fi'
-import {
-  MdPlayCircleOutline as PlayIcon,
-  MdPauseCircleOutline as PauseIcon
-} from 'react-icons/md'
-import Slider from '../slider/Slider'
-import type { Track } from '../../types/library'
-import style from './PlayerControls.scss'
-import ScanProgress from '../scan-progress'
-import Time from '../time'
+  FiRepeat as RepeatIcon,
+} from 'react-icons/fi';
+import { MdPlayCircleOutline as PlayIcon, MdPauseCircleOutline as PauseIcon } from 'react-icons/md';
+import Slider from '../slider/Slider';
+import type { Track } from '../../types/library';
+import style from './PlayerControls.scss';
+import ScanProgress from '../scan-progress';
+import Time from '../time';
 
 interface PlayerControlsProps {
-  currentSong: Track | null
-  currentTime: number
-  port: string
-  volume: number
-  shuffle: boolean
-  repeat: boolean
-  isPlaying: boolean
-  addPlayStatusListener: (listener: (isPlaying: boolean) => void) => void
-  addTimeChangeListener: (listener: (currentTime: number) => void) => void
-  seek: (to: number) => void
-  play: () => void
-  pause: () => void
-  setCurrentTime: (currentTime: number) => void
-  setPlaying: (isPlaying: boolean) => void
-  setVolume: (volume: number | string) => void
-  openEqualizer: () => void
-  toggleRepeat: () => void
-  toggleShuffle: () => void
-  nextSong: () => void
-  previousSong: () => void
+  currentSong: Track | null;
+  currentTime: number;
+  port: string;
+  volume: number;
+  shuffle: boolean;
+  repeat: boolean;
+  isPlaying: boolean;
+  addPlayStatusListener: (listener: (isPlaying: boolean) => void) => void;
+  addTimeChangeListener: (listener: (currentTime: number) => void) => void;
+  seek: (to: number) => void;
+  play: () => void;
+  pause: () => void;
+  setCurrentTime: (currentTime: number) => void;
+  setPlaying: (isPlaying: boolean) => void;
+  setVolume: (volume: number | string) => void;
+  openEqualizer: () => void;
+  toggleRepeat: () => void;
+  toggleShuffle: () => void;
+  nextSong: () => void;
+  previousSong: () => void;
 }
 
 class PlayerControls extends PureComponent<PlayerControlsProps> {
-  constructor (props: PlayerControlsProps) {
-    super(props)
+  constructor(props: PlayerControlsProps) {
+    super(props);
 
-    this.props.addPlayStatusListener(isPlaying => {
+    this.props.addPlayStatusListener((isPlaying) => {
       if (this.props.isPlaying !== isPlaying) {
-        this.props.setPlaying(isPlaying)
+        this.props.setPlaying(isPlaying);
       }
-    })
+    });
 
-    const round = (number: number) => Math.floor(number * 100)
-    this.props.addTimeChangeListener(currentTime => {
+    const round = (number: number) => Math.floor(number * 100);
+    this.props.addTimeChangeListener((currentTime) => {
       if (round(currentTime) !== round(this.props.currentTime)) {
-        this.props.setCurrentTime(currentTime)
+        this.props.setCurrentTime(currentTime);
       }
-    })
+    });
   }
 
-  componentDidUpdate (prevProps: PlayerControlsProps) {
+  componentDidUpdate(prevProps: PlayerControlsProps) {
     if (this.props.currentTime !== prevProps.currentTime) {
-      this.props.seek(this.props.currentTime)
+      this.props.seek(this.props.currentTime);
     }
 
     if (this.props.isPlaying !== prevProps.isPlaying) {
-      if (this.props.isPlaying) this.props.play()
-      else this.props.pause()
+      if (this.props.isPlaying) this.props.play();
+      else this.props.pause();
     }
 
     if (this.props.currentSong !== prevProps.currentSong) {
-      if (this.props.isPlaying) this.props.play()
+      if (this.props.isPlaying) this.props.play();
     }
   }
 
   toggle = () => {
     if (this.props.isPlaying) {
-      this.props.pause()
+      this.props.pause();
     } else {
-      this.props.play()
+      this.props.play();
     }
-  }
+  };
 
-  get coverStyle () {
-    const {
-      currentSong,
-      port
-    } = this.props
-    const coverStyle: CSSProperties = {}
+  get coverStyle() {
+    const { currentSong, port } = this.props;
+    const coverStyle: CSSProperties = {};
 
     if (currentSong && currentSong.picture) {
-      const cover = `${basename(currentSong.picture, extname(currentSong.picture))}-optimized.png`
-      coverStyle.backgroundImage = `url("http://localhost:${port}/albumart/${cover}")`
+      const cover = `${basename(currentSong.picture, extname(currentSong.picture))}-optimized.png`;
+      coverStyle.backgroundImage = `url("http://localhost:${port}/albumart/${cover}")`;
     }
 
-    return coverStyle
+    return coverStyle;
   }
 
-  render () {
+  render() {
     const {
       currentSong,
       currentTime,
@@ -114,17 +108,14 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
       toggleRepeat,
       toggleShuffle,
       seek,
-      isPlaying
-    } = this.props
+      isPlaying,
+    } = this.props;
     return (
       <div className={style.controls}>
         <div className={style.controlsPanel}>
           <div className={style.meta}>
             <div className={style.contents}>
-              <div
-                className={style.picture}
-                style={this.coverStyle}
-              />
+              <div className={style.picture} style={this.coverStyle} />
               <div className={style.details}>
                 <div className={style.title}>{currentSong ? currentSong.title : 'None'}</div>
                 <div className={style.album}>{currentSong ? currentSong.album : 'None'}</div>
@@ -142,27 +133,22 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
                 max={currentSong?.duration ?? 0}
                 step={0.0001}
                 value={currentTime}
-                onInput={e => {
-                  const value = parseFloat(e.currentTarget.value)
-                  if (currentTime !== value) seek(value)
+                onInput={(e) => {
+                  const value = parseFloat(e.currentTarget.value);
+                  if (currentTime !== value) seek(value);
                 }}
-                onChange={() => {
-                }}
+                onChange={() => {}}
               />
             </div>
             <div className={style.mainControlContainer}>
               <div className={style.mainControlButtons}>
-                <button
-                  className={style.controlButton}
-                  onClick={previousSong}
-                  title={'Previous'}
-                >
+                <button className={style.controlButton} onClick={previousSong} title={'Previous'}>
                   <BackIcon size={'16px'} />
                 </button>
                 <button
                   onClick={this.toggle}
                   className={classNames(style.playToggleButton, {
-                    [style.playing]: isPlaying
+                    [style.playing]: isPlaying,
                   })}
                   disabled={!currentSong}
                   title={isPlaying ? 'Pause' : 'Play'}
@@ -170,16 +156,12 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
                   <PauseIcon className={style.pauseIcon} size={'40px'} />
                   <PlayIcon className={style.playIcon} size={'40px'} />
                 </button>
-                <button
-                  className={style.controlButton}
-                  onClick={nextSong}
-                  title={'Next'}
-                >
+                <button className={style.controlButton} onClick={nextSong} title={'Next'}>
                   <ForwardIcon size={'16px'} />
                 </button>
                 <button
                   className={classNames(style.controlButton, {
-                    [style.active]: shuffle
+                    [style.active]: shuffle,
                   })}
                   onClick={toggleShuffle}
                   title={'Shuffle'}
@@ -188,7 +170,7 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
                 </button>
                 <button
                   className={classNames(style.controlButton, {
-                    [style.active]: repeat
+                    [style.active]: repeat,
                   })}
                   onClick={toggleRepeat}
                   title={'Repeat'}
@@ -198,16 +180,13 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
                 <ScanProgress />
               </div>
               <div className={style.volume}>
-                <div
-                  onClick={openEqualizer}
-                  className={style.icon}
-                >
+                <div onClick={openEqualizer} className={style.icon}>
                   <EQIcon size={'16px'} />
                 </div>
                 <div
                   className={style.icon}
                   onClick={() => {
-                    setVolume(0)
+                    setVolume(0);
                   }}
                 >
                   <VolumeOffIcon size={'16px'} />
@@ -218,8 +197,8 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
                     max={1}
                     step={0.01}
                     value={volume}
-                    onInput={e => {
-                      setVolume(e.currentTarget.value)
+                    onInput={(e) => {
+                      setVolume(e.currentTarget.value);
                     }}
                     onChange={() => {}}
                   />
@@ -227,7 +206,7 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
                 <div
                   className={style.icon}
                   onClick={() => {
-                    setVolume(1)
+                    setVolume(1);
                   }}
                 >
                   <VolumeFullIcon size={'16px'} />
@@ -237,8 +216,8 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
           </div>
         </div>
       </div>
-    )
+    );
   }
 }
 
-export default PlayerControls
+export default PlayerControls;

@@ -1,3 +1,3 @@
-import OnlineSourcePanel from './OnlineSourcePanel'
+import OnlineSourcePanel from './OnlineSourcePanel';
 
-export default OnlineSourcePanel
+export default OnlineSourcePanel;
