@@ -30,7 +30,9 @@ jobs:
           cache: npm
       - uses: actions/cache@v4
         with:
-          path: .cache/${{ matrix.platform }}
+          path: |
+            .cache/${{ matrix.platform }}
+            ~/.electron-gyp
           key: build-${{ matrix.platform }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             build-${{ matrix.platform }}-${{ hashFiles('package-lock.json') }}-

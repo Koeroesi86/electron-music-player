@@ -9,5 +9,6 @@ module.exports = {
   electron: cacheDir('electron'),
   electronBuilder: cacheDir('electron-builder'),
   webpack: cacheDir('webpack'),
-  babel: cacheDir('babel')
+  babel: cacheDir('babel'),
+  tsc: cacheDir('tsc')
 }
