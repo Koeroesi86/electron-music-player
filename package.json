@@ -11,7 +11,11 @@
     "build": "node scripts/tsc.js tsconfig.main.json out && node scripts/build.js",
     "start": "electron out/index.js",
     "dist": "node scripts/dist.js",
-    "typecheck": "node scripts/tsc.js tsconfig.json"
+    "typecheck": "node scripts/tsc.js tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:backend": "vitest run --project backend",
+    "test:frontend": "vitest run --project frontend"
   },
   "author": {
     "name": "Krisztian Korosi",
@@ -107,6 +111,8 @@
     "@babel/preset-env": "^8.0.7",
     "@babel/preset-react": "^8.0.1",
     "@babel/preset-typescript": "^8.0.7",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/express": "^5.0.6",
     "@types/lodash": "^4.17.26",
     "@types/mime-types": "^3.0.1",
@@ -124,6 +130,7 @@
     "exports-loader": "^5.0.0",
     "file-loader": "^6.2.0",
     "imports-loader": "^5.0.0",
+    "jsdom": "^30.1.3",
     "mini-css-extract-plugin": "^2.10.2",
     "neostandard": "^0.14.1",
     "path-browserify": "^1.0.1",
@@ -134,6 +141,7 @@
     "style-loader": "^4.0.0",
     "typescript": "^6.0.3",
     "url-loader": "^4.1.1",
+    "vitest": "^5.0.5",
     "webpack": "^5.112.0",
     "webpack-cli": "^7.2.3",
     "webpack-dev-server": "^6.0.0"
