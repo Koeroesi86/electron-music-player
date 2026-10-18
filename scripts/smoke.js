@@ -1,6 +1,6 @@
 const { spawn, spawnSync } = require('child_process')
 const { createServer } = require('net')
-const { existsSync, mkdtempSync, rmSync } = require('fs')
+const { existsSync, mkdtempSync, readFileSync, rmSync } = require('fs')
 const { tmpdir } = require('os')
 const { join, resolve } = require('path')
 
@@ -26,6 +26,7 @@ if (!existsSync(executablePath)) {
 
 // a clean user data folder, so the run does not touch the library of the machine
 const home = mkdtempSync(join(tmpdir(), 'emusic-smoke-'))
+const logFile = join(home, 'chromium.log')
 const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env
 const env = { ...inherited, HOME: home, USERPROFILE: home, APPDATA: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production' }
 
@@ -42,15 +43,22 @@ const freePort = () =>
 const findWindowUrl = async (port, child) => {
   const deadline = Date.now() + timeout
   let open = 'none'
+  let endpointError = 'none'
   while (Date.now() < deadline) {
     if (child.exitCode !== null) throw new Error(`The app exited with ${child.exitCode} before a window opened`)
-    const targets = await fetch(`http://127.0.0.1:${port}/json`).then(response => response.json(), () => [])
+    const targets = await fetch(`http://127.0.0.1:${port}/json`).then(
+      response => response.json(),
+      error => {
+        endpointError = String(error.cause?.code ?? error)
+        return []
+      }
+    )
     const target = targets.find(candidate => candidate.url.includes('/app/index.html'))
     if (target) return target.url
     open = targets.map(candidate => candidate.url).join(', ') || open
     await new Promise(done => setTimeout(done, 500))
   }
-  throw new Error(`No main window, open: ${open}`)
+  throw new Error(`No main window, open: ${open}, debugging endpoint error: ${endpointError}`)
 }
 
 // taskkill also takes the helper processes down on windows
@@ -59,7 +67,7 @@ const stop = child =>
 
 const run = async () => {
   const port = await freePort()
-  const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`], { env, stdio: 'inherit' })
+  const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`, '--enable-logging', `--log-file=${logFile}`], { env, stdio: 'inherit' })
   try {
     const url = await findWindowUrl(port, child)
     const response = await fetch(`${new URL(url).origin}/library`)
@@ -75,6 +83,7 @@ const run = async () => {
 run()
   .catch(error => {
     console.error(error)
+    if (existsSync(logFile)) console.error(`Log of the app:\n${readFileSync(logFile, 'utf8')}`)
     process.exitCode = 1
   })
   .finally(() => rmSync(home, { recursive: true, force: true }))
