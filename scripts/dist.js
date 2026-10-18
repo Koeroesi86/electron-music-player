@@ -26,12 +26,21 @@ const platforms = [
   [isLinux, 'linux', 'Linux']
 ]
 
+// snap removes chrome-sandbox from the shared unpacked dir, so it must not run alongside the other linux targets
+const extraBuilds = {
+  win: [],
+  mac: [],
+  linux: [{ linux: ['snap'] }]
+}
+
+const build = options => electronBuilder.build(options)
+
 platforms
   .filter(([enabled]) => enabled)
   .forEach(([, option, label]) => {
     // an empty target list makes electron-builder use the targets from package.json
-    electronBuilder
-      .build({ [option]: [] })
+    extraBuilds[option]
+      .reduce((previous, options) => previous.then(() => build(options)), build({ [option]: [] }))
       .then(() => {
         console.log(`${label} package created.`)
         process.exit(0)
