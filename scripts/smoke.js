@@ -2,7 +2,7 @@ const { spawn, spawnSync } = require('child_process')
 const { createServer } = require('net')
 const { existsSync, mkdtempSync, readFileSync, rmSync } = require('fs')
 const { tmpdir } = require('os')
-const { join, resolve } = require('path')
+const { dirname, join, resolve } = require('path')
 
 // usage: node scripts/smoke.js [--packaged]
 // starts the built app (out/index.js), or the packaged one from dist/, and checks that the window opens
@@ -65,6 +65,21 @@ const findWindowUrl = async (port, child) => {
 const stop = child =>
   process.platform === 'win32' ? spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F']) : child.kill()
 
+// loads every dependency of the app from inside the package in the node mode of the executable: the one that does not load is the reason for an app that hangs on its error dialog
+const loadDependencies = () => {
+  const archive = join(dirname(executablePath), 'resources', 'app.asar')
+  const script = `const { dependencies } = require(${JSON.stringify(join(archive, 'package.json'))})
+for (const name of Object.keys(dependencies)) {
+  try { require(require.resolve(name, { paths: [${JSON.stringify(archive)}] })); console.log('ok   ' + name) } catch (error) { console.log('FAIL ' + name + ': ' + error.message) }
+}`
+  const { stdout, stderr, error } = spawnSync(executablePath, ['-e', script], {
+    env: { ...env, ELECTRON_RUN_AS_NODE: '1' },
+    encoding: 'utf8',
+    timeout: 30000
+  })
+  return [stdout, stderr, error?.message].filter(Boolean).join('\n')
+}
+
 const run = async () => {
   const port = await freePort()
   const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`, '--enable-logging', `--log-file=${logFile}`], { env, stdio: 'inherit' })
@@ -83,6 +98,7 @@ const run = async () => {
 run()
   .catch(error => {
     console.error(error)
+    if (packaged) console.error(`Packaged dependencies:\n${loadDependencies()}`)
     if (existsSync(logFile)) console.error(`Log of the app:\n${readFileSync(logFile, 'utf8')}`)
     process.exitCode = 1
   })
