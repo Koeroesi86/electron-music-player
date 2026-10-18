@@ -12,5 +12,6 @@
     "isolatedModules": false,
     "resolveJsonModule": false
   },
-  "include": ["electron", "index.ts", "types"]
+  "include": ["electron", "index.ts", "types"],
+  "exclude": ["electron/**/*.test.ts", "electron/test-database.ts"]
 }
