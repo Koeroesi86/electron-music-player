@@ -11,11 +11,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-15-intel, windows-2022]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-15-intel
+            platform: darwin
+          - os: windows-2022
+            platform: win32
     runs-on: ${{ matrix.os }}
     env:
-      ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
-      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
+      ELECTRON_CACHE: ${{ github.workspace }}/.cache/${{ matrix.platform }}/electron
+      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/${{ matrix.platform }}/electron-builder
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,11 +30,11 @@ jobs:
           cache: npm
       - uses: actions/cache@v4
         with:
-          path: |
-            .cache/electron
-            .cache/electron-builder
-          key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: electron-${{ runner.os }}-
+          path: .cache/${{ matrix.platform }}
+          key: build-${{ matrix.platform }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            build-${{ matrix.platform }}-${{ hashFiles('package-lock.json') }}-
+            build-${{ matrix.platform }}-
       - name: Install Linux packaging tools
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libarchive-tools
