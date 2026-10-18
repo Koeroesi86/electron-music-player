@@ -21,22 +21,6 @@ declare module 'find-free-port' {
   export default function findFreePort(start: number, host?: string): Promise<number[]>;
 }
 
-declare module 'in-view' {
-  interface InViewHandlers {
-    on: (event: 'enter' | 'exit', handler: (element: Element) => void) => InViewHandlers;
-    check: () => InViewHandlers;
-  }
-
-  interface InView {
-    (selector: string): InViewHandlers;
-    offset: (offset: number) => void;
-    threshold: (threshold: number) => void;
-  }
-
-  const inView: InView;
-  export default inView;
-}
-
 declare module '*.scss' {
   const classNames: Record<string, string>;
   export default classNames;
