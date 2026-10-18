@@ -4,6 +4,7 @@ import LocalCollection from '../local-collection'
 import NowPlaying from '../now-playing'
 import OnlineSources from '../online-sources'
 import Equalizer from '../equalizer'
+import FolderManagement from '../folder-management'
 import style from './PlayerTabs.scss'
 
 interface PlayerTabsProps {
@@ -33,6 +34,11 @@ function PlayerTabs ({ tab = 'local', addFiles = () => {} }: PlayerTabsProps) {
         [style.active]: tab === 'equalizer'
       })}>
         <Equalizer />
+      </div>
+      <div className={classNames(style.tab, {
+        [style.active]: tab === 'settings'
+      })}>
+        <FolderManagement addFiles={addFiles} />
       </div>
     </div>
   )

@@ -72,7 +72,7 @@ const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
           name: '[name]-[hash].[ext]',
           useRelativePath: true,
           outputPath: 'bundle/',
-          publicPath: 'assets/'
+          publicPath: 'bundle/'
         }
       },
       {

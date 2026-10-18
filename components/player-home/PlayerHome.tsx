@@ -12,6 +12,9 @@ import Navigation from '../navigation'
 import AudioSpectrum from '../audio-spectrum'
 import PlayerTabs from '../player-tabs'
 
+// Electron can only blur behind the window on Windows and macOS
+const isLinux = navigator.userAgent.includes('Linux')
+
 interface PlayerHomeProps {
   maximized: boolean
   enableTransparency: boolean
@@ -110,7 +113,8 @@ export default class PlayerHome extends PureComponent<PlayerHomeProps, PlayerHom
         className={classNames(style.playerHome, {
           [style.opaque]: enableTransparency,
           [style.maximized]: maximized,
-          [style.loaded]: loaded
+          [style.loaded]: loaded,
+          [style.noBlur]: isLinux
         })}
       >
         <div className={style.wrapper}>
