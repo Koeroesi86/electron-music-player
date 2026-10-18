@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  "entry": [
+    // run by node, not imported
+    "scripts/**",
+    "index.ts",
+    "electron/preload.ts",
+    "client/app.tsx",
+    // webpack entry that renders the loading splash html
+    "client/htmlGenerator.tsx",
+    // vitest alias for the stylesheets
+    "test-utils-style-stub.ts"
+  ],
+  "ignoreDependencies": [
+    // webpack loaders, referenced by name in config/webpack.config.base.js
+    "babel-loader",
+    "css-loader",
+    "file-loader",
+    "sass-loader",
+    "style-loader",
+    // kept for the commented url-loader rule and the imports/exports webpack shims
+    "url-loader",
+    "imports-loader",
+    "exports-loader",
+    // run as binaries by scripts/prebuild.js and scripts/dist.js
+    "electron-icon-maker",
+    "electron-packager",
+    // augmented by types/csstype.d.ts, installed with the React typings
+    "csstype"
+  ],
+  "rules": {
+    // errors: dead code stops the build
+    "unused-files": "error",
+    "unused-exports": "error",
+    "unused-types": "error",
+    "unused-dependencies": "error",
+    "unused-dev-dependencies": "error",
+    "stale-suppressions": "error",
+    "require-suppression-reason": "error",
+    // existing complexity is reported, not blocking, until it is refactored
+    "complexity-cyclomatic": "warn",
+    "complexity-cognitive": "warn",
+    "complexity-crap": "warn"
+  },
+  "duplicates": {
+    // the existing clones stay below the limit, so duplication can not grow
+    "threshold": 3.5
+  }
+}

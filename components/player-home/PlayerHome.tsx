@@ -29,6 +29,7 @@ interface PlayerHomeState {
 }
 
 export default class PlayerHome extends PureComponent<PlayerHomeProps, PlayerHomeState> {
+  // fallow-ignore-next-line unused-class-member -- React reads defaultProps, nothing references it
   static defaultProps = {
     enableTransparency: true,
   };
