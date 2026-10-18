@@ -1,0 +1,65 @@
+name: Pull request checks
+
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
+  # the findings that the change itself introduces; the whole-repository check runs in the test job
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          # the audit compares the files with the base branch
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx fallow audit --base origin/${{ github.base_ref }}
+
+  # packaging only starts once the cheap checks passed
+  dist:
+    needs: test
+    uses: ./.github/workflows/dist.yml
+
+  security:
+    uses: ./.github/workflows/security.yml
+
+  codeql:
+    uses: ./.github/workflows/codeql.yml
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+  # the one check that master requires: it fails unless every job passed,
+  # so the jobs and the operating systems can change without touching the branch protection
+  required-checks:
+    if: always()
+    needs: [test, audit, dist, security, codeql]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Tests, audit, packaging, security scans and CodeQL passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: ${RESULTS}"
+          for result in ${RESULTS}; do
+            [ "${result}" = "success" ] || exit 1
+          done
