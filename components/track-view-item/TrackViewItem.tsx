@@ -30,6 +30,7 @@ interface TrackViewItemProps {
 }
 
 class TrackViewItem extends PureComponent<TrackViewItemProps> {
+  // fallow-ignore-next-line unused-class-member -- React reads defaultProps, nothing references it
   static defaultProps = {
     isHeader: false,
     isSelected: false,

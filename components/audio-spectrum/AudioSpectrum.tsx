@@ -22,6 +22,7 @@ export interface AudioSpectrumProps {
 
 // @see https://github.com/hu-ke/react-audio-spectrum
 class AudioSpectrum extends PureComponent<AudioSpectrumProps> {
+  // fallow-ignore-next-line unused-class-member -- React reads defaultProps, nothing references it
   static defaultProps = {
     width: 200,
     height: 150,
