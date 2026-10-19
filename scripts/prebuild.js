@@ -1,9 +1,8 @@
-const { execSync } = require('child_process')
 const { resolve } = require('path')
 const fs = require('fs')
 const rimraf = require('rimraf')
+const { generateIcons } = require('./generate-icons')
 
-const isWin = process.platform === 'win32'
 const cwd = resolve(__dirname, '../')
 
 const bundlePath = resolve(cwd, './build')
@@ -12,8 +11,9 @@ if (fs.existsSync(bundlePath)) {
   console.log('Removed previous build.')
 }
 
-const command = resolve(__dirname, `../node_modules/.bin/electron-icon-maker${isWin ? '.cmd' : ''}`).replace(/\\/g, '/')
-const cmd = `${command} --input="${resolve(__dirname, '../assets/icon.png').replace(/\\/g, '/')}" --output="${resolve(__dirname, '../')}"`
-console.log(cmd)
-execSync(cmd, { cwd, stdio: 'inherit' })
-console.log('Generated app icons.')
+generateIcons(resolve(cwd, 'assets/icon.png'), cwd)
+  .then(() => console.log('Generated app icons.'))
+  .catch((error) => {
+    console.error(error)
+    process.exit(1)
+  })

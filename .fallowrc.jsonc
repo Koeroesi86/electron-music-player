@@ -22,8 +22,6 @@
     "url-loader",
     "imports-loader",
     "exports-loader",
-    // run as binaries by scripts/prebuild.js and scripts/dist.js
-    "electron-icon-maker",
     // used by the scripts of the checks (scripts/smoke.js, scripts/check-dist.js, scripts/security-scan.js), which run in CI only
     "@electron/asar",
     "@doyensec/electronegativity",
