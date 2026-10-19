@@ -4,10 +4,14 @@ import path from 'path';
 import fs from 'fs';
 import mimeType from 'mime-types';
 import sharp from 'sharp';
+import { rateLimit } from 'express-rate-limit';
 import executeQuery from './executeQuery';
 import type { Track } from '../types/library';
 
 const server = express();
+
+// audio streaming issues many range requests, so the limit only guards against runaway loops
+const limiter = rateLimit({ windowMs: 60 * 1000, limit: 6000 });
 
 const sendFile = (filePath: string, response: Response, range = '') => {
   const mime = mimeType.contentType(path.resolve(filePath));
@@ -39,6 +43,7 @@ const sendFile = (filePath: string, response: Response, range = '') => {
 };
 
 function setupServer() {
+  server.use(limiter);
   server.use('/app', express.static(path.resolve(__dirname, '../../build')));
   server.use('/albumart/:albumArt', (request, response) => {
     const albumArt = String(request.params.albumArt);
@@ -74,11 +79,18 @@ function setupServer() {
   server.get('/local', (request, response) => {
     const { path: filePath } = request.query;
 
-    if (typeof filePath === 'string' && filePath) {
-      sendFile(filePath, response, request.headers.range);
-    } else {
-      response.status(404);
+    if (typeof filePath !== 'string' || !filePath || !global._database) {
+      response.sendStatus(404);
+      return;
     }
+
+    // only files of the library are served, the path comes from the database and not from the request
+    executeQuery<Pick<Track, 'path'>>(global._database, {
+      query: `SELECT path FROM library WHERE path = ?`,
+      variables: [filePath],
+    })
+      .then(([track]) => (track ? sendFile(track.path, response, request.headers.range) : response.sendStatus(404)))
+      .catch(() => response.sendStatus(500));
   });
 
   server.get('/library', (request, response) => {

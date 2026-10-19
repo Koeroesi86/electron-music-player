@@ -14,7 +14,6 @@ function getLoadingWindow() {
     show: false,
     webPreferences: {
       backgroundThrottling: false,
-      webSecurity: false,
     },
   });
   // loadingWindow.setSize(400, 300)

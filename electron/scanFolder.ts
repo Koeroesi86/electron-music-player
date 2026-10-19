@@ -92,16 +92,18 @@ const parsePicture = (picture: IPicture, album: string, appDataPath: string): st
   }
   const filePath = path.resolve(folderPath, `./${fileName}.${extension}`);
 
-  if (!fs.existsSync(folderPath)) {
-    fs.mkdirSync(folderPath);
-  }
-
   if (extension === '' || !extension) {
     return null;
   }
 
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, picture.data);
+  fs.mkdirSync(folderPath, { recursive: true });
+  // the wx flag fails when the file exists, so there is no gap between the check and the write
+  try {
+    fs.writeFileSync(filePath, picture.data, { flag: 'wx' });
+  } catch (error) {
+    if (!(error instanceof Error && 'code' in error && error.code === 'EEXIST')) {
+      throw error;
+    }
   }
 
   return path.basename(filePath);
