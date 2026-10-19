@@ -30,6 +30,7 @@ interface EqualizerState {
 }
 
 class Equalizer extends PureComponent<EqualizerProps, EqualizerState> {
+  // fallow-ignore-next-line unused-class-member -- React reads defaultProps, nothing references it
   static defaultProps = {
     gains: [-40, -40, -40, -40, -40, -40, -40, -40, -40, -40, -40, -40],
     bands: [

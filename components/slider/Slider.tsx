@@ -14,6 +14,7 @@ interface SliderProps {
 }
 
 class Slider extends PureComponent<SliderProps> {
+  // fallow-ignore-next-line unused-class-member -- React reads defaultProps, nothing references it
   static defaultProps = {
     min: 0,
     max: 1,
