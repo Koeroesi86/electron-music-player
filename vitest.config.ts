@@ -7,6 +7,14 @@ export default defineConfig({
     alias: [{ find: /^.+\.scss$/, replacement: path.resolve(__dirname, 'test-utils-style-stub.ts') }],
   },
   test: {
+    coverage: {
+      provider: 'v8',
+      include: ['electron/**/*.ts', 'client/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
+      exclude: ['**/*.test.{ts,tsx}', 'electron/test-database.ts'],
+      // just below the current coverage, so it can not drop; raise them as tests are added
+      thresholds: { statements: 13, branches: 22, functions: 8, lines: 13 },
+      reporter: ['text-summary', 'json-summary', 'lcov'],
+    },
     projects: [
       {
         extends: true,
