@@ -28,7 +28,11 @@ if (!existsSync(executablePath)) {
 const home = mkdtempSync(join(tmpdir(), 'emusic-smoke-'))
 const logFile = join(home, 'chromium.log')
 const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env
-const env = { ...inherited, HOME: home, USERPROFILE: home, APPDATA: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production' }
+// windows keeps its profile folders (chromium needs them to start, and the app data folder does not follow the variables there), the other systems get the clean ones
+const env =
+  process.platform === 'win32'
+    ? { ...inherited, NODE_ENV: 'production' }
+    : { ...inherited, HOME: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production' }
 
 const freePort = () =>
   new Promise((done, fail) => {
@@ -62,8 +66,13 @@ const findWindowUrl = async (port, child) => {
 }
 
 // taskkill also takes the helper processes down on windows
-const stop = child =>
-  process.platform === 'win32' ? spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F']) : child.kill()
+const stop = child => {
+  if (child.exitCode !== null) return Promise.resolve()
+  const exited = new Promise(done => child.once('exit', done))
+  if (process.platform === 'win32') spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'])
+  else child.kill()
+  return exited
+}
 
 // loads every dependency of the app from inside the package in the node mode of the executable: the one that does not load is the reason for an app that hangs on its error dialog
 const loadDependencies = () => {
@@ -82,7 +91,7 @@ for (const name of Object.keys(dependencies)) {
 
 const run = async () => {
   const port = await freePort()
-  const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`, '--enable-logging', `--log-file=${logFile}`], { env, stdio: 'inherit' })
+  const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`, '--enable-logging', `--log-file=${logFile}`, `--user-data-dir=${join(home, 'user-data')}`], { env, stdio: 'inherit' })
   try {
     const url = await findWindowUrl(port, child)
     const response = await fetch(`${new URL(url).origin}/library`)
@@ -91,7 +100,7 @@ const run = async () => {
     if (!Array.isArray(library)) throw new Error('/library did not answer a list')
     console.log(`Smoke test passed: ${url}, ${library.length} tracks`)
   } finally {
-    stop(child)
+    await stop(child)
   }
 }
 
@@ -102,4 +111,4 @@ run()
     if (existsSync(logFile)) console.error(`Log of the app:\n${readFileSync(logFile, 'utf8')}`)
     process.exitCode = 1
   })
-  .finally(() => rmSync(home, { recursive: true, force: true }))
+  .finally(() => rmSync(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }))
