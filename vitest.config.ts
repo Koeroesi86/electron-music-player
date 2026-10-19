@@ -21,7 +21,7 @@ export default defineConfig({
         test: {
           name: 'backend',
           environment: 'node',
-          include: ['electron/**/*.test.ts'],
+          include: ['electron/**/*.test.ts', 'scripts/**/*.test.js'],
         },
       },
       {

@@ -1,6 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
-const StaticSiteGeneratorPlugin = require('static-site-generator-webpack-plugin')
+const StaticSitePlugin = require('./static-site-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const appConfig = require('./appConfig')
 const cache = require('./cache')
@@ -149,7 +149,7 @@ const config = [
     entry: path.resolve(__dirname, '../client/htmlGenerator.tsx'),
     target: 'node',
     plugins: [
-      new StaticSiteGeneratorPlugin({
+      new StaticSitePlugin({
         entry: 'htmlGenerator',
         paths: appConfig.paths,
         locals: appConfig.locals
