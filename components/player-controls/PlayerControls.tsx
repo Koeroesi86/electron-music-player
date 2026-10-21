@@ -82,6 +82,14 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
     }
   };
 
+  volumeBeforeMute = 0.5;
+
+  toggleMute = () => {
+    const { volume, setVolume } = this.props;
+    if (volume > 0) this.volumeBeforeMute = volume;
+    setVolume(volume > 0 ? 0 : this.volumeBeforeMute);
+  };
+
   get coverStyle() {
     const { currentSong, port } = this.props;
     const coverStyle: CSSProperties = {};
@@ -179,17 +187,12 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
                 <ScanProgress />
               </div>
               <div className={style.volume}>
-                <div onClick={openEqualizer} className={style.icon}>
+                <button onClick={openEqualizer} className={style.icon} title={'Equalizer'} aria-label={'Equalizer'}>
                   <EQIcon size={'16px'} />
-                </div>
-                <div
-                  className={style.icon}
-                  onClick={() => {
-                    setVolume(0);
-                  }}
-                >
+                </button>
+                <button onClick={this.toggleMute} className={style.icon} title={volume > 0 ? 'Mute' : 'Unmute'} aria-label={volume > 0 ? 'Mute' : 'Unmute'}>
                   <VolumeOffIcon size={'16px'} />
-                </div>
+                </button>
                 <div className={style.slider}>
                   <Slider
                     min={0}
@@ -202,14 +205,16 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
                     onChange={() => {}}
                   />
                 </div>
-                <div
+                <button
                   className={style.icon}
                   onClick={() => {
                     setVolume(1);
                   }}
+                  title={'Full volume'}
+                  aria-label={'Full volume'}
                 >
                   <VolumeFullIcon size={'16px'} />
-                </div>
+                </button>
               </div>
             </div>
           </div>

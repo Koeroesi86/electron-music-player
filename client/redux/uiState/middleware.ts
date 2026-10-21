@@ -25,67 +25,29 @@ const middleware: Middleware<object, RootState> = (store) => (next) => (action) 
   if (action.type === 'NEXT_SONG') {
     const { nowPlaying, currentSong, repeat, shuffle, played } = store.getState().uiState;
 
-    if (!repeat) {
+    // shuffle keeps the history with repeat as well, so Previous can step back through it
+    if (!repeat || shuffle) {
       store.dispatch({ type: 'ADD_PLAYED', payload: { track: currentSong } });
     }
 
     const currentIndex = nowPlaying.findIndex((track) => track.path === currentSong?.path);
+    const next = shuffle ? shufflePlaylist(nowPlaying, repeat ? [] : played) : (nowPlaying[currentIndex + 1] ?? (repeat ? nowPlaying[0] : undefined));
 
-    if (!shuffle) {
-      if (currentIndex < nowPlaying.length - 1) {
-        store.dispatch({
-          type: 'PLAY_TRACK',
-          payload: { track: Object.assign({}, nowPlaying[currentIndex + 1]) },
-        });
-      } else if (repeat) {
-        store.dispatch({
-          type: 'PLAY_TRACK',
-          payload: { track: Object.assign({}, nowPlaying[0]) },
-        });
-      }
-    } else {
-      if (repeat) {
-        store.dispatch({
-          type: 'PLAY_TRACK',
-          payload: { track: shufflePlaylist(nowPlaying, []) ?? null },
-        });
-      } else {
-        store.dispatch({
-          type: 'PLAY_TRACK',
-          payload: { track: shufflePlaylist(nowPlaying, played) ?? null },
-        });
-      }
-    }
+    // with nothing left to play the current song stays and playback stops
+    store.dispatch(next ? { type: 'PLAY_TRACK', payload: { track: Object.assign({}, next) } } : { type: 'SET_PLAYING', payload: { isPlaying: false } });
   }
 
   if (action.type === 'PREVIOUS_SONG') {
     const { nowPlaying, currentSong, repeat, shuffle, played } = store.getState().uiState;
     const currentIndex = nowPlaying.findIndex((track) => track.path === currentSong?.path);
+    const previous = shuffle ? played[played.length - 1] : (nowPlaying[currentIndex - 1] ?? (repeat ? nowPlaying[nowPlaying.length - 1] : undefined));
 
-    if (!shuffle) {
-      if (currentIndex > 0) {
-        store.dispatch({
-          type: 'PLAY_TRACK',
-          payload: { track: Object.assign({}, nowPlaying[currentIndex - 1]) },
-        });
-      } else if (repeat) {
-        store.dispatch({
-          type: 'PLAY_TRACK',
-          payload: { track: Object.assign({}, nowPlaying[nowPlaying.length - 1]) },
-        });
-      }
-    } else {
-      if (repeat) {
-        store.dispatch({
-          type: 'PLAY_TRACK',
-          payload: { track: shufflePlaylist(nowPlaying, []) ?? null },
-        });
-      } else {
-        store.dispatch({
-          type: 'PLAY_TRACK',
-          payload: { track: shufflePlaylist(nowPlaying, played) ?? null },
-        });
-      }
+    if (shuffle && previous) {
+      store.dispatch({ type: 'POP_PLAYED', payload: {} });
+    }
+
+    if (previous) {
+      store.dispatch({ type: 'PLAY_TRACK', payload: { track: Object.assign({}, previous) } });
     }
   }
 

@@ -100,11 +100,26 @@ describe('uiState middleware', () => {
       expect(store.getState().uiState.currentSong).toEqual(c);
     });
 
-    it('shuffle stops with no song when everything was played', () => {
-      const store = createTestStore({ currentSong: a, shuffle: true, played: [a, b, c] });
+    it('shuffle keeps the current song and stops when everything was played', () => {
+      const store = createTestStore({ currentSong: a, shuffle: true, isPlaying: true, played: [a, b, c] });
       dispatch(store, { type: 'NEXT_SONG', payload: {} });
 
-      expect(store.getState().uiState.currentSong).toBeNull();
+      expect(store.getState().uiState).toMatchObject({ currentSong: a, isPlaying: false });
+    });
+
+    it('stops at the end of the queue without repeat', () => {
+      const store = createTestStore({ currentSong: c, isPlaying: true });
+      dispatch(store, { type: 'NEXT_SONG', payload: {} });
+
+      expect(store.getState().uiState).toMatchObject({ currentSong: c, isPlaying: false });
+    });
+
+    it('shuffle with repeat records the history', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      const store = createTestStore({ currentSong: a, shuffle: true, repeat: true });
+      dispatch(store, { type: 'NEXT_SONG', payload: {} });
+
+      expect(store.getState().uiState.played).toEqual([a]);
     });
   });
 
@@ -121,6 +136,22 @@ describe('uiState middleware', () => {
       dispatch(store, { type: 'PREVIOUS_SONG' });
 
       expect(store.getState().uiState.currentSong).toEqual(a);
+    });
+
+    it('shuffle steps back through the tracks that were played', () => {
+      const store = createTestStore({ currentSong: c, shuffle: true, played: [a, b] });
+      dispatch(store, { type: 'PREVIOUS_SONG' });
+      expect(store.getState().uiState).toMatchObject({ currentSong: b, played: [a] });
+
+      dispatch(store, { type: 'PREVIOUS_SONG' });
+      expect(store.getState().uiState).toMatchObject({ currentSong: a, played: [] });
+    });
+
+    it('shuffle stays on the current track when nothing was played before', () => {
+      const store = createTestStore({ currentSong: b, shuffle: true });
+      dispatch(store, { type: 'PREVIOUS_SONG' });
+
+      expect(store.getState().uiState.currentSong).toEqual(b);
     });
 
     it('wraps to the last track with repeat', () => {

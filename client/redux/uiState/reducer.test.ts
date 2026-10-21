@@ -70,18 +70,12 @@ describe('uiState reducer', () => {
     expect(reducer(state, { type: 'SET_CURRENT_TIME', payload: { currentTime: 12.5 } })).toBe(state);
   });
 
-  it('selecting an album closes the equalizer, deselecting keeps it', () => {
+  it('selects and deselects an album', () => {
     const album = { id: 'a' } as Album;
-    const open = { ...initial, showEqualizer: true };
+    const state = run({ type: 'SELECT_ALBUM', payload: { album } });
 
-    expect(run({ type: 'SELECT_ALBUM', payload: { album } }, open)).toMatchObject({ selectedAlbum: album, showEqualizer: false });
-    expect(run({ type: 'SELECT_ALBUM', payload: { album: null } }, open)).toMatchObject({ selectedAlbum: null, showEqualizer: true });
-  });
-
-  it('opening the equalizer deselects the album, closing hides it', () => {
-    const state = run({ type: 'OPEN_EQUALIZER' }, { ...initial, selectedAlbum: { id: 'a' } as Album });
-    expect(state).toMatchObject({ showEqualizer: true, selectedAlbum: null });
-    expect(run({ type: 'CLOSE_EQUALIZER' }, state).showEqualizer).toBe(false);
+    expect(state.selectedAlbum).toEqual(album);
+    expect(run({ type: 'SELECT_ALBUM', payload: { album: null } }, state).selectedAlbum).toBeNull();
   });
 
   it('sets a single equalizer gain in dB without mutating the previous state', () => {
@@ -121,6 +115,7 @@ describe('uiState reducer', () => {
     expect(one.played).toEqual([track('a')]);
     expect(run({ type: 'ADD_PLAYED', payload: { track: null } }, one).played).toEqual([track('a')]);
     expect(run({ type: 'CLEAR_PLAYED' }, one).played).toEqual([]);
+    expect(run({ type: 'POP_PLAYED' }, run({ type: 'ADD_PLAYED', payload: { track: track('b') } }, one)).played).toEqual([track('a')]);
   });
 
   it('updates maximized and playing flags', () => {

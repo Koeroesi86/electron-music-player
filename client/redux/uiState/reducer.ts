@@ -14,7 +14,6 @@ const initialState: UiState = {
   currentTime: 0,
   volume: 0.5,
   selectedAlbum: null,
-  showEqualizer: false,
   scanningFolder: null,
   progress: 0,
   totalCount: 0,
@@ -69,14 +68,6 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
   if (action.type === 'SELECT_ALBUM') {
     return Object.assign({}, state, {
       selectedAlbum: action.payload.album || null,
-      showEqualizer: action.payload.album ? false : state.showEqualizer,
-    });
-  }
-
-  if (action.type === 'OPEN_EQUALIZER') {
-    return Object.assign({}, state, {
-      showEqualizer: true,
-      selectedAlbum: null,
     });
   }
 
@@ -86,12 +77,6 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
     equalizer[index] = clampGain(parseFloat(`${value}`));
     return Object.assign({}, state, {
       equalizer,
-    });
-  }
-
-  if (action.type === 'CLOSE_EQUALIZER') {
-    return Object.assign({}, state, {
-      showEqualizer: false,
     });
   }
 
@@ -149,6 +134,12 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
   if (action.type === 'CLEAR_PLAYED') {
     return Object.assign({}, state, {
       played: [],
+    });
+  }
+
+  if (action.type === 'POP_PLAYED') {
+    return Object.assign({}, state, {
+      played: state.played.slice(0, -1),
     });
   }
 
