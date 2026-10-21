@@ -109,7 +109,7 @@ function setupServer() {
       const fileName = basename.replace(/-optimized/, '').replace(path.extname(basename), '');
       fs.promises
         .readdir(path.resolve(global._appDataPath, './albumart'))
-        .then((files) => files.find((file) => file.indexOf(fileName) === 0 && !/-optimized|\.part$/.test(file)))
+        .then((files) => files.find((file) => file.indexOf(fileName) === 0 && !file.includes('-optimized') && !file.endsWith('.part')))
         .then((suspectedFile) => {
           if (!suspectedFile) {
             response.sendStatus(404);
