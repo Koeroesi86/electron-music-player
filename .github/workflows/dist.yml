@@ -43,12 +43,22 @@ jobs:
             build-${{ matrix.platform }}-
       - name: Install Linux packaging tools
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libarchive-tools
+        run: sudo apt-get update && sudo apt-get install -y libarchive-tools flatpak flatpak-builder
+      # electron-builder bundles the flatpak from the runtime, the sdk and the base app, which it does not download itself
+      - name: Install the Flatpak runtime
+        if: runner.os == 'Linux'
+        run: |
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08 org.electronjs.Electron2.BaseApp//25.08
       - run: npm ci
       - run: npm run build
       - run: npm run dist
       - name: Check the contents of the package
         run: npm run check:dist
+      # the bundle holds the same app.asar that check:dist lists and that the smoke test starts, so only its existence is checked
+      - name: Check the Flatpak bundle
+        if: runner.os == 'Linux'
+        run: ls dist/eMusic-*.flatpak
       # the packaged app has to start: a file missing from the package or a native module that does not load only shows here
       - name: Smoke test of the packaged app
         if: runner.os != 'Linux'

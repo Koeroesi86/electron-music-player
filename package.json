@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/Koeroesi86/electron-music-player",
   "build": {
-    "appId": "com.squirrel.emusic",
+    "appId": "io.github.koeroesi86.eMusic",
     "productName": "eMusic",
     "compression": "normal",
     "files": [
@@ -89,6 +89,23 @@
       "url": "http://localhost",
       "channel": "latest",
       "publishAutoUpdate": true
+    },
+    "flatpak": {
+      "runtime": "org.freedesktop.Platform",
+      "runtimeVersion": "25.08",
+      "sdk": "org.freedesktop.Sdk",
+      "base": "org.electronjs.Electron2.BaseApp",
+      "baseVersion": "25.08",
+      "useWaylandFlags": true,
+      "finishArgs": [
+        "--socket=wayland",
+        "--socket=x11",
+        "--share=ipc",
+        "--device=dri",
+        "--socket=pulseaudio",
+        "--share=network",
+        "--filesystem=xdg-music:ro"
+      ]
     }
   },
   "license": "ISC",
