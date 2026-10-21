@@ -41,7 +41,7 @@ class AudioComponent extends PureComponent<AudioComponentProps> {
     if (/^http/.test(src)) {
       this.audio.src = src;
     } else {
-      this.audio.src = `http://localhost:${this.props.port}/local?path=${encodeURIComponent(track.path)}`;
+      this.audio.src = `http://127.0.0.1:${this.props.port}/local?path=${encodeURIComponent(track.path)}`;
     }
   }
 

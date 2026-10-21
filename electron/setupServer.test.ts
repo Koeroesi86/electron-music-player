@@ -36,7 +36,7 @@ describe('setupServer /local', () => {
     global._database = database;
     global._appDataPath = folder;
     global._port = await getFreePort();
-    baseUrl = `http://localhost:${global._port}`;
+    baseUrl = `http://127.0.0.1:${global._port}`;
     setupServer();
   });
 
@@ -57,5 +57,17 @@ describe('setupServer /local', () => {
 
   it('does not serve a path that traverses out of the library', async () => {
     expect((await request(path.join(folder, '..', path.basename(folder), 'secret.txt'))).status).toBe(404);
+  });
+
+  describe('cross-origin access', () => {
+    const fromOrigin = (origin: string) => fetch(`${baseUrl}/library`, { headers: { origin } });
+
+    it.each(['http://localhost:8080', 'http://127.0.0.1:3000'])('allows the loopback origin %s', async (origin) => {
+      expect((await fromOrigin(origin)).headers.get('access-control-allow-origin')).toBe(origin);
+    });
+
+    it.each(['https://example.com', 'http://localhost.example.com', 'http://192.168.0.2:3000'])('does not allow the origin %s', async (origin) => {
+      expect((await fromOrigin(origin)).headers.get('access-control-allow-origin')).toBeNull();
+    });
   });
 });

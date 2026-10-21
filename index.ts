@@ -98,8 +98,8 @@ const getPort = () => {
   return fp(3000, '127.0.0.1').then((freePorts) => {
     global._port = freePorts[0];
     if (!windowLocation || !loadingLocation) {
-      windowLocation = `http://localhost:${global._port}/app/index.html?port=${global._port}`;
-      loadingLocation = `http://localhost:${global._port}/app/loading.html`;
+      windowLocation = `http://127.0.0.1:${global._port}/app/index.html?port=${global._port}`;
+      loadingLocation = `http://127.0.0.1:${global._port}/app/loading.html`;
     } else {
       windowLocation += `?port=${global._port}`;
     }

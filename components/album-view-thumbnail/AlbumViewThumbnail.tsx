@@ -32,7 +32,7 @@ class AlbumViewThumbnail extends PureComponent<AlbumViewThumbnailProps> {
 
     if (album.cover && this.cover) {
       const cover = `${basename(album.cover, extname(album.cover))}-optimized.png`;
-      this.cover.style.backgroundImage = `url("http://localhost:${port}/albumart/${cover}")`;
+      this.cover.style.backgroundImage = `url("http://127.0.0.1:${port}/albumart/${cover}")`;
     }
   }
 
