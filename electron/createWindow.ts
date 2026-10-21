@@ -1,6 +1,7 @@
 import { BrowserWindow } from 'electron';
 import { resolve } from 'path';
 import windowStateKeeper from 'electron-window-state';
+import lockNavigation from './lockNavigation';
 
 // const { TouchBarLabel, TouchBarSpacer } = TouchBar
 
@@ -39,6 +40,7 @@ const createWindow = () => {
     },
   });
   mainWindowState.manage(mainWindow);
+  lockNavigation(mainWindow.webContents);
   // mainWindow.setTouchBar(touchBar)
   mainWindow.setFullScreenable(false);
 

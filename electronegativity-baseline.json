@@ -4,7 +4,6 @@
   "CONTEXT_ISOLATION_JS_CHECK createWindow.ts",
   "CONTEXT_ISOLATION_JS_CHECK getLoadingWindow.ts",
   "CSP_GLOBAL_CHECK file:///",
-  "LIMIT_NAVIGATION_GLOBAL_CHECK file:///",
   "PERMISSION_REQUEST_HANDLER_GLOBAL_CHECK file:///",
   "PRELOAD_JS_CHECK createWindow.ts",
   "SANDBOX_JS_CHECK createWindow.ts",

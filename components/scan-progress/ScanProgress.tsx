@@ -53,7 +53,11 @@ class ScanProgress extends PureComponent<ScanProgressProps> {
             />
             &nbsp;in
           </span>
-          <span onClick={() => scanningFolder && electronAPI.openPath(scanningFolder)} title={`Click to open ${scanningFolder}`} className={style.link}>
+          <span
+            onClick={() => scanningFolder && electronAPI.send('OPEN_LIBRARY_PATH', scanningFolder)}
+            title={`Click to open ${scanningFolder}`}
+            className={style.link}
+          >
             {scanningFolder}
           </span>
           <div className={style.progressBar}>
