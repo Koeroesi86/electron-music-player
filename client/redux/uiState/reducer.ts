@@ -1,6 +1,7 @@
 import type { Reducer } from 'redux';
 import { isAppAction } from '../types';
 import type { UiState } from '../types';
+import { clampGain, defaultGains, restoreGains } from '../../audio/equalizer';
 
 const initialState: UiState = {
   view: 'albums',
@@ -21,7 +22,7 @@ const initialState: UiState = {
   isPlaying: false,
   shuffle: false,
   repeat: false,
-  equalizer: [-40, -40, -40, -40, -40, -40, -40, -40, -40, -40, -40, -40],
+  equalizer: defaultGains,
 };
 
 const reducer: Reducer<UiState> = (state = initialState, action) => {
@@ -82,7 +83,7 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
   if (action.type === 'SET_GAIN') {
     const { value, index } = action.payload;
     const equalizer = state.equalizer.slice();
-    equalizer[index] = parseFloat(`${value}`) / 100.0;
+    equalizer[index] = clampGain(parseFloat(`${value}`));
     return Object.assign({}, state, {
       equalizer,
     });
@@ -161,7 +162,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
   }
 
   if (action.type === 'RESTORE_SETTINGS') {
-    return Object.assign({}, state, action.payload.settings);
+    const { settings } = action.payload;
+    return Object.assign({}, state, settings, settings.equalizer && { equalizer: restoreGains(settings.equalizer) });
   }
 
   return state;

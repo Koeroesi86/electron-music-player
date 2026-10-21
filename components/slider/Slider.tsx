@@ -39,14 +39,15 @@ class Slider extends PureComponent<SliderProps> {
   }
 
   update() {
-    const { max, value, orientation } = this.props;
+    const { min, max, value, orientation } = this.props;
+    const fill = max > min ? ((value - min) / (max - min)) * 100 : 0;
     if (!this.slider || !this.lowerFill) return;
 
     this.slider.value = `${value}`;
     if (orientation !== 'vertical') {
-      this.lowerFill.style.width = `${max > 0 ? (value / max) * 100 : 0}%`;
+      this.lowerFill.style.width = `${fill}%`;
     } else {
-      this.lowerFill.style.height = `${max > 0 ? (value / max) * 100 : 0}%`;
+      this.lowerFill.style.height = `${fill}%`;
     }
   }
 
