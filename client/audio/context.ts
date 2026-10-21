@@ -7,6 +7,9 @@ type TimeChangeListener = (currentTime: number) => void;
 const audioContext = new window.AudioContext();
 let audioNode: HTMLAudioElement | null = null;
 let audioSource: MediaElementAudioSourceNode | undefined;
+// an element can only be wrapped once, a second createMediaElementSource on it throws
+let sourceElement: HTMLAudioElement | null = null;
+let analyser: AnalyserNode | undefined;
 let isPlaying = false;
 let mounted = false;
 const listeners: PlayStatusListener[] = [];
@@ -31,7 +34,8 @@ const notifyListeners = () => {
 const connectNode = (node: HTMLAudioElement | null) => {
   audioNode = node;
 
-  if (node) {
+  if (node && node !== sourceElement) {
+    sourceElement = node;
     node.addEventListener('pause', () => {
       isPlaying = false;
       notifyListeners();
@@ -87,14 +91,6 @@ const connectToSource = (item: AudioNode) => {
   }
 };
 
-const disconnectFromSource = (item: AudioNode) => {
-  if (connectedItems.includes(item)) {
-    if (audioSource) {
-      audioSource.disconnect(item);
-    }
-  }
-};
-
 const play = () => {
   if (audioNode) {
     const playPromise = audioNode.play();
@@ -132,18 +128,17 @@ const addTimeChangeListener = (listener: TimeChangeListener) => {
 };
 
 const createAnalyser = (): AnalyserNode | false => {
-  if (audioSource) {
-    const analyser = audioContext.createAnalyser();
+  if (!audioSource) return false;
+
+  // only listens: its output is not connected, as it would play the signal a second time, around the equalizer
+  if (!analyser) {
+    analyser = audioContext.createAnalyser();
     analyser.smoothingTimeConstant = 0.8;
     analyser.fftSize = 2048;
-
     audioSource.connect(analyser);
-    connectDestination(analyser);
-
-    return analyser;
   }
 
-  return false;
+  return analyser;
 };
 
 const createBiquadFilter = () => audioContext.createBiquadFilter();

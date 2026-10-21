@@ -80,6 +80,10 @@ class AudioSpectrum extends PureComponent<AudioSpectrumProps> {
     const { canvas, canvasContext } = this;
     if (!canvas || !canvasContext) return;
 
+    // a running loop would keep drawing next to the new one
+    clearTimeout(this.timer);
+    window.cancelAnimationFrame(this.animationId ?? 0);
+
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height - capHeight;
     const capYPositionArray: number[] = []; // store the vertical position of hte caps for the previous frame
