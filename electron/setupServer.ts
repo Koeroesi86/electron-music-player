@@ -40,6 +40,25 @@ const parseRange = (range: string, fileSize: number) => {
   return start <= end && start < fileSize ? { start, end } : undefined;
 };
 
+const optimizing = new Map<string, Promise<void>>();
+
+/** Resize the album art into the optimized file; requests for the same file share one run and never see a half written file */
+const optimizeAlbumArt = (source: string, target: string) => {
+  const running = optimizing.get(target);
+  if (running) return running;
+
+  const partial = `${target}.part`;
+  const job = sharp(source)
+    .resize(250, 250, { fit: 'inside' })
+    .png({ compressionLevel: 9, force: true })
+    .toFile(partial)
+    .then(() => fs.promises.rename(partial, target))
+    .then(() => undefined)
+    .finally(() => optimizing.delete(target));
+  optimizing.set(target, job);
+  return job;
+};
+
 const sendFile = (filePath: string, request: Request, response: Response) => {
   const range = request.headers.range ?? '';
   const mime = mimeType.contentType(path.resolve(filePath));
@@ -88,24 +107,22 @@ function setupServer() {
       sendFile(current, request, response);
     } else if (/-optimized/.test(basename)) {
       const fileName = basename.replace(/-optimized/, '').replace(path.extname(basename), '');
-      const suspectedFile = fs.readdirSync(path.resolve(global._appDataPath, './albumart')).find((file) => file.indexOf(fileName) === 0);
-
-      if (!suspectedFile) {
-        response.sendStatus(404);
-      } else {
-        const toOptimize = path.join(global._appDataPath, './albumart/', suspectedFile);
-        sharp(toOptimize)
-          .resize(250, 250, { fit: 'inside' })
-          .png({ compressionLevel: 9, force: true })
-          .toFile(current)
-          .then(() => sendFile(current, request, response))
-          .catch((err) =>
-            response.status(500).send(`
-              Can't generate optimized file from ${current}
-              ${err}
-            `)
-          );
-      }
+      fs.promises
+        .readdir(path.resolve(global._appDataPath, './albumart'))
+        .then((files) => files.find((file) => file.indexOf(fileName) === 0 && !file.includes('-optimized') && !file.endsWith('.part')))
+        .then((suspectedFile) => {
+          if (!suspectedFile) {
+            response.sendStatus(404);
+            return undefined;
+          }
+          return optimizeAlbumArt(path.join(global._appDataPath, './albumart/', suspectedFile), current).then(() => sendFile(current, request, response));
+        })
+        .catch((err) =>
+          response.status(500).send(`
+            Can't generate optimized file from ${current}
+            ${err}
+          `)
+        );
     } else {
       response.sendStatus(404);
     }

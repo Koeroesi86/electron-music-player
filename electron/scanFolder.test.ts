@@ -49,4 +49,50 @@ describe('scanFolder', () => {
 
     expect(scanningFiles()).toEqual([expect.objectContaining({ progress: 0, totalCount: 1 })]);
   });
+
+  it('does not wait between files', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    ['a.mp3', 'b.mp3', 'c.mp3'].forEach((name) => fs.writeFileSync(path.join(root, name), 'not audio'));
+
+    try {
+      await scanFolder(root, sender);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(scanningFiles()).toHaveLength(3);
+  });
+
+  it('finds the audio files of nested folders', async () => {
+    fs.mkdirSync(path.join(root, 'a', 'b'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'a', 'b', 'deep.ogg'), 'not audio');
+    fs.writeFileSync(path.join(root, 'top.wav'), 'not audio');
+
+    await scanFolder(root, sender);
+
+    expect(scanningFiles().map((file) => path.basename(file.fileName))).toEqual(['deep.ogg', 'top.wav']);
+  });
+
+  it('reads one folder at a time', async () => {
+    ['a', 'b', 'c'].forEach((name) => {
+      fs.mkdirSync(path.join(root, name));
+      fs.writeFileSync(path.join(root, name, `${name}.mp3`), 'not audio');
+    });
+    const readdir = fs.promises.readdir.bind(fs.promises);
+    let running = 0;
+    let most = 0;
+    vi.spyOn(fs.promises, 'readdir').mockImplementation(async (...args: Parameters<typeof readdir>) => {
+      running += 1;
+      most = Math.max(most, running);
+      try {
+        return await readdir(...args);
+      } finally {
+        running -= 1;
+      }
+    });
+
+    await scanFolder(root, sender);
+
+    expect(most).toBe(1);
+  });
 });

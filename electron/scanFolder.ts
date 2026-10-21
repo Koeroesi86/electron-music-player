@@ -40,16 +40,11 @@ const supportedFormats = [
   'wvp',
 ];
 
-const folderDelay = 200; // delay after a folder scan
-const fileDelay = 100; // delay after a file scan
 const fileReadTimeout = 2000;
-const breakLimit = 1000; // take a break after this amount of scanned files
-const breakMultiplier = 100; // multiply the default file delay on a break
-let existingTracks: Track[] | undefined;
+let existingTracks: Map<string, Track> | undefined;
 const scannedFolders: string[] = [];
-const scannedFiles: string[] = [];
+const scannedFiles = new Set<string>();
 const foundFiles: string[] = [];
-let counter = 0;
 let progress = 0;
 let totalCount = 0;
 let appDataPath: string;
@@ -124,7 +119,7 @@ const writeMeta = (fileName: string) => {
           return Promise.reject(cancelled);
         }
 
-        const existingTrack = existingTracks?.find((track) => track.path === meta.path);
+        const existingTrack = existingTracks?.get(meta.path);
         if (existingTrack && isEqual(existingTrack, meta)) {
           return Promise.resolve();
         }
@@ -145,14 +140,20 @@ const writeMeta = (fileName: string) => {
 
 const isSupported = (filePath: string) => supportedFormats.includes(path.extname(filePath).replace('.', ''));
 
-/** Collect the supported audio files of a folder tree, symbolic links are skipped */
-const findFilesSync = (directory: string): string[] =>
-  fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const entryPath = path.join(directory, entry.name);
-    if (entry.isSymbolicLink()) return [];
-    if (entry.isDirectory()) return findFilesSync(entryPath);
-    return entry.isFile() && isSupported(entryPath) ? [entryPath] : [];
-  });
+/** Collect the supported audio files of a folder tree, one folder at a time, symbolic links are skipped */
+const findFiles = (directory: string): Promise<string[]> =>
+  fs.promises.readdir(directory, { withFileTypes: true }).then((entries) =>
+    entries.reduce<Promise<string[]>>(
+      (found, entry) =>
+        found.then((files) => {
+          const entryPath = path.join(directory, entry.name);
+          if (entry.isSymbolicLink()) return files;
+          if (entry.isDirectory()) return findFiles(entryPath).then((nested) => files.concat(nested));
+          return entry.isFile() && isSupported(entryPath) ? files.concat(entryPath) : files;
+        }),
+      Promise.resolve([])
+    )
+  );
 
 const init = (currentPath: string) => {
   if (existingTracks) {
@@ -162,15 +163,20 @@ const init = (currentPath: string) => {
     appDataPath = global._appDataPath;
     database = global._database;
     prevFolder = currentPath;
-    foundFiles.push(...findFilesSync(currentPath).sort());
-    totalCount = foundFiles.length;
-    return executeQuery<Track>(database, {
-      query: `SELECT * FROM library ORDER BY path ASC`,
-      variables: [],
-    }).then((t) => {
-      existingTracks = t;
-      return Promise.resolve();
-    });
+    return findFiles(currentPath)
+      .then((found) => {
+        foundFiles.push(...found.sort());
+        totalCount = foundFiles.length;
+      })
+      .then(() =>
+        executeQuery<Track>(database, {
+          query: `SELECT * FROM library ORDER BY path ASC`,
+          variables: [],
+        })
+      )
+      .then((t) => {
+        existingTracks = new Map(t.map((track) => [track.path, track]));
+      });
   }
 };
 
@@ -179,31 +185,20 @@ const end = () => {
   totalCount = 0;
   existingTracks = undefined;
   scannedFolders.splice(0);
-  scannedFiles.splice(0);
+  scannedFiles.clear();
   foundFiles.splice(0);
   return Promise.resolve();
 };
 
+// yields to the event loop between files, so the server and the window stay responsive during a scan
 const nextFile = (next: () => void) => {
-  counter += 1;
   progress += 1;
-  let delay = fileDelay;
-  if (counter >= breakLimit) {
-    delay = fileDelay * breakMultiplier;
-    console.log(`Taking a ${delay / 1000} second break...`);
-  }
-  setTimeout(() => {
-    if (counter >= breakLimit) {
-      console.log('I am back!');
-      counter = 0;
-    }
-    next();
-  }, delay);
+  setImmediate(next);
 };
 
 const stepFile = (fileName: string, sender: WebContents) =>
   new Promise<void>((resolve) => {
-    if (scannedFiles.includes(fileName)) {
+    if (scannedFiles.has(fileName)) {
       console.log('double scanned', fileName);
       resolve();
       return;
@@ -215,7 +210,7 @@ const stepFile = (fileName: string, sender: WebContents) =>
       prevFolder = folder;
     }
 
-    scannedFiles.push(fileName);
+    scannedFiles.add(fileName);
     sender.send('SCANNING_FILE', { fileName, progress, totalCount });
     writeMeta(fileName)
       .catch((e) => console.error(fileName, e))
