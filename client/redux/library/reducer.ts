@@ -1,4 +1,4 @@
-import path from 'path';
+import { dirname } from 'path';
 import type { Reducer } from 'redux';
 import type { Album, Track } from '../../../types/library';
 import { isAppAction } from '../types';
@@ -19,46 +19,31 @@ const reducer: Reducer<LibraryState> = (state = initialState, action) => {
   if (!isAppAction(action)) return state;
 
   if (action.type === 'STORE_LIBRARY') {
-    const { library: tracks, finished } = action.payload;
-    const albumsObject: Record<string, Album> = {};
-    state.albums.forEach((album) => {
-      albumsObject[album.id] = album;
-    });
+    const { library, finished } = action.payload;
+    // the payload is the whole library, so albums and tracks that are gone from it are gone from the state too
+    const tracks = library.map((track) => ({ ...track, picture: track.picture?.replace(/^file:\/\//, '') ?? null }));
+    const albums = new Map<string, Album>();
     tracks.forEach((track) => {
-      const albumKey = `${path.dirname(track.path)} - ${track.album}`;
-      if (track.picture) {
-        track.picture = track.picture.replace(/^file:\/\//, '');
-      }
-      const album = albumsObject[albumKey];
-      if (!album) {
-        albumsObject[albumKey] = {
-          id: albumKey,
+      const path = dirname(track.path);
+      const id = `${path} - ${track.album}`;
+      const album = albums.get(id);
+      if (album) {
+        album.tracks.push(track);
+        album.duration = (album.duration ?? 0) + (track.duration ?? 0);
+      } else {
+        albums.set(id, {
+          id,
           title: track.album,
-          path: path.dirname(track.path),
+          path,
           artist: track.artist,
           cover: track.picture,
           duration: track.duration,
           year: track.year,
           tracks: [track],
-        };
-      } else {
-        const existingTrack = album.tracks.find((t) => track.path === t.path);
-        if (!existingTrack) {
-          album.tracks.push(track);
-          album.duration = (album.duration ?? 0) + (track.duration ?? 0);
-        } else {
-          album.duration = (album.duration ?? 0) - (existingTrack.duration ?? 0);
-          Object.assign(existingTrack, track);
-          album.duration += track.duration ?? 0;
-        }
+        });
       }
     });
-    const receivedAlbums = Object.getOwnPropertyNames(albumsObject).map((id) => Object.assign({}, albumsObject[id], { id }));
-    return Object.assign({}, state, {
-      tracks,
-      albums: receivedAlbums,
-      loaded: !!finished,
-    });
+    return { ...state, tracks, albums: [...albums.values()], loaded: !!finished };
   }
 
   return state;
