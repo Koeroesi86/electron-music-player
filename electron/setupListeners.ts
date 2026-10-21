@@ -1,4 +1,4 @@
-import { ipcMain, nativeImage, session } from 'electron';
+import { ipcMain, nativeImage, session, shell } from 'electron';
 import { resolve } from 'path';
 import playlistParser from 'playlist-parser';
 import type { Database } from 'sqlite3';
@@ -7,6 +7,7 @@ import type { Folder } from '../types/library';
 import executeQuery from './executeQuery';
 import addFoldersToLibrary from './addFoldersToLibrary';
 import rescanLibrary from './rescanLibrary';
+import openLibraryPath from './openLibraryPath';
 
 const isWin = process.platform === 'win32';
 const enableTransparency = true;
@@ -115,6 +116,10 @@ function setupListeners(database: Database, windows: AppWindows) {
 
   ipcMain.on('RESCAN_LIBRARY', (event, payload: unknown) => {
     rescanLibrary(event.sender, typeof payload === 'object' && payload !== null && 'forced' in payload && payload.forced === true);
+  });
+
+  ipcMain.on('OPEN_LIBRARY_PATH', (_event, target: unknown) => {
+    openLibraryPath(database, target, (folder) => shell.openPath(folder)).catch((e) => console.error(e));
   });
 
   session.defaultSession.on('will-download', (event, item) => {
