@@ -70,4 +70,50 @@ describe('setupServer /local', () => {
       expect((await fromOrigin(origin)).headers.get('access-control-allow-origin')).toBeNull();
     });
   });
+
+  describe('range requests', () => {
+    const ranged = (range: string) => fetch(`${baseUrl}/local?path=${encodeURIComponent(libraryFile())}`, { headers: { range } });
+
+    it('serves a byte range', async () => {
+      const response = await ranged('bytes=1-2');
+      expect(response.status).toBe(206);
+      expect(response.headers.get('content-range')).toBe('bytes 1-2/5');
+      expect(await response.text()).toBe('ud');
+    });
+
+    it('serves a suffix range', async () => {
+      const response = await ranged('bytes=-2');
+      expect(response.status).toBe(206);
+      expect(await response.text()).toBe('io');
+    });
+
+    it('clamps an end past the file', async () => {
+      const response = await ranged('bytes=3-100');
+      expect(response.headers.get('content-range')).toBe('bytes 3-4/5');
+    });
+
+    it.each(['bytes=10-20', 'bytes=-', 'bytes=3-1', 'items=0-1'])('rejects the unsatisfiable range %s', async (range) => {
+      const response = await ranged(range);
+      expect(response.status).toBe(416);
+      expect(response.headers.get('content-range')).toBe('bytes */5');
+    });
+
+    it('answers 404 when the file vanished after the scan', async () => {
+      const missing = path.join(folder, 'missing.flac');
+      await new Promise<void>((resolve, reject) => database.run('INSERT INTO library (path) VALUES (?)', [missing], (err) => (err ? reject(err) : resolve())));
+      expect((await request(missing)).status).toBe(404);
+      expect((await fetch(`${baseUrl}/local?path=${encodeURIComponent(missing)}`, { headers: { range: 'bytes=0-1' } })).status).toBe(404);
+    });
+  });
+
+  it('answers 404 for an optimized album art without a source image', async () => {
+    fs.mkdirSync(path.join(folder, 'albumart'), { recursive: true });
+    expect((await fetch(`${baseUrl}/albumart/nothing-optimized.png`)).status).toBe(404);
+  });
+
+  it('answers with the library', async () => {
+    const response = await fetch(`${baseUrl}/library`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(expect.arrayContaining([expect.objectContaining({ path: libraryFile() })]));
+  });
 });

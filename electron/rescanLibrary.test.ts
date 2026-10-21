@@ -1,0 +1,80 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import type { WebContents } from 'electron';
+import type { Database } from 'sqlite3';
+import type { Folder } from '../types/library';
+import executeQuery from './executeQuery';
+import rescanLibrary from './rescanLibrary';
+import scanFolders from './scanFolders';
+import { createTestDatabase } from './test-database';
+
+vi.mock('./scanFolders', () => ({ default: vi.fn() }));
+
+describe('rescanLibrary', () => {
+  let database: Database;
+  let root: string;
+  const sender = { send: vi.fn() } as unknown as WebContents;
+  const mtime = (folder: string) => Math.floor(fs.statSync(folder).mtimeMs);
+  const storedFolders = () => executeQuery<Folder>(database, { query: 'SELECT * FROM folders ORDER BY path', variables: [] });
+  const addFolder = (folder: string, lastModified: number) =>
+    executeQuery(database, { query: 'INSERT INTO folders (path, lastModified) VALUES (?, ?)', variables: [folder, lastModified] });
+  const rescan = (forced = false) => {
+    const complete = new Promise<void>((resolve) => vi.mocked(sender.send).mockImplementation((channel) => channel === 'RESCAN_COMPLETE' && resolve()));
+    rescanLibrary(sender, forced);
+    return complete;
+  };
+
+  beforeEach(async () => {
+    vi.mocked(scanFolders).mockReset().mockResolvedValue(undefined);
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-rescan-'));
+    database = await createTestDatabase();
+    global._database = database;
+  });
+
+  afterEach(() => {
+    global._database = undefined;
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  it('scans a folder that changed and stores its modification time afterwards', async () => {
+    await addFolder(root, 0);
+    await rescan();
+
+    expect(scanFolders).toHaveBeenCalledWith([expect.objectContaining({ path: root })], sender);
+    expect(await storedFolders()).toEqual([{ path: root, lastModified: mtime(root) }]);
+  });
+
+  it('skips a folder that did not change', async () => {
+    await addFolder(root, mtime(root));
+    await rescan();
+
+    expect(scanFolders).toHaveBeenCalledWith([], sender);
+  });
+
+  it('scans an unchanged folder when forced', async () => {
+    await addFolder(root, mtime(root));
+    await rescan(true);
+
+    expect(scanFolders).toHaveBeenCalledWith([expect.objectContaining({ path: root })], sender);
+  });
+
+  it('keeps the old modification time when the scan fails, so the folder is retried', async () => {
+    await addFolder(root, 0);
+    vi.mocked(scanFolders).mockRejectedValue(new Error('scan failed'));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    rescanLibrary(sender, false);
+    await vi.waitFor(() => expect(console.error).toHaveBeenCalled());
+
+    expect(await storedFolders()).toEqual([{ path: root, lastModified: 0 }]);
+  });
+
+  it('does not throw for a folder that was deleted', async () => {
+    const gone = path.join(root, 'gone');
+    await addFolder(gone, 0);
+    await rescan();
+
+    expect(scanFolders).toHaveBeenCalledWith([], sender);
+  });
+});

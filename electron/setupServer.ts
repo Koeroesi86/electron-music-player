@@ -23,6 +23,23 @@ const allowLoopbackOrigin = (request: Request, response: Response) => {
 // audio streaming issues many range requests, so the limit only guards against runaway loops
 const limiter = rateLimit({ windowMs: 60 * 1000, limit: 6000 });
 
+const pipeFile = (filePath: string, response: Response, options?: { start: number; end: number }) => {
+  const file = fs.createReadStream(filePath, options);
+  // the file can vanish after the library scan, and the response may already be streaming
+  file.on('error', () => (response.headersSent ? response.destroy() : response.sendStatus(404)));
+  response.on('close', () => file.destroy());
+  file.pipe(response);
+};
+
+/** Resolve a single `bytes=start-end` or `bytes=-suffix` range, undefined when it cannot be satisfied */
+const parseRange = (range: string, fileSize: number) => {
+  const parts = range.match(/^bytes=(\d*)-(\d*)$/);
+  if (!parts || (parts[1] === '' && parts[2] === '')) return undefined;
+  const start = parts[1] === '' ? Math.max(fileSize - parseInt(parts[2], 10), 0) : parseInt(parts[1], 10);
+  const end = parts[1] === '' || parts[2] === '' ? fileSize - 1 : Math.min(parseInt(parts[2], 10), fileSize - 1);
+  return start <= end && start < fileSize ? { start, end } : undefined;
+};
+
 const sendFile = (filePath: string, request: Request, response: Response) => {
   const range = request.headers.range ?? '';
   const mime = mimeType.contentType(path.resolve(filePath));
@@ -34,22 +51,30 @@ const sendFile = (filePath: string, request: Request, response: Response) => {
   response.setHeader('Content-Type', mime);
   if (/^image\//.test(mime)) {
     response.setHeader('Cache-Control', 'Public');
-    fs.createReadStream(filePath).pipe(response);
-  } else if (range !== '') {
-    const stat = fs.statSync(filePath);
-    const fileSize = stat.size;
-    const parts = range.match(/bytes=([0-9]+)-([0-9]*)/);
-    const start = parseInt(parts?.[1] ?? '0', 10);
-    const end = parts?.[2] ? parseInt(parts[2], 10) : fileSize - 1;
-    const file = fs.createReadStream(filePath, { start, end });
-    response.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
-    response.setHeader('Accept-Ranges', 'bytes');
-    response.setHeader('Content-Length', end - start + 1);
-    response.status(206);
-    file.pipe(response);
-  } else {
-    fs.createReadStream(filePath).pipe(response);
+    pipeFile(filePath, response);
+    return;
   }
+  if (range === '') {
+    pipeFile(filePath, response);
+    return;
+  }
+  fs.stat(filePath, (error, stat) => {
+    if (error) {
+      response.sendStatus(404);
+      return;
+    }
+    const bounds = parseRange(range, stat.size);
+    if (!bounds) {
+      response.setHeader('Content-Range', `bytes */${stat.size}`);
+      response.sendStatus(416);
+      return;
+    }
+    response.setHeader('Content-Range', `bytes ${bounds.start}-${bounds.end}/${stat.size}`);
+    response.setHeader('Accept-Ranges', 'bytes');
+    response.setHeader('Content-Length', bounds.end - bounds.start + 1);
+    response.status(206);
+    pipeFile(filePath, response, bounds);
+  });
 };
 
 function setupServer() {
@@ -65,15 +90,15 @@ function setupServer() {
       const fileName = basename.replace(/-optimized/, '').replace(path.extname(basename), '');
       const suspectedFile = fs.readdirSync(path.resolve(global._appDataPath, './albumart')).find((file) => file.indexOf(fileName) === 0);
 
-      if (suspectedFile) {
+      if (!suspectedFile) {
+        response.sendStatus(404);
+      } else {
         const toOptimize = path.join(global._appDataPath, './albumart/', suspectedFile);
         sharp(toOptimize)
           .resize(250, 250, { fit: 'inside' })
           .png({ compressionLevel: 9, force: true })
           .toFile(current)
-          .then((info) => {
-            sendFile(current, request, response);
-          })
+          .then(() => sendFile(current, request, response))
           .catch((err) =>
             response.status(500).send(`
               Can't generate optimized file from ${current}
@@ -109,11 +134,11 @@ function setupServer() {
       executeQuery<Track>(global._database, {
         query: `SELECT * FROM library ORDER BY path ASC`,
         variables: [],
-      }).then((library) => {
-        response.json(library);
-      });
+      })
+        .then((library) => response.json(library))
+        .catch(() => response.sendStatus(500));
     } else {
-      response.status(403);
+      response.sendStatus(403);
     }
   });
 
