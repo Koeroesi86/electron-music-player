@@ -4,6 +4,7 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 import type { Database } from 'sqlite3';
+import sharp from 'sharp';
 import setupServer from './setupServer';
 import { createTestDatabase } from './test-database';
 
@@ -109,6 +110,25 @@ describe('setupServer /local', () => {
   it('answers 404 for an optimized album art without a source image', async () => {
     fs.mkdirSync(path.join(folder, 'albumart'), { recursive: true });
     expect((await fetch(`${baseUrl}/albumart/nothing-optimized.png`)).status).toBe(404);
+  });
+
+  it('answers concurrent requests for an optimized album art with the complete image', async () => {
+    const albumArt = path.join(folder, 'albumart');
+    fs.mkdirSync(albumArt, { recursive: true });
+    await sharp({ create: { width: 1200, height: 1200, channels: 3, background: 'red' } })
+      .png()
+      .toFile(path.join(albumArt, 'concurrent-abc.png'));
+
+    const responses = await Promise.all(Array.from({ length: 8 }, () => fetch(`${baseUrl}/albumart/concurrent-abc-optimized.png`)));
+    const sizes = await Promise.all(
+      responses.map(async (response) => {
+        const { width } = await sharp(Buffer.from(await response.arrayBuffer())).metadata();
+        return { status: response.status, width };
+      })
+    );
+
+    expect(sizes).toEqual(Array.from({ length: 8 }, () => ({ status: 200, width: 250 })));
+    expect(fs.readdirSync(albumArt).filter((file) => file.endsWith('.part'))).toEqual([]);
   });
 
   it('answers with the library', async () => {

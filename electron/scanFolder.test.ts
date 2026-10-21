@@ -49,4 +49,27 @@ describe('scanFolder', () => {
 
     expect(scanningFiles()).toEqual([expect.objectContaining({ progress: 0, totalCount: 1 })]);
   });
+
+  it('does not wait between files', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    ['a.mp3', 'b.mp3', 'c.mp3'].forEach((name) => fs.writeFileSync(path.join(root, name), 'not audio'));
+
+    try {
+      await scanFolder(root, sender);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(scanningFiles()).toHaveLength(3);
+  });
+
+  it('finds the audio files of nested folders', async () => {
+    fs.mkdirSync(path.join(root, 'a', 'b'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'a', 'b', 'deep.ogg'), 'not audio');
+    fs.writeFileSync(path.join(root, 'top.wav'), 'not audio');
+
+    await scanFolder(root, sender);
+
+    expect(scanningFiles().map((file) => path.basename(file.fileName))).toEqual(['deep.ogg', 'top.wav']);
+  });
 });
