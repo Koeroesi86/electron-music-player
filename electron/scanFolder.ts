@@ -140,21 +140,20 @@ const writeMeta = (fileName: string) => {
 
 const isSupported = (filePath: string) => supportedFormats.includes(path.extname(filePath).replace('.', ''));
 
-/** Collect the supported audio files of a folder tree, symbolic links are skipped */
+/** Collect the supported audio files of a folder tree, one folder at a time, symbolic links are skipped */
 const findFiles = (directory: string): Promise<string[]> =>
-  fs.promises
-    .readdir(directory, { withFileTypes: true })
-    .then((entries) =>
-      Promise.all(
-        entries.map((entry) => {
+  fs.promises.readdir(directory, { withFileTypes: true }).then((entries) =>
+    entries.reduce<Promise<string[]>>(
+      (found, entry) =>
+        found.then((files) => {
           const entryPath = path.join(directory, entry.name);
-          if (entry.isSymbolicLink()) return [];
-          if (entry.isDirectory()) return findFiles(entryPath);
-          return entry.isFile() && isSupported(entryPath) ? [entryPath] : [];
-        })
-      )
+          if (entry.isSymbolicLink()) return files;
+          if (entry.isDirectory()) return findFiles(entryPath).then((nested) => files.concat(nested));
+          return entry.isFile() && isSupported(entryPath) ? files.concat(entryPath) : files;
+        }),
+      Promise.resolve([])
     )
-    .then((found) => found.flat());
+  );
 
 const init = (currentPath: string) => {
   if (existingTracks) {

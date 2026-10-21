@@ -72,4 +72,27 @@ describe('scanFolder', () => {
 
     expect(scanningFiles().map((file) => path.basename(file.fileName))).toEqual(['deep.ogg', 'top.wav']);
   });
+
+  it('reads one folder at a time', async () => {
+    ['a', 'b', 'c'].forEach((name) => {
+      fs.mkdirSync(path.join(root, name));
+      fs.writeFileSync(path.join(root, name, `${name}.mp3`), 'not audio');
+    });
+    const readdir = fs.promises.readdir.bind(fs.promises);
+    let running = 0;
+    let most = 0;
+    vi.spyOn(fs.promises, 'readdir').mockImplementation(async (...args: Parameters<typeof readdir>) => {
+      running += 1;
+      most = Math.max(most, running);
+      try {
+        return await readdir(...args);
+      } finally {
+        running -= 1;
+      }
+    });
+
+    await scanFolder(root, sender);
+
+    expect(most).toBe(1);
+  });
 });
