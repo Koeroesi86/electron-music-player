@@ -28,7 +28,6 @@ export interface PersistedSettings {
 
 export interface UiState extends PersistedSettings {
   port: string;
-  showEqualizer: boolean;
   scanningFolder: string | null;
   progress: number;
   totalCount: number;
@@ -53,11 +52,10 @@ export type AppAction =
   | EmptyAction<'TRACK_ENDED'>
   | EmptyAction<'NEXT_SONG'>
   | EmptyAction<'PREVIOUS_SONG'>
-  | EmptyAction<'OPEN_EQUALIZER'>
-  | EmptyAction<'CLOSE_EQUALIZER'>
   | EmptyAction<'TOGGLE_REPEAT'>
   | EmptyAction<'TOGGLE_SHUFFLE'>
   | EmptyAction<'CLEAR_PLAYED'>
+  | EmptyAction<'POP_PLAYED'>
   | EmptyAction<'CLICK_NOTIFICATION'>
   | PayloadAction<'LIBRARY_SIZE', unknown>
   | PayloadAction<'FOLDERS_ADDED_TO_LIBRARY', { folders: Folder[] }>
