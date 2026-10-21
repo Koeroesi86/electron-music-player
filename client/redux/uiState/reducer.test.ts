@@ -31,7 +31,7 @@ describe('uiState reducer', () => {
       repeat: false,
       currentSong: null,
     });
-    expect(initial.equalizer).toHaveLength(12);
+    expect(initial.equalizer).toEqual(Array(10).fill(0));
   });
 
   it('returns the same state for unknown actions', () => {
@@ -84,12 +84,23 @@ describe('uiState reducer', () => {
     expect(run({ type: 'CLOSE_EQUALIZER' }, state).showEqualizer).toBe(false);
   });
 
-  it('sets a single equalizer gain scaled by 100 without mutating the previous state', () => {
-    const state = run({ type: 'SET_GAIN', payload: { value: '50', index: 2 } });
+  it('sets a single equalizer gain in dB without mutating the previous state', () => {
+    const state = run({ type: 'SET_GAIN', payload: { value: '6.5', index: 2 } });
 
-    expect(state.equalizer[2]).toBe(0.5);
-    expect(state.equalizer[1]).toBe(-40);
-    expect(initial.equalizer[2]).toBe(-40);
+    expect(state.equalizer[2]).toBe(6.5);
+    expect(state.equalizer[1]).toBe(0);
+    expect(initial.equalizer[2]).toBe(0);
+  });
+
+  it('keeps an equalizer gain within the slider range', () => {
+    expect(run({ type: 'SET_GAIN', payload: { value: 40, index: 0 } }).equalizer[0]).toBe(12);
+    expect(run({ type: 'SET_GAIN', payload: { value: -40, index: 0 } }).equalizer[0]).toBe(-12);
+  });
+
+  it('restores saved equalizer gains and drops ones from before gains were in dB', () => {
+    const saved = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { equalizer: saved } } }).equalizer).toEqual(saved);
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { equalizer: Array(12).fill(-40) } } }).equalizer).toEqual(Array(10).fill(0));
   });
 
   it('tracks scanning progress and ends scanning when the library is stored', () => {

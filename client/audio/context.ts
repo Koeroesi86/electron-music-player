@@ -1,4 +1,5 @@
 import { createContext } from 'react';
+import { needsSeek } from './equalizer';
 
 type PlayStatusListener = (isPlaying: boolean) => void;
 type TimeChangeListener = (currentTime: number) => void;
@@ -7,6 +8,7 @@ const audioContext = new window.AudioContext();
 let audioNode: HTMLAudioElement | null = null;
 let audioSource: MediaElementAudioSourceNode | undefined;
 let isPlaying = false;
+let mounted = false;
 const listeners: PlayStatusListener[] = [];
 const connectedItems: AudioNode[] = [];
 const audioMountListeners: (() => void)[] = [];
@@ -17,6 +19,7 @@ let currentTime = 0;
 
 const onAudioMounted = (listener: () => void) => {
   audioMountListeners.push(listener);
+  if (mounted) listener();
 };
 
 const notifyListeners = () => {
@@ -48,9 +51,9 @@ const connectNode = (node: HTMLAudioElement | null) => {
 
     connectedItems.forEach((item) => {
       source.connect(item);
-      connectDestination(item);
     });
 
+    mounted = true;
     audioMountListeners.forEach((cb) => {
       cb();
     });
@@ -72,7 +75,7 @@ const connectNode = (node: HTMLAudioElement | null) => {
 
 const seek = (to: number) => {
   currentTime = to;
-  if (audioNode && audioNode.duration && audioNode.currentTime !== to) {
+  if (audioNode && audioNode.duration && needsSeek(audioNode.currentTime, to)) {
     audioNode.currentTime = to;
   }
 };

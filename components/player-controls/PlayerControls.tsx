@@ -107,7 +107,7 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
       nextSong,
       toggleRepeat,
       toggleShuffle,
-      seek,
+      setCurrentTime,
       isPlaying,
     } = this.props;
     return (
@@ -134,8 +134,7 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
                 step={0.0001}
                 value={currentTime}
                 onInput={(e) => {
-                  const value = parseFloat(e.currentTarget.value);
-                  if (currentTime !== value) seek(value);
+                  setCurrentTime(parseFloat(e.currentTarget.value));
                 }}
                 onChange={() => {}}
               />
