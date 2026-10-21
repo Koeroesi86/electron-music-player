@@ -143,20 +143,16 @@ const writeMeta = (fileName: string) => {
   });
 };
 
-const countFilesSync = (directory: string, fileCount = 0): number => {
-  return fs.readdirSync(directory).reduce((prev, file) => {
-    const filePath = path.join(directory, file);
-    const stats = fs.statSync(filePath);
-    if (stats.isSymbolicLink()) return prev;
+const isSupported = (filePath: string) => supportedFormats.includes(path.extname(filePath).replace('.', ''));
 
-    if (stats.isDirectory()) {
-      return prev + countFilesSync(filePath);
-    } else {
-      foundFiles.push(filePath);
-      return prev + 1;
-    }
-  }, fileCount);
-};
+/** Collect the supported audio files of a folder tree, symbolic links are skipped */
+const findFilesSync = (directory: string): string[] =>
+  fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isSymbolicLink()) return [];
+    if (entry.isDirectory()) return findFilesSync(entryPath);
+    return entry.isFile() && isSupported(entryPath) ? [entryPath] : [];
+  });
 
 const init = (currentPath: string) => {
   if (existingTracks) {
@@ -166,8 +162,8 @@ const init = (currentPath: string) => {
     appDataPath = global._appDataPath;
     database = global._database;
     prevFolder = currentPath;
-    totalCount = countFilesSync(currentPath);
-    foundFiles.sort();
+    foundFiles.push(...findFilesSync(currentPath).sort());
+    totalCount = foundFiles.length;
     return executeQuery<Track>(database, {
       query: `SELECT * FROM library ORDER BY path ASC`,
       variables: [],
@@ -207,33 +203,23 @@ const nextFile = (next: () => void) => {
 
 const stepFile = (fileName: string, sender: WebContents) =>
   new Promise<void>((resolve) => {
-    const extension = path.extname(fileName).replace('.', '');
-    const scanned = scannedFiles.includes(fileName);
-    const fileStats = fs.statSync(fileName);
-    const folder = path.dirname(fileName);
+    if (scannedFiles.includes(fileName)) {
+      console.log('double scanned', fileName);
+      resolve();
+      return;
+    }
 
+    const folder = path.dirname(fileName);
     if (folder !== prevFolder) {
       sender.send('SCANNING_FOLDER', { folder });
       prevFolder = folder;
     }
 
-    if (supportedFormats.includes(extension) && !scanned && fileStats.isFile()) {
-      scannedFiles.push(fileName);
-      sender.send('SCANNING_FILE', { fileName, progress, totalCount });
-      writeMeta(fileName)
-        .then(() => nextFile(resolve))
-        .catch((e) => {
-          console.error(fileName, e);
-          nextFile(resolve);
-        });
-    } else if (scanned || !fileStats.isFile()) {
-      // don't count the risky ones
-      if (!fileStats.isFile()) console.log('meh?', fileName, fileStats);
-      if (scanned) console.log('double scanned', fileName);
-      resolve();
-    } else {
-      nextFile(resolve);
-    }
+    scannedFiles.push(fileName);
+    sender.send('SCANNING_FILE', { fileName, progress, totalCount });
+    writeMeta(fileName)
+      .catch((e) => console.error(fileName, e))
+      .then(() => nextFile(resolve));
   });
 
 const scan = (sender: WebContents) =>
@@ -247,20 +233,9 @@ const scan = (sender: WebContents) =>
 
 /** Scan a defined folder for tracks */
 const scanFolder = (folderPath: string, sender: WebContents) =>
-  new Promise<void>((resolve, reject) => {
-    init(folderPath)
-      .then(() => scan(sender))
-      .then(() => {
-        end();
-        console.log(foundFiles.length);
-        console.log(totalCount);
-        console.log(database);
-        resolve();
-      })
-      .catch((err) => {
-        end();
-        reject(err);
-      });
-  });
+  Promise.resolve()
+    .then(() => init(folderPath))
+    .then(() => scan(sender))
+    .finally(end);
 
 export default scanFolder;

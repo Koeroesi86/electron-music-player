@@ -12,16 +12,24 @@ function rescanLibrary(sender: WebContents, forced = false) {
     query: `SELECT * FROM folders ORDER BY path ASC`,
     variables: [],
   })
-    .then((folders) => {
-      folders.map((folder) =>
-        executeQuery(database, {
-          query: `INSERT OR REPLACE INTO folders (path, lastModified) VALUES (?, ?)`,
-          variables: [folder.path, Math.floor(fs.statSync(folder.path).mtimeMs)],
-        })
+    .then(async (folders) => {
+      const modified = new Map(
+        folders.filter((folder) => fs.existsSync(folder.path)).map((folder) => [folder.path, Math.floor(fs.statSync(folder.path).mtimeMs)])
       );
-      return folders.filter((folder) => fs.existsSync(folder.path) && (folder.lastModified < Math.floor(fs.statSync(folder.path).mtimeMs) || forced));
+      const changed = folders.filter((folder) => (forced ? modified.has(folder.path) : folder.lastModified < (modified.get(folder.path) ?? 0)));
+
+      await scanFolders(changed, sender);
+
+      // stored after the scan, with the time seen before it, so a failed or interrupted scan is retried
+      return Promise.all(
+        changed.map((folder) =>
+          executeQuery(database, {
+            query: `INSERT OR REPLACE INTO folders (path, lastModified) VALUES (?, ?)`,
+            variables: [folder.path, modified.get(folder.path)],
+          })
+        )
+      );
     })
-    .then((folders) => scanFolders(folders, sender))
     .then(() =>
       executeQuery<Track>(database, {
         query: `SELECT * FROM library ORDER BY path ASC`,
