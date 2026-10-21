@@ -56,7 +56,7 @@ class AlbumDetails extends PureComponent<AlbumDetailsProps, AlbumDetailsState> {
         </div>
         <div
           className={style.cover}
-          style={{ backgroundImage: displayed.cover ? `url("http://localhost:${port}/local?path=${encodeURIComponent(displayed.cover)}")` : '' }}
+          style={{ backgroundImage: displayed.cover ? `url("http://127.0.0.1:${port}/local?path=${encodeURIComponent(displayed.cover)}")` : '' }}
         />
         <div className={style.artist}>{displayed.artist}</div>
         <div className={style.title}>{displayed.title}</div>

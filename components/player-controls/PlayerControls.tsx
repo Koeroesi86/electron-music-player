@@ -88,7 +88,7 @@ class PlayerControls extends PureComponent<PlayerControlsProps> {
 
     if (currentSong && currentSong.picture) {
       const cover = `${basename(currentSong.picture, extname(currentSong.picture))}-optimized.png`;
-      coverStyle.backgroundImage = `url("http://localhost:${port}/albumart/${cover}")`;
+      coverStyle.backgroundImage = `url("http://127.0.0.1:${port}/albumart/${cover}")`;
     }
 
     return coverStyle;

@@ -1,5 +1,5 @@
 import express from 'express';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
 import mimeType from 'mime-types';
@@ -10,17 +10,27 @@ import type { Track } from '../types/library';
 
 const server = express();
 
+// the renderer is served from this server, or from the dev server on another port
+const loopbackOrigin = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+const allowLoopbackOrigin = (request: Request, response: Response) => {
+  response.setHeader('Vary', 'Origin');
+  const { origin } = request.headers;
+  if (origin && loopbackOrigin.test(origin)) response.setHeader('Access-Control-Allow-Origin', origin);
+  response.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Range');
+};
+
 // audio streaming issues many range requests, so the limit only guards against runaway loops
 const limiter = rateLimit({ windowMs: 60 * 1000, limit: 6000 });
 
-const sendFile = (filePath: string, response: Response, range = '') => {
+const sendFile = (filePath: string, request: Request, response: Response) => {
+  const range = request.headers.range ?? '';
   const mime = mimeType.contentType(path.resolve(filePath));
   if (!mime) {
     response.status(500).send(`contentType failed`);
     return;
   }
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  allowLoopbackOrigin(request, response);
   response.setHeader('Content-Type', mime);
   if (/^image\//.test(mime)) {
     response.setHeader('Cache-Control', 'Public');
@@ -50,7 +60,7 @@ function setupServer() {
     const basename = path.basename(albumArt);
     const current = path.join(global._appDataPath, './albumart/', basename);
     if (fs.existsSync(current)) {
-      sendFile(current, response);
+      sendFile(current, request, response);
     } else if (/-optimized/.test(basename)) {
       const fileName = basename.replace(/-optimized/, '').replace(path.extname(basename), '');
       const suspectedFile = fs.readdirSync(path.resolve(global._appDataPath, './albumart')).find((file) => file.indexOf(fileName) === 0);
@@ -62,7 +72,7 @@ function setupServer() {
           .png({ compressionLevel: 9, force: true })
           .toFile(current)
           .then((info) => {
-            sendFile(current, response);
+            sendFile(current, request, response);
           })
           .catch((err) =>
             response.status(500).send(`
@@ -89,13 +99,12 @@ function setupServer() {
       query: `SELECT path FROM library WHERE path = ?`,
       variables: [filePath],
     })
-      .then(([track]) => (track ? sendFile(track.path, response, request.headers.range) : response.sendStatus(404)))
+      .then(([track]) => (track ? sendFile(track.path, request, response) : response.sendStatus(404)))
       .catch(() => response.sendStatus(500));
   });
 
   server.get('/library', (request, response) => {
-    response.setHeader('Access-Control-Allow-Origin', '*');
-    response.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    allowLoopbackOrigin(request, response);
     if (global._database) {
       executeQuery<Track>(global._database, {
         query: `SELECT * FROM library ORDER BY path ASC`,
@@ -108,7 +117,7 @@ function setupServer() {
     }
   });
 
-  server.listen(global._port, () => {
+  server.listen(global._port, '127.0.0.1', () => {
     console.log(`Example app listening on port ${global._port}!`);
   });
 }

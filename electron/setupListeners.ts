@@ -1,19 +1,12 @@
 import { ipcMain, nativeImage, session } from 'electron';
-import fs from 'fs';
 import { resolve } from 'path';
 import playlistParser from 'playlist-parser';
 import type { Database } from 'sqlite3';
 import type { AppWindows } from '../types/global';
 import type { Folder } from '../types/library';
 import executeQuery from './executeQuery';
-import executeQueries from './executeQueries';
-import scanFolders from './scanFolders';
+import addFoldersToLibrary from './addFoldersToLibrary';
 import rescanLibrary from './rescanLibrary';
-
-interface AddedFile {
-  path: string;
-  lastModified: number;
-}
 
 const isWin = process.platform === 'win32';
 const enableTransparency = true;
@@ -116,43 +109,12 @@ function setupListeners(database: Database, windows: AppWindows) {
       .catch((e) => console.error(e));
   });
 
-  ipcMain.on('ADD_FOLDERS_TO_LIBRARY', (event, files: AddedFile[]) => {
-    const folders = files.filter((file) => fs.statSync(file.path).isDirectory());
-    const toRemoveQueries = files.map((file) => ({
-      query: `SELECT * FROM folders WHERE path LIKE ?`,
-      variables: [file.path + '%'],
-    }));
-    executeQueries<Folder>(database, toRemoveQueries)
-      .then((results) => {
-        if (!results.length) return;
-        const removeQueries = results[0].map((result) => ({
-          query: `DELETE FROM folders WHERE path = ?`,
-          variables: [result.path],
-        }));
-
-        return executeQueries(database, removeQueries);
-      })
-      .then(() => {
-        const queries = files.map((file) => ({
-          query: `INSERT OR REPLACE INTO folders (path, lastModified) VALUES (?, ?)`,
-          variables: [file.path, file.lastModified],
-        }));
-
-        return executeQueries(database, queries);
-      })
-      .then(() => {
-        event.sender.send('FOLDERS_ADDED_TO_LIBRARY', { folders });
-
-        return scanFolders(folders, event.sender);
-      })
-      .then(() => {
-        event.sender.send('TRACKS_ADDED_TO_LIBRARY', {});
-      })
-      .catch((e) => console.error(e));
+  ipcMain.on('ADD_FOLDERS_TO_LIBRARY', (event, files: unknown) => {
+    addFoldersToLibrary(database, files, event.sender).catch((e) => console.error(e));
   });
 
-  ipcMain.on('RESCAN_LIBRARY', (event, { forced }: { forced: boolean }) => {
-    rescanLibrary(event.sender, forced);
+  ipcMain.on('RESCAN_LIBRARY', (event, payload: unknown) => {
+    rescanLibrary(event.sender, typeof payload === 'object' && payload !== null && 'forced' in payload && payload.forced === true);
   });
 
   session.defaultSession.on('will-download', (event, item) => {

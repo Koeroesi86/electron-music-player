@@ -21,7 +21,7 @@ class NowPlaying extends PureComponent<NowPlayingProps> {
 
     if (currentSong && currentSong.picture) {
       const cover = basename(currentSong.picture);
-      coverStyle.backgroundImage = `url("http://localhost:${port}/albumart/${cover}")`;
+      coverStyle.backgroundImage = `url("http://127.0.0.1:${port}/albumart/${cover}")`;
     }
 
     return coverStyle;

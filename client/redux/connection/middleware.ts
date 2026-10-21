@@ -55,7 +55,7 @@ const appLoaded = _.debounce(() => {
 const getLibrary = (store: MiddlewareAPI<Dispatch<AppAction>, RootState>): Promise<Track[]> => {
   const { port } = store.getState().uiState;
   return Promise.resolve()
-    .then(() => fetch(`http://localhost:${port}/library`))
+    .then(() => fetch(`http://127.0.0.1:${port}/library`))
     .then((response) => {
       if (!response.ok) {
         throw new Error(`Failed to fetch library: ${response.status}`);
@@ -176,7 +176,7 @@ const middleware: Middleware<object, RootState> = (store) => {
         if (track.picture) {
           const { port } = store.getState().uiState;
           const cover = `${(track.picture.split(/[\\/]/).pop() ?? '').replace(/\.[^.]*$/, '')}-optimized.png`;
-          const url = `http://localhost:${port}/albumart/${cover}`;
+          const url = `http://127.0.0.1:${port}/albumart/${cover}`;
           notification.icon = url;
           notification.image = url;
         }
