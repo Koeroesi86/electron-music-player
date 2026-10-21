@@ -55,10 +55,6 @@ jobs:
       - run: npm run dist
       - name: Check the contents of the package
         run: npm run check:dist
-      # the bundle holds the same app.asar that check:dist lists and that the smoke test starts, so only its existence is checked
-      - name: Check the Flatpak bundle
-        if: runner.os == 'Linux'
-        run: ls dist/eMusic-*.flatpak
       # the packaged app has to start: a file missing from the package or a native module that does not load only shows here
       - name: Smoke test of the packaged app
         if: runner.os != 'Linux'
@@ -66,6 +62,12 @@ jobs:
       - name: Smoke test of the packaged app (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run --auto-servernum npm run smoke:packaged
+      # the sandbox, the finish args and the zypak wrapper of the bundle only show when the installed flatpak starts
+      - name: Smoke test of the Flatpak bundle
+        if: runner.os == 'Linux'
+        run: |
+          flatpak install --user --noninteractive --bundle dist/eMusic-*.flatpak
+          xvfb-run --auto-servernum dbus-run-session npm run smoke:flatpak
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-${{ matrix.os }}

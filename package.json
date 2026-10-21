@@ -23,6 +23,7 @@
     "security:electron": "node scripts/security-scan.js",
     "smoke": "node scripts/smoke.js",
     "smoke:packaged": "node scripts/smoke.js --packaged",
+    "smoke:flatpak": "node scripts/smoke.js --flatpak",
     "check:dist": "node scripts/check-dist.js"
   },
   "author": {

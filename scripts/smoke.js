@@ -4,8 +4,8 @@ const { existsSync, mkdtempSync, readFileSync, rmSync } = require('fs')
 const { tmpdir } = require('os')
 const { dirname, join, resolve } = require('path')
 
-// usage: node scripts/smoke.js [--packaged]
-// starts the built app (out/index.js), or the packaged one from dist/, and checks that the window opens
+// usage: node scripts/smoke.js [--packaged | --flatpak]
+// starts the built app (out/index.js), the packaged one from dist/, or the installed flatpak (flatpak install dist/eMusic-*.flatpak), and checks that the window opens
 // and that the local server answers from the database: a missing file or a native module that does not load shows up here
 const root = resolve(__dirname, '..')
 const packagedExecutables = {
@@ -15,11 +15,15 @@ const packagedExecutables = {
 }
 const timeout = 60000
 
-const packaged = process.argv.includes('--packaged')
-const executablePath = packaged ? resolve(root, packagedExecutables[process.platform]) : require('electron')
-const args = [...(packaged ? [] : [resolve(root, 'out/index.js')]), ...(process.platform === 'linux' ? ['--no-sandbox'] : [])]
+const flatpak = process.argv.includes('--flatpak')
+const packaged = flatpak || process.argv.includes('--packaged')
+const executablePath = flatpak ? 'flatpak' : packaged ? resolve(root, packagedExecutables[process.platform]) : require('electron')
+// the flatpak starts its own sandbox: zypak sets the chromium sandbox up, so --no-sandbox is not passed
+const args = flatpak
+  ? ['run', require('../package.json').build.appId]
+  : [...(packaged ? [] : [resolve(root, 'out/index.js')]), ...(process.platform === 'linux' ? ['--no-sandbox'] : [])]
 
-if (!existsSync(executablePath)) {
+if (!flatpak && !existsSync(executablePath)) {
   console.error(`${executablePath} does not exist, build first`)
   process.exit(1)
 }
@@ -29,8 +33,9 @@ const home = mkdtempSync(join(tmpdir(), 'emusic-smoke-'))
 const logFile = join(home, 'chromium.log')
 const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env
 // windows keeps its profile folders (chromium needs them to start, and the app data folder does not follow the variables there), the other systems get the clean ones
+// the flatpak finds its user installation through HOME and keeps the data of the app in its own folder, so it keeps them too
 const env =
-  process.platform === 'win32'
+  process.platform === 'win32' || flatpak
     ? { ...inherited, NODE_ENV: 'production' }
     : { ...inherited, HOME: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production' }
 
@@ -107,7 +112,7 @@ const run = async () => {
 run()
   .catch(error => {
     console.error(error)
-    if (packaged) console.error(`Packaged dependencies:\n${loadDependencies()}`)
+    if (packaged && !flatpak) console.error(`Packaged dependencies:\n${loadDependencies()}`)
     if (existsSync(logFile)) console.error(`Log of the app:\n${readFileSync(logFile, 'utf8')}`)
     process.exitCode = 1
   })
