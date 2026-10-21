@@ -43,7 +43,13 @@ jobs:
             build-${{ matrix.platform }}-
       - name: Install Linux packaging tools
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libarchive-tools
+        run: sudo apt-get update && sudo apt-get install -y libarchive-tools flatpak flatpak-builder
+      # electron-builder bundles the flatpak from the runtime, the sdk and the base app, which it does not download itself
+      - name: Install the Flatpak runtime
+        if: runner.os == 'Linux'
+        run: |
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08 org.electronjs.Electron2.BaseApp//25.08
       - run: npm ci
       - run: npm run build
       - run: npm run dist
@@ -56,6 +62,12 @@ jobs:
       - name: Smoke test of the packaged app (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run --auto-servernum npm run smoke:packaged
+      # the sandbox, the finish args and the zypak wrapper of the bundle only show when the installed flatpak starts
+      - name: Smoke test of the Flatpak bundle
+        if: runner.os == 'Linux'
+        run: |
+          flatpak install --user --noninteractive --bundle dist/eMusic-*.flatpak
+          xvfb-run --auto-servernum dbus-run-session npm run smoke:flatpak
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-${{ matrix.os }}

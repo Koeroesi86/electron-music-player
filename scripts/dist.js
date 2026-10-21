@@ -31,11 +31,12 @@ const platforms = [
   [isLinux, 'linux', 'Linux']
 ]
 
-// snap removes chrome-sandbox from the shared unpacked dir, so it must not run alongside the other linux targets
+// snap removes chrome-sandbox from the shared unpacked dir, so it must not run alongside the other linux targets;
+// flatpak needs flatpak-builder on the machine and is not known to be safe next to the other targets, so it has its own build
 const extraBuilds = {
   win: [],
   mac: [],
-  linux: [{ linux: ['snap'] }]
+  linux: [{ linux: ['flatpak'] }, { linux: ['snap'] }]
 }
 
 const build = options => electronBuilder.build(options)
