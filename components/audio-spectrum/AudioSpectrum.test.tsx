@@ -26,7 +26,7 @@ describe('AudioSpectrum', () => {
     let notify: (isPlaying: boolean) => void = () => {};
     render(
       <AudioSpectrum
-        createAnalyser={() => false}
+        createAnalyser={() => undefined}
         addPlayStatusListener={(listener) => {
           notify = listener;
         }}

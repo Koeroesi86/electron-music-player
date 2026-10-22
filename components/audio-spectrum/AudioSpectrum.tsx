@@ -17,7 +17,7 @@ export interface AudioSpectrumProps {
   meterColor?: string | MeterStop[];
   gap?: number;
   fps?: number;
-  createAnalyser?: () => AnalyserNode | false;
+  createAnalyser?: () => AnalyserNode | undefined;
   addPlayStatusListener?: (listener: (isPlaying: boolean) => void) => void;
 }
 
@@ -46,12 +46,12 @@ const AudioSpectrum = ({
   meterColor = defaultMeterColor,
   gap = 10,
   fps = 30,
-  createAnalyser = () => false,
+  createAnalyser = () => undefined,
   addPlayStatusListener = () => {},
 }: AudioSpectrumProps) => {
   const canvas = useRef<HTMLCanvasElement>(null);
   const canvasContext = useRef<CanvasRenderingContext2D | null>(null);
-  const analyser = useRef<AnalyserNode | false>(false);
+  const analyser = useRef<AnalyserNode | undefined>(undefined);
   const isPlaying = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const animationId = useRef<number>(undefined);

@@ -4,18 +4,27 @@ import { needsSeek } from './equalizer';
 type PlayStatusListener = (isPlaying: boolean) => void;
 type TimeChangeListener = (currentTime: number) => void;
 
+const createListeners = <T>() => {
+  const listeners = new Set<(value: T) => void>();
+
+  return {
+    add: (listener: (value: T) => void) => listeners.add(listener),
+    remove: (listener: (value: T) => void) => listeners.delete(listener),
+    notify: (value: T) => listeners.forEach((listener) => listener(value)),
+  };
+};
+
 const audioContext = new window.AudioContext();
 let audioNode: HTMLAudioElement | null = null;
 let audioSource: MediaElementAudioSourceNode | undefined;
 // an element can only be wrapped once, a second createMediaElementSource on it throws
 let sourceElement: HTMLAudioElement | null = null;
 let analyser: AnalyserNode | undefined;
-let isPlaying = false;
 let mounted = false;
-const listeners: PlayStatusListener[] = [];
+const playStatus = createListeners<boolean>();
+const timeChange = createListeners<number>();
 const connectedItems: AudioNode[] = [];
 const audioMountListeners: (() => void)[] = [];
-const timeChangeListeners: TimeChangeListener[] = [];
 let timeChangeTimer: ReturnType<typeof setInterval> | undefined;
 const currentTimeFPS = 5;
 let currentTime = 0;
@@ -25,58 +34,6 @@ const onAudioMounted = (listener: () => void) => {
   if (mounted) listener();
 };
 
-const notifyListeners = () => {
-  listeners.forEach((listener) => {
-    listener(isPlaying);
-  });
-};
-
-const connectNode = (node: HTMLAudioElement | null) => {
-  audioNode = node;
-
-  if (node && node !== sourceElement) {
-    sourceElement = node;
-    node.addEventListener('pause', () => {
-      isPlaying = false;
-      notifyListeners();
-    });
-    node.addEventListener('play', () => {
-      isPlaying = true;
-      notifyListeners();
-    });
-    node.addEventListener('error', () => {
-      isPlaying = false;
-      console.warn('error playing', node.src);
-      notifyListeners();
-    });
-
-    const source = audioContext.createMediaElementSource(node);
-    audioSource = source;
-
-    connectedItems.forEach((item) => {
-      source.connect(item);
-    });
-
-    mounted = true;
-    audioMountListeners.forEach((cb) => {
-      cb();
-    });
-
-    seek(currentTime);
-
-    clearInterval(timeChangeTimer);
-    timeChangeTimer = setInterval(() => {
-      if (audioNode) {
-        const { currentTime: nodeTime } = audioNode;
-        currentTime = nodeTime;
-        timeChangeListeners.forEach((listener) => {
-          listener(nodeTime);
-        });
-      }
-    }, 1000 / currentTimeFPS);
-  }
-};
-
 const seek = (to: number) => {
   currentTime = to;
   if (audioNode && audioNode.duration && needsSeek(audioNode.currentTime, to)) {
@@ -84,51 +41,59 @@ const seek = (to: number) => {
   }
 };
 
+const listenToPlayStatus = (node: HTMLAudioElement) => {
+  node.addEventListener('pause', () => playStatus.notify(false));
+  node.addEventListener('play', () => playStatus.notify(true));
+  node.addEventListener('error', () => {
+    console.warn('error playing', node.src);
+    playStatus.notify(false);
+  });
+};
+
+const startTimeChanges = () => {
+  clearInterval(timeChangeTimer);
+  timeChangeTimer = setInterval(() => {
+    if (!audioNode) return;
+
+    currentTime = audioNode.currentTime;
+    timeChange.notify(currentTime);
+  }, 1000 / currentTimeFPS);
+};
+
+const connectNode = (node: HTMLAudioElement | null) => {
+  audioNode = node;
+  if (!node || node === sourceElement) return;
+
+  sourceElement = node;
+  listenToPlayStatus(node);
+
+  const source = audioContext.createMediaElementSource(node);
+  audioSource = source;
+  connectedItems.forEach((item) => source.connect(item));
+
+  mounted = true;
+  audioMountListeners.forEach((listener) => listener());
+
+  seek(currentTime);
+  startTimeChanges();
+};
+
 const connectToSource = (item: AudioNode) => {
   connectedItems.push(item);
-  if (audioSource) {
-    audioSource.connect(item);
-  }
+  audioSource?.connect(item);
 };
 
 const play = () => {
-  if (audioNode) {
-    const playPromise = audioNode.play();
-
-    if (playPromise) {
-      playPromise
-        .then(() => {
-          console.log('playing', audioNode?.src);
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    }
-  }
+  audioNode
+    ?.play()
+    .then(() => console.log('playing', audioNode?.src))
+    .catch((err) => console.error(err));
 };
 
-const pause = () => {
-  if (audioNode) {
-    audioNode.pause();
-  }
-};
+const pause = () => audioNode?.pause();
 
-const addPlayStatusListener = (listener: PlayStatusListener) => {
-  if (typeof listener === 'function') listeners.push(listener);
-};
-
-const removePlayStatusListener = (listener: PlayStatusListener) => {
-  if (listeners.includes(listener)) {
-    listeners.splice(listeners.indexOf(listener), 1);
-  }
-};
-
-const addTimeChangeListener = (listener: TimeChangeListener) => {
-  if (!timeChangeListeners.includes(listener)) timeChangeListeners.push(listener);
-};
-
-const createAnalyser = (): AnalyserNode | false => {
-  if (!audioSource) return false;
+const createAnalyser = (): AnalyserNode | undefined => {
+  if (!audioSource) return undefined;
 
   // only listens: its output is not connected, as it would play the signal a second time, around the equalizer
   if (!analyser) {
@@ -146,9 +111,9 @@ const createGain = () => audioContext.createGain();
 const connectDestination = (node: AudioNode) => node.connect(audioContext.destination);
 
 export const Audio = createContext({
-  addPlayStatusListener,
-  removePlayStatusListener,
-  addTimeChangeListener,
+  addPlayStatusListener: (listener: PlayStatusListener) => void playStatus.add(listener),
+  removePlayStatusListener: (listener: PlayStatusListener) => void playStatus.remove(listener),
+  addTimeChangeListener: (listener: TimeChangeListener) => void timeChange.add(listener),
   connectNode,
   connectToSource,
   connectDestination,

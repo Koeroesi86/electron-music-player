@@ -1,9 +1,7 @@
 import fs from 'fs';
-import path from 'path';
 import type { Database } from 'sqlite3';
 import type { WebContents } from 'electron';
-import type { Folder } from '../types/library';
-import executeQueries from './executeQueries';
+import { deleteFolders, getFoldersInside, saveFolders } from './libraryRepository';
 import scanFolders from './scanFolders';
 
 interface AddedFile {
@@ -27,28 +25,13 @@ const isDirectory = (filePath: string) => {
   }
 };
 
-// ! is the escape character of the LIKE below, so % and _ in a folder name match themselves
-const escapeLike = (value: string) => value.replace(/[!%_]/g, '!$&');
-
 /** Add the directories among the dropped files to the library, replacing the folders inside them, and scan them */
 async function addFoldersToLibrary(database: Database, payload: unknown, sender: WebContents) {
   const folders = (Array.isArray(payload) ? payload : []).filter(isAddedFile).filter((file) => isDirectory(file.path));
 
-  const nested = await executeQueries<Folder>(
-    database,
-    folders.map((folder) => ({
-      query: `SELECT * FROM folders WHERE path LIKE ? ESCAPE '!'`,
-      variables: [`${escapeLike(folder.path.replace(/[\\/]+$/, '') + path.sep)}%`],
-    }))
-  );
-  await executeQueries(
-    database,
-    nested.flat().map((folder) => ({ query: `DELETE FROM folders WHERE path = ?`, variables: [folder.path] }))
-  );
-  await executeQueries(
-    database,
-    folders.map((folder) => ({ query: `INSERT OR REPLACE INTO folders (path, lastModified) VALUES (?, ?)`, variables: [folder.path, folder.lastModified] }))
-  );
+  const nested = await Promise.all(folders.map((folder) => getFoldersInside(database, folder.path)));
+  await deleteFolders(database, nested.flat());
+  await saveFolders(database, folders);
   sender.send('FOLDERS_ADDED_TO_LIBRARY', { folders });
 
   await scanFolders(folders, sender);

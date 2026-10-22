@@ -3,20 +3,6 @@ import { resolve } from 'path';
 import windowStateKeeper from 'electron-window-state';
 import lockNavigation from './lockNavigation';
 
-// const { TouchBarLabel, TouchBarSpacer } = TouchBar
-
-// const artist = new TouchBarLabel({ textColor: '#5c43e8' })
-// const track = new TouchBarLabel({ textColor: '#555555' })
-// const time = new TouchBarLabel({ textColor: '#5c43e8' })
-
-// const touchBar = new TouchBar([
-//   artist,
-//   new TouchBarSpacer({ size: 'small' }),
-//   track,
-//   new TouchBarSpacer({ size: 'small' }),
-//   time
-// ])
-
 const createWindow = () => {
   const mainWindowState = windowStateKeeper({
     defaultWidth: 1200,
@@ -33,7 +19,6 @@ const createWindow = () => {
     darkTheme: true,
     show: false,
     webPreferences: {
-      // webSecurity: false,
       backgroundThrottling: false,
       preload: resolve(__dirname, './preload.js'),
       webviewTag: true,
@@ -41,17 +26,7 @@ const createWindow = () => {
   });
   mainWindowState.manage(mainWindow);
   lockNavigation(mainWindow.webContents);
-  // mainWindow.setTouchBar(touchBar)
   mainWindow.setFullScreenable(false);
-
-  // app.updateTouchBar = metadata => {
-  //   artist.label = metadata.artist
-  //   track.label = metadata.track
-  // }
-  //
-  // app.updateTouchBarTime = duration => {
-  //   time.label = duration
-  // }
 
   return mainWindow;
 };
