@@ -4,11 +4,16 @@ import type { ListenerContext } from './listenerContext';
 import { getFolders } from './libraryRepository';
 import { getSettings, saveSettings } from './settingsRepository';
 
+// the window can be closed while the database answers
+const sendIfAlive = (sender: WebContents, channel: string, payload: unknown) => {
+  if (!sender.isDestroyed()) sender.send(channel, payload);
+};
+
 const sendState = async ({ database }: ListenerContext, sender: WebContents) => {
-  sender.send('STORE_FOLDERS', { folders: await getFolders(database) });
+  sendIfAlive(sender, 'STORE_FOLDERS', { folders: await getFolders(database) });
 
   const settings = await getSettings(database);
-  if (settings) sender.send('RESTORE_SETTINGS', { settings });
+  if (settings) sendIfAlive(sender, 'RESTORE_SETTINGS', { settings });
 };
 
 const registerStateListeners = (context: ListenerContext) => {
@@ -18,7 +23,7 @@ const registerStateListeners = (context: ListenerContext) => {
 
   ipcMain.on('SAVE_SETTINGS', (event, settings: unknown) => {
     saveSettings(context.database, settings)
-      .then(() => event.sender.send('SETTINGS_SAVED', { settings }))
+      .then(() => sendIfAlive(event.sender, 'SETTINGS_SAVED', { settings }))
       .catch((e) => console.error(e));
   });
 };
