@@ -44,7 +44,7 @@ const [metadataPath, installer] = updateMetadata[process.platform]
 const metadataFile = resolve(__dirname, '..', metadataPath)
 if (!existsSync(metadataFile)) problems.push(`missing: ${metadataPath}`)
 else if (!installer.test(readFileSync(metadataFile, 'utf8'))) problems.push(`${metadataPath} does not list ${installer}`)
-// the packaged app must know where to look for updates, linux-unpacked is rebuilt by the flatpak and snap builds, which have none on purpose
+// the packaged app must know where to look for updates, linux-unpacked is rebuilt by the flatpak build, which has none on purpose
 if (process.platform !== 'linux' && !existsSync(resolve(archive, '..', 'app-update.yml'))) problems.push('missing: app-update.yml')
 
 problems.slice(0, 50).forEach(problem => console.error(problem))

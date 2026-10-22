@@ -43,7 +43,7 @@ jobs:
             build-${{ matrix.platform }}-
       - name: Install Linux packaging tools
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libarchive-tools flatpak flatpak-builder
+        run: sudo apt-get update && sudo apt-get install -y flatpak flatpak-builder
       # electron-builder bundles the flatpak from the runtime, the sdk and the base app, which it does not download itself
       - name: Install the Flatpak runtime
         if: runner.os == 'Linux'

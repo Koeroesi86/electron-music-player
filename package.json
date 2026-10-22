@@ -73,15 +73,7 @@
       "executableName": "eMusic",
       "category": "Audio",
       "target": [
-        "AppImage",
-        "deb",
-        "rpm",
-        "freebsd",
-        "pacman",
-        "apk",
-        "7z",
-        "zip",
-        "tar.gz"
+        "AppImage"
       ],
       "icon": "icons/png/"
     },
