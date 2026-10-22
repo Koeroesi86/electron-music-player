@@ -8,6 +8,7 @@ import { Audio } from '../../client/audio/context';
 
 const mapState = (state: RootState) => ({
   currentSong: state.uiState.currentSong,
+  isPlaying: state.uiState.isPlaying,
   volume: state.uiState.volume,
   port: state.uiState.port,
 });

@@ -5,6 +5,7 @@ import { radioUuidOf } from '../../client/radio-track';
 
 interface AudioComponentProps {
   currentSong: Track | null;
+  isPlaying: boolean;
   volume: number;
   port: string;
   trackEnded: () => void;
@@ -18,7 +19,7 @@ const sourceOf = (track: Track, port: string) => {
   return /^http/.test(track.path) ? track.path : `http://127.0.0.1:${port}/local?path=${encodeURIComponent(track.path)}`;
 };
 
-const AudioComponent = ({ currentSong, volume, port, trackEnded, connectNode }: AudioComponentProps) => {
+const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, connectNode }: AudioComponentProps) => {
   const audio = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -32,11 +33,15 @@ const AudioComponent = ({ currentSong, volume, port, trackEnded, connectNode }: 
     // the audio element lives as long as the component
   }, []);
 
+  // the play command can arrive before the source is set, so a new source starts here; a restored track stays paused
   useUpdateEffect(() => {
-    if (audio.current) audio.current.src = currentSong ? sourceOf(currentSong, port) : '';
+    if (!audio.current) return;
+
+    audio.current.src = currentSong ? sourceOf(currentSong, port) : '';
+    if (currentSong && isPlaying) audio.current.play().catch((err) => console.error(err));
   }, [currentSong]);
 
-  return <audio style={{ display: 'none' }} ref={audio} crossOrigin="anonymous" autoPlay onEnded={trackEnded} />;
+  return <audio style={{ display: 'none' }} ref={audio} crossOrigin="anonymous" onEnded={trackEnded} />;
 };
 
 export default AudioComponent;
