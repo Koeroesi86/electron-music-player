@@ -126,10 +126,12 @@ const getPort = () => {
   });
 };
 
-// electron-updater only works in the packaged app
+// electron-updater only works in the packaged app, on Linux only in an AppImage (the Flatpak updates through its store),
+// and EMUSIC_NO_UPDATE=1 turns it off, which the smoke tests of the packaged app set
 const getUpdateSource = (): UpdateSource | undefined => {
   if (isMockUpdate) return createMockUpdateSource();
-  if (!app.isPackaged) return undefined;
+  if (!app.isPackaged || process.env.EMUSIC_NO_UPDATE === '1') return undefined;
+  if (process.platform === 'linux' && !process.env.APPIMAGE) return undefined;
 
   return autoUpdater;
 };
@@ -137,7 +139,7 @@ const getUpdateSource = (): UpdateSource | undefined => {
 // the splash stays up while the update is checked and downloaded, the app starts once it is done
 const updateOnSplash = async (loading: BrowserWindow) => {
   const source = getUpdateSource();
-  if (!source) return 'continue';
+  if (!source) return;
 
   return runUpdate(source, (progress) => loading.webContents.send('SPLASH_PROGRESS', progress), { install: !isMockUpdate });
 };
@@ -156,8 +158,6 @@ app
 
     return updateOnSplash(loading);
   })
-  // the installer quits the app, so the library and the main window are not opened
-  .then((outcome) => (outcome === 'restarting' ? new Promise<never>(() => undefined) : undefined))
   .then(() => createDatabase(libraryLocation))
   .then((d) => {
     console.log(`Connected to library ${libraryLocation}`);

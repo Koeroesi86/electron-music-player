@@ -5,22 +5,26 @@ export interface SplashProgress {
   percent?: number;
 }
 
-export type UpdateOutcome = 'continue' | 'restarting';
-
 export interface UpdateSource extends EventEmitter {
   autoDownload: boolean;
   checkForUpdates: () => Promise<{ isUpdateAvailable: boolean; updateInfo: { version: string } } | null>;
   downloadUpdate: () => Promise<unknown>;
-  quitAndInstall: () => void;
+  quitAndInstall: (isSilent?: boolean, isForceRunAfter?: boolean) => void;
 }
 
 interface UpdateOptions {
   // a mocked update is downloaded but never installed, the app starts as usual
   install?: boolean;
   checkTimeout?: number;
+  // the download fails when no progress arrives for this long
+  downloadStallTimeout?: number;
+  // how long the splash waits for the app to quit after the installer was started
+  installTimeout?: number;
 }
 
 const defaultCheckTimeout = 10000;
+const defaultDownloadStallTimeout = 60000;
+const defaultInstallTimeout = 30000;
 
 const wait = (delay: number) => new Promise<void>((resolve) => setTimeout(resolve, delay));
 
@@ -33,30 +37,52 @@ const withTimeout = <T>(promise: Promise<T>, timeout: number) => {
   return Promise.race([promise, timedOut]).finally(() => clearTimeout(timer));
 };
 
-// resolves to 'restarting' only when an update was installed and the app is about to quit, any failure lets the app start
-export async function runUpdate(source: UpdateSource, report: (progress: SplashProgress) => void, options: UpdateOptions = {}): Promise<UpdateOutcome> {
-  const { install = true, checkTimeout = defaultCheckTimeout } = options;
+const downloadWithStallTimeout = (source: UpdateSource, timeout: number) => {
+  let timer: NodeJS.Timeout | undefined;
+  const stalled = new Promise<never>((_resolve, reject) => {
+    const arm = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => reject(new Error(`The update download made no progress for ${timeout} ms`)), timeout);
+    };
+
+    arm();
+    source.on('download-progress', arm);
+  });
+
+  return Promise.race([source.downloadUpdate(), stalled]).finally(() => clearTimeout(timer));
+};
+
+// the installer quits the app, so with an update installed this only returns when something went wrong or nothing was installed:
+// any failure lets the installed version start
+export async function runUpdate(source: UpdateSource, report: (progress: SplashProgress) => void, options: UpdateOptions = {}): Promise<void> {
+  const {
+    install = true,
+    checkTimeout = defaultCheckTimeout,
+    downloadStallTimeout = defaultDownloadStallTimeout,
+    installTimeout = defaultInstallTimeout,
+  } = options;
 
   try {
     source.autoDownload = false;
     report({ text: 'Checking for updates...' });
     const result = await withTimeout(source.checkForUpdates(), checkTimeout);
 
-    if (!result?.isUpdateAvailable) return 'continue';
+    if (!result?.isUpdateAvailable) return;
 
     const { version } = result.updateInfo;
     report({ text: `Downloading update ${version}...`, percent: 0 });
     source.on('download-progress', ({ percent }: { percent: number }) => report({ text: `Downloading update ${version}...`, percent: Math.round(percent) }));
-    await source.downloadUpdate();
+    await downloadWithStallTimeout(source, downloadStallTimeout);
 
-    if (!install) return 'continue';
+    if (!install) return;
 
     report({ text: 'Restarting to install the update...', percent: 100 });
-    source.quitAndInstall();
-    return 'restarting';
+    // silent on windows, so the installer shows nothing, and the app is started again afterwards
+    source.quitAndInstall(true, true);
+    await wait(installTimeout);
+    console.error(`The app did not quit ${installTimeout} ms after the update was installed, starting the installed version`);
   } catch (error) {
     console.error('Update failed, starting the installed version', error);
-    return 'continue';
   }
 }
 

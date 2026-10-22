@@ -21,7 +21,7 @@ describe('runUpdate', () => {
     const source = createSource(() => Promise.resolve({ isUpdateAvailable: false, updateInfo: { version: '1.0.0' } }));
     const report = vi.fn();
 
-    await expect(runUpdate(source, report)).resolves.toBe('continue');
+    await expect(runUpdate(source, report)).resolves.toBeUndefined();
 
     expect(report).toHaveBeenCalledWith({ text: 'Checking for updates...' });
     expect(source.downloadUpdate).not.toHaveBeenCalled();
@@ -35,7 +35,7 @@ describe('runUpdate', () => {
     });
     const report = vi.fn();
 
-    await expect(runUpdate(source, report)).resolves.toBe('restarting');
+    await expect(runUpdate(source, report, { installTimeout: 0 })).resolves.toBeUndefined();
 
     expect(source.autoDownload).toBe(false);
     expect(report.mock.calls.map(([progress]) => progress)).toEqual([
@@ -44,13 +44,22 @@ describe('runUpdate', () => {
       { text: 'Downloading update 2.0.0...', percent: 42 },
       { text: 'Restarting to install the update...', percent: 100 },
     ]);
-    expect(source.quitAndInstall).toHaveBeenCalledOnce();
+    expect(source.quitAndInstall).toHaveBeenCalledExactlyOnceWith(true, true);
+  });
+
+  it('starts the app when it did not quit after the installer started', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const source = createSource(available);
+
+    await expect(runUpdate(source, vi.fn(), { installTimeout: 1 })).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('did not quit'));
   });
 
   it('does not install when installing is turned off', async () => {
     const source = createSource(available);
 
-    await expect(runUpdate(source, vi.fn(), { install: false })).resolves.toBe('continue');
+    await expect(runUpdate(source, vi.fn(), { install: false })).resolves.toBeUndefined();
 
     expect(source.downloadUpdate).toHaveBeenCalledOnce();
     expect(source.quitAndInstall).not.toHaveBeenCalled();
@@ -62,14 +71,36 @@ describe('runUpdate', () => {
   ])('continues when %s', async (_name, check) => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    await expect(runUpdate(createSource(check), vi.fn(), { checkTimeout: 1 })).resolves.toBe('continue');
+    await expect(runUpdate(createSource(check), vi.fn(), { checkTimeout: 1 })).resolves.toBeUndefined();
+  });
+
+  it('continues when the download stalls', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const source = createSource(available, () => new Promise<never>(() => undefined));
+
+    await expect(runUpdate(source, vi.fn(), { downloadStallTimeout: 1 })).resolves.toBeUndefined();
+
+    expect(source.quitAndInstall).not.toHaveBeenCalled();
+  });
+
+  it('keeps a slow download going while it makes progress', async () => {
+    const source = createSource(available, () =>
+      [20, 40, 60].reduce<Promise<unknown>>(
+        (previous, percent) => previous.then(() => new Promise((resolve) => setTimeout(resolve, 15))).then(() => source.emit('download-progress', { percent })),
+        Promise.resolve()
+      )
+    );
+
+    await runUpdate(source, vi.fn(), { downloadStallTimeout: 40, installTimeout: 0 });
+
+    expect(source.quitAndInstall).toHaveBeenCalledOnce();
   });
 
   it('continues when the download fails', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const source = createSource(available, () => Promise.reject(new Error('disk full')));
 
-    await expect(runUpdate(source, vi.fn())).resolves.toBe('continue');
+    await expect(runUpdate(source, vi.fn())).resolves.toBeUndefined();
 
     expect(source.quitAndInstall).not.toHaveBeenCalled();
   });
@@ -79,7 +110,7 @@ describe('createMockUpdateSource', () => {
   it('goes through a whole update without installing anything', async () => {
     const report = vi.fn();
 
-    await expect(runUpdate(createMockUpdateSource(0), report, { install: false })).resolves.toBe('continue');
+    await expect(runUpdate(createMockUpdateSource(0), report, { install: false })).resolves.toBeUndefined();
 
     const percents = report.mock.calls.map(([progress]) => progress.percent).filter((percent) => percent !== undefined);
     expect(percents).toEqual([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]);

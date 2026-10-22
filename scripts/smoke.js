@@ -7,6 +7,7 @@ const { dirname, join, resolve } = require('path')
 // usage: node scripts/smoke.js [--packaged [--ia32] | --flatpak]
 // starts the built app (out/index.js), the packaged one from dist/, or the installed flatpak (flatpak install dist/eMusic-*.flatpak), and checks that the window opens
 // and that the local server answers from the database: a missing file or a native module that does not load shows up here
+// the updater is turned off (EMUSIC_NO_UPDATE), so a newer release can not be downloaded and installed in the middle of the run
 const root = resolve(__dirname, '..')
 const packagedExecutables = {
   linux: 'dist/linux-unpacked/eMusic',
@@ -23,7 +24,7 @@ const ia32 = process.argv.includes('--ia32')
 const executablePath = flatpak ? 'flatpak' : packaged ? resolve(root, ia32 ? packagedIa32Executable : packagedExecutables[process.platform]) : require('electron')
 // the flatpak starts its own sandbox: zypak sets the chromium sandbox up, so --no-sandbox is not passed
 const args = flatpak
-  ? ['run', require('../package.json').build.appId]
+  ? ['run', '--env=EMUSIC_NO_UPDATE=1', require('../package.json').build.appId]
   : [...(packaged ? [] : [resolve(root, 'out/index.js')]), ...(process.platform === 'linux' ? ['--no-sandbox'] : [])]
 
 if (!flatpak && !existsSync(executablePath)) {
@@ -39,8 +40,8 @@ const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env
 // the flatpak finds its user installation through HOME and keeps the data of the app in its own folder, so it keeps them too
 const env =
   process.platform === 'win32' || flatpak
-    ? { ...inherited, NODE_ENV: 'production' }
-    : { ...inherited, HOME: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production' }
+    ? { ...inherited, NODE_ENV: 'production', EMUSIC_NO_UPDATE: '1' }
+    : { ...inherited, HOME: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production', EMUSIC_NO_UPDATE: '1' }
 
 const freePort = () =>
   new Promise((done, fail) => {
