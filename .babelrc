@@ -1,8 +1,13 @@
 {
   "presets": [
     ["@babel/preset-env", { "targets": { "electron": "30" } }],
-    "@babel/preset-react",
     "@babel/preset-typescript"
+  ],
+  "overrides": [
+    {
+      "test": ["./**/*.tsx", "./**/*.jsx", "./**/*.js"],
+      "presets": ["@babel/preset-react"]
+    }
   ],
   "plugins": [
     "@babel/plugin-transform-runtime"
