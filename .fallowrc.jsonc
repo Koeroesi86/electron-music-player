@@ -16,9 +16,10 @@
     // webpack loaders, referenced by name in config/webpack.config.base.js
     "esbuild-loader",
     "css-loader",
-    "file-loader",
     "sass-loader",
     "style-loader",
+    // the fonts of components/player-home/PlayerHome.scss
+    "@fontsource/open-sans",
     // used by the scripts of the checks (scripts/smoke.js, scripts/check-dist.js, scripts/security-scan.js), which run in CI only
     "@electron/asar",
     "@doyensec/electronegativity",
