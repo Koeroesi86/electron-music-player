@@ -85,6 +85,17 @@ describe('RadioStations', () => {
     expect(search).toHaveBeenCalledWith({ name: 'jazz' });
   });
 
+  it('unmounts cleanly when a search returns the dispatched action', () => {
+    const { search, unmount } = renderPanel();
+    search.mockReturnValue({ type: 'SEARCH_RADIO' });
+    fireEvent.change(screen.getByPlaceholderText('Search stations'), { target: { value: 'jazz' } });
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+
+    expect(() => unmount()).not.toThrow();
+  });
+
   it('filters by genre and keeps the name', () => {
     const { search } = renderPanel({ query: { name: 'fm' } });
     search.mockClear();

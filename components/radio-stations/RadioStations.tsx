@@ -30,7 +30,9 @@ const RadioStations = ({ radio, currentStation, search, loadTags, play }: RadioS
     // the most popular stations and the genres load when the panel is first shown
   }, []);
 
-  useUpdateEffect(() => search({ ...query, name: delayedName.trim() || undefined }), [delayedName]);
+  useUpdateEffect(() => {
+    search({ ...query, name: delayedName.trim() || undefined });
+  }, [delayedName]);
 
   return (
     <div className={style.radioStations}>
