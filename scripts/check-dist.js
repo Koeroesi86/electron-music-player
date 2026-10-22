@@ -1,4 +1,4 @@
-const { listPackage } = require('@electron/asar')
+const { listPackage, extractFile } = require('@electron/asar')
 const { existsSync, readFileSync } = require('fs')
 const { resolve } = require('path')
 
@@ -39,6 +39,12 @@ const problems = [
   ...files.flatMap(file => forbidden.filter(([pattern]) => pattern.test(file)).map(([, label]) => `${label}: ${file}`)),
   ...required.filter(path => !files.some(file => file === path || file.startsWith(`${path}/`))).map(path => `missing: ${path}`)
 ]
+
+// a font that is a JavaScript module (file-loader with esModule) fails to decode in the renderer, so the text falls back
+files
+  .filter(file => file.endsWith('.woff2'))
+  .filter(file => extractFile(archive, file.slice(1)).subarray(0, 4).toString('latin1') !== 'wOF2')
+  .forEach(file => problems.push(`not a woff2 font: ${file}`))
 
 const [metadataPath, installer] = updateMetadata[process.platform]
 const metadataFile = resolve(__dirname, '..', metadataPath)

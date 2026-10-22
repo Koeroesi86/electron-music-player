@@ -48,28 +48,12 @@ const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
           target: 'chrome124'
         }
       },
-      // fonts/fonts/components/player-home/fonts/fonts/open-sans-regular.woff2
-      // http://localhost:3000/assets/components/player-home/fonts/fonts/open-sans-regular.woff2
+      // webpack's asset modules emit the file itself, file-loader would emit a JavaScript module next to the url() of the css
       {
-        test: /\.(woff(2)?|ttf|eot)$/,
-        use: [{
-          loader: 'file-loader',
-          options: {
-            name: '[name]-[hash].[ext]',
-            useRelativePath: true,
-            outputPath: 'bundle/',
-            publicPath: 'fonts/'
-          }
-        }]
-      },
-      {
-        test: /\.(svg|png|jpg|webm|mp4)$/,
-        loader: 'file-loader',
-        options: {
-          name: '[name]-[hash].[ext]',
-          useRelativePath: true,
-          outputPath: 'bundle/',
-          publicPath: 'bundle/'
+        test: /\.(woff(2)?|ttf|eot|svg|png|jpg|webm|mp4)$/,
+        type: 'asset/resource',
+        generator: {
+          filename: 'bundle/[name]-[hash][ext]'
         }
       },
       {
