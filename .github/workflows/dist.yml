@@ -60,6 +60,8 @@ jobs:
         if: inputs.version != ''
         env:
           VERSION: ${{ inputs.version }}
+        # the default shell of Windows is PowerShell, where "$VERSION" is empty and the installer would keep the version of package.json
+        shell: bash
         run: node scripts/version.js "$VERSION"
       - run: npm run build
       - run: npm run dist
@@ -84,4 +86,5 @@ jobs:
           path: |
             dist/eMusic*
             dist/*.yml
+            !dist/builder-debug.yml
           if-no-files-found: error
