@@ -1,6 +1,6 @@
-import { mkdtemp, readFile, rm, stat } from 'fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
-import { posix, resolve } from 'path';
+import { posix } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IpcMainEvent } from 'electron';
 import type { LauncherOptions } from './appImageLauncher';
@@ -18,13 +18,12 @@ vi.mock('electron', () => ({
   ipcMain: { on: (channel: string, listener: Listener) => listeners.set(channel, listener) },
 }));
 
-// the listeners find the icons relative to the compiled files, the sources have them one folder up
+// the listeners find the icons relative to the compiled files, the tests bring their own
 vi.mock('./appImageLauncher', async (importOriginal) => {
   const original = await importOriginal<typeof import('./appImageLauncher')>();
   return {
     ...original,
-    enableLauncher: (appImage: string, options: LauncherOptions) =>
-      original.enableLauncher(appImage, { ...options, iconsPath: resolve(__dirname, '../icons/png') }),
+    enableLauncher: (appImage: string, options: LauncherOptions) => original.enableLauncher(appImage, { ...options, iconsPath: join(home, 'icons') }),
   };
 });
 
@@ -39,6 +38,8 @@ describe('registerLauncherListeners', () => {
 
   beforeEach(async () => {
     home = (await mkdtemp(join(tmpdir(), 'emusic-listeners-'))).replaceAll('\\', '/');
+    await mkdir(join(home, 'icons'));
+    await Promise.all([16, 24, 32, 48, 64, 128, 256, 512].map((size) => writeFile(join(home, 'icons', `${size}x${size}.png`), '')));
     vi.stubEnv('XDG_DATA_HOME', join(home, 'data'));
     listeners.clear();
     send.mockReset();

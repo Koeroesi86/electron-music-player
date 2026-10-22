@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
-import { posix } from 'path';
+import { normalize, posix } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildDesktopEntry,
@@ -79,7 +79,7 @@ describe('launcher on disk', () => {
     await expect(readdir(join(folder, 'data/icons/hicolor'))).resolves.toHaveLength(sizes.length);
     await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(true);
     await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
-    expect(refresh).toHaveBeenCalledExactlyOnceWith(join(folder, 'data/applications'));
+    expect(refresh).toHaveBeenCalledExactlyOnceWith(normalize(join(folder, 'data/applications')));
   });
 
   it('leaves nothing behind when the path can not be used', async () => {
