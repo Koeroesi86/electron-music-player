@@ -18,6 +18,7 @@ const createWindow = () => {
     transparent: true,
     darkTheme: true,
     show: false,
+    icon: resolve(__dirname, '../../icons/png/512x512.png'),
     webPreferences: {
       backgroundThrottling: false,
       preload: resolve(__dirname, './preload.js'),

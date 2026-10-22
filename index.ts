@@ -22,6 +22,11 @@ const isWin = process.platform === 'win32';
 const isMac = process.platform === 'darwin';
 const isDev = process.env.NODE_ENV === 'development';
 
+// scripts/prebuild.js registers this desktop entry, which gives the development window its icon on linux
+if (isDev && process.platform === 'linux') {
+  app.setDesktopName('emusic-dev.desktop');
+}
+
 const argv = minimist(process.argv.slice(2));
 
 global._appDataPath = resolve(app.getPath('appData'), `./${packageInfo.name}`);

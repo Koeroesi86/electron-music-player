@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron';
+import { resolve } from 'path';
 
 function getLoadingWindow() {
   const loadingWindow = new BrowserWindow({
@@ -12,6 +13,7 @@ function getLoadingWindow() {
     transparent: true,
     darkTheme: true,
     show: false,
+    icon: resolve(__dirname, '../../icons/png/512x512.png'),
     webPreferences: {
       backgroundThrottling: false,
     },
