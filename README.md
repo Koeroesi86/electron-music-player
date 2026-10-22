@@ -10,6 +10,7 @@ Open-Source Lossless Audio Player
 | Command            | Purpose                              |
 | :----------------- | :----------------------------------- |
 | `npm run dev`      | Start development server             |
+| `MOCK_UPDATE=1 npm run dev` | Development server with a mocked update on the splash (nothing is installed) |
 | `npm run build`    | Compile the app to `/out` and `/build`. |
 | `npm run typecheck`| Type-check the whole project         |
 | `npm run dist`     | Build for current OS                 |

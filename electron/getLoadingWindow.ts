@@ -16,6 +16,7 @@ function getLoadingWindow() {
     icon: resolve(__dirname, '../../icons/png/512x512.png'),
     webPreferences: {
       backgroundThrottling: false,
+      preload: resolve(__dirname, './splashPreload.js'),
     },
   });
   // loadingWindow.setSize(400, 300)

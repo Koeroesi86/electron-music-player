@@ -39,7 +39,8 @@ const extraBuilds = {
   linux: [{ linux: ['flatpak'] }, { linux: ['snap'] }]
 }
 
-const build = options => electronBuilder.build(options)
+// the release workflow uploads the files, electron-builder only writes the update metadata next to them
+const build = options => electronBuilder.build({ ...options, publish: 'never' })
 
 platforms
   .filter(([enabled]) => enabled)
