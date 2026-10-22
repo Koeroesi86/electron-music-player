@@ -9,37 +9,8 @@ import type { Database } from 'sqlite3';
 import type { WebContents } from 'electron';
 import type { Track } from '../types/library';
 import addTrack from './addTrack';
-import executeQuery from './executeQuery';
-
-const supportedFormats = [
-  'ape',
-  'aif',
-  'aiff',
-  'aifc',
-  'asf',
-  'wma',
-  'wmv',
-  'flac',
-  'm4a',
-  'm4b',
-  'm4p',
-  'm4v',
-  'm4r',
-  '3gp',
-  'mp4',
-  'aac',
-  'mp2',
-  'mp3',
-  'm2a',
-  'ogv',
-  'oga',
-  'ogx',
-  'ogg',
-  'opus',
-  'wav',
-  'wv',
-  'wvp',
-];
+import { getLibrary } from './libraryRepository';
+import isSupported from './isSupported';
 
 const fileReadTimeout = 2000;
 
@@ -82,8 +53,6 @@ const transformMeta = ({ common: metadata, format }: IAudioMetadata, fileName: s
 
 const isEqual = (a: Track, b: Track) => (Object.keys(a) as (keyof Track)[]).every((key) => `${a[key]}` === `${b[key]}`);
 
-const isSupported = (filePath: string) => supportedFormats.includes(path.extname(filePath).replace('.', ''));
-
 /** Collect the supported audio files of a folder tree, one folder at a time, symbolic links are skipped */
 const findFiles = async (directory: string): Promise<string[]> => {
   const entries = await fs.promises.readdir(directory, { withFileTypes: true });
@@ -124,7 +93,7 @@ const scanFolder = async (folderPath: string, sender: WebContents) => {
   const appDataPath = global._appDataPath;
 
   const files = (await findFiles(folderPath)).sort();
-  const library = await executeQuery<Track>(database, { query: `SELECT * FROM library ORDER BY path ASC`, variables: [] });
+  const library = await getLibrary(database);
   const existingTracks = new Map(library.map((track) => [track.path, track]));
   let currentFolder = folderPath;
 

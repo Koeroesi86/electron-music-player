@@ -40,7 +40,7 @@ describe('audio context', () => {
   it('has no analyser before an audio element is connected', async () => {
     const { audio } = await setup();
 
-    expect(audio.createAnalyser()).toBe(false);
+    expect(audio.createAnalyser()).toBeUndefined();
   });
 
   it('only listens with the analyser: playing its output would add the signal around the equalizer', async () => {

@@ -57,7 +57,6 @@ export type AppAction =
   | EmptyAction<'CLEAR_PLAYED'>
   | EmptyAction<'POP_PLAYED'>
   | EmptyAction<'CLICK_NOTIFICATION'>
-  | PayloadAction<'LIBRARY_SIZE', unknown>
   | PayloadAction<'FOLDERS_ADDED_TO_LIBRARY', { folders: Folder[] }>
   | PayloadAction<'STORE_FOLDERS', { folders: Folder[] }>
   | PayloadAction<'STORE_LIBRARY', { library: Track[]; finished: boolean }>

@@ -1,60 +1,52 @@
 import fs from 'fs';
 import type { WebContents } from 'electron';
-import type { Folder, Track } from '../types/library';
-import executeQuery from './executeQuery';
+import type { Database } from 'sqlite3';
+import type { Folder } from '../types/library';
+import { deleteTracks, getFolders, getLibrary, saveFolders } from './libraryRepository';
 import scanFolders from './scanFolders';
 
-function rescanLibrary(sender: WebContents, forced = false) {
+const exists = (filePath: string) =>
+  fs.promises.access(filePath).then(
+    () => true,
+    () => false
+  );
+
+const readModifiedTimes = async (folders: Folder[]) => {
+  const times = await Promise.all(folders.map(async (folder) => [folder.path, await fs.promises.stat(folder.path).catch(() => undefined)] as const));
+  return new Map(times.flatMap(([folderPath, stat]) => (stat ? [[folderPath, Math.floor(stat.mtimeMs)] as const] : [])));
+};
+
+const removeMissingTracks = async (database: Database) => {
+  const tracks = await getLibrary(database);
+  const present = await Promise.all(tracks.map((track) => exists(track.path)));
+  const missing = tracks.filter((_track, index) => !present[index]);
+
+  missing.forEach((track) => console.log(`Removing non existent ${track.path}`));
+  console.log(`Removing ${missing.length} of ${tracks.length} songs`);
+  await deleteTracks(database, missing);
+};
+
+async function rescanLibrary(sender: WebContents, forced = false) {
   const database = global._database;
   if (!database) return;
   console.log(`Scanning library ${forced ? 'completely' : 'wisely'}...`);
-  executeQuery<Folder>(database, {
-    query: `SELECT * FROM folders ORDER BY path ASC`,
-    variables: [],
-  })
-    .then(async (folders) => {
-      const modified = new Map(
-        folders.filter((folder) => fs.existsSync(folder.path)).map((folder) => [folder.path, Math.floor(fs.statSync(folder.path).mtimeMs)])
-      );
-      const changed = folders.filter((folder) => (forced ? modified.has(folder.path) : folder.lastModified < (modified.get(folder.path) ?? 0)));
 
-      await scanFolders(changed, sender);
+  try {
+    const folders = await getFolders(database);
+    const modified = await readModifiedTimes(folders);
+    const changed = folders.filter((folder) => (forced ? modified.has(folder.path) : folder.lastModified < (modified.get(folder.path) ?? 0)));
 
-      // stored after the scan, with the time seen before it, so a failed or interrupted scan is retried
-      return Promise.all(
-        changed.map((folder) =>
-          executeQuery(database, {
-            query: `INSERT OR REPLACE INTO folders (path, lastModified) VALUES (?, ?)`,
-            variables: [folder.path, modified.get(folder.path)],
-          })
-        )
-      );
-    })
-    .then(() =>
-      executeQuery<Track>(database, {
-        query: `SELECT * FROM library ORDER BY path ASC`,
-        variables: [],
-      })
-    )
-    .then((tracks) => {
-      const queries = tracks
-        .filter((track) => !fs.existsSync(track.path))
-        .map((track) => {
-          console.log(`Removing non existent ${track.path}`);
-          return executeQuery(database, {
-            query: `DELETE FROM library WHERE path = ?`,
-            variables: [track.path],
-          });
-        });
-
-      console.log(`Removing ${queries.length} of ${tracks.length} songs`);
-
-      return Promise.all(queries);
-    })
-    .then(() => {
-      sender.send('RESCAN_COMPLETE', {});
-    })
-    .catch((e) => console.error(e));
+    await scanFolders(changed, sender);
+    // stored after the scan, with the time seen before it, so a failed or interrupted scan is retried
+    await saveFolders(
+      database,
+      changed.map((folder) => ({ path: folder.path, lastModified: modified.get(folder.path) ?? folder.lastModified }))
+    );
+    await removeMissingTracks(database);
+    sender.send('RESCAN_COMPLETE', {});
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 export default rescanLibrary;
