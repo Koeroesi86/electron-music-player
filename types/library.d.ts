@@ -22,6 +22,17 @@ export interface Album {
   tracks: Track[];
 }
 
+/** An album as listed in a window of the library, its tracks are fetched when the album is opened or played */
+export interface AlbumSummary extends Omit<Album, 'tracks'> {
+  trackCount: number;
+}
+
+/** One page of a list, together with the length of the whole list */
+export interface LibraryPage<T> {
+  items: T[];
+  total: number;
+}
+
 export interface Folder {
   path: string;
   lastModified: number;

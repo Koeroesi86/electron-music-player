@@ -1,52 +1,39 @@
-import { dirname } from 'path';
 import type { Reducer } from 'redux';
-import type { Album, Track } from '../../../types/library';
+import type { AlbumSummary, Track } from '../../../types/library';
 import { isAppAction } from '../types';
+import { createPageCache, markStale, storePage } from './pages';
+import type { PageCache } from './pages';
 
 export interface LibraryState {
-  tracks: Track[];
-  albums: Album[];
+  tracks: PageCache<Track>;
+  albums: PageCache<AlbumSummary>;
+  /** The first page has arrived */
   loaded: boolean;
 }
 
 const initialState: LibraryState = {
-  tracks: [],
-  albums: [],
+  tracks: createPageCache(),
+  albums: createPageCache(),
   loaded: false,
 };
 
 const reducer: Reducer<LibraryState> = (state = initialState, action) => {
   if (!isAppAction(action)) return state;
 
-  if (action.type === 'STORE_LIBRARY') {
-    const { library, finished } = action.payload;
-    // the payload is the whole library, so albums and tracks that are gone from it are gone from the state too
-    const tracks = library.map((track) => ({ ...track, picture: track.picture?.replace(/^file:\/\//, '') ?? null }));
-    const albums = new Map<string, Album>();
-    tracks.forEach((track) => {
-      const path = dirname(track.path);
-      const id = `${path} - ${track.album}`;
-      const album = albums.get(id);
-      if (album) {
-        album.tracks.push(track);
-        album.duration = (album.duration ?? 0) + (track.duration ?? 0);
-      } else {
-        albums.set(id, {
-          id,
-          title: track.album,
-          path,
-          artist: track.artist,
-          cover: track.picture,
-          duration: track.duration,
-          year: track.year,
-          tracks: [track],
-        });
-      }
-    });
-    return { ...state, tracks, albums: [...albums.values()], loaded: !!finished };
+  switch (action.type) {
+    case 'STORE_TRACK_PAGE': {
+      const { page, items, total } = action.payload;
+      return { ...state, tracks: storePage(state.tracks, page, items, total), loaded: true };
+    }
+    case 'STORE_ALBUM_PAGE': {
+      const { page, items, total } = action.payload;
+      return { ...state, albums: storePage(state.albums, page, items, total) };
+    }
+    case 'INVALIDATE_LIBRARY':
+      return { ...state, tracks: markStale(state.tracks), albums: markStale(state.albums) };
+    default:
+      return state;
   }
-
-  return state;
 };
 
 export default reducer;

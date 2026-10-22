@@ -63,7 +63,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, scanningFolder: action.payload.folder };
     case 'SCANNING_FILE':
       return { ...state, progress: action.payload.progress, totalCount: action.payload.totalCount };
-    case 'STORE_LIBRARY':
+    case 'RESCAN_COMPLETE':
+    case 'TRACKS_ADDED_TO_LIBRARY':
       return { ...state, scanningFolder: null };
     case 'MAXIMIZED_APP':
       return { ...state, maximized: action.payload.maximized };

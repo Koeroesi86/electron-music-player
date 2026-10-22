@@ -5,6 +5,7 @@ import type { RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
 import { electronAPI } from '../../electron-api';
 import type { RootState } from '../reducers';
 import { getCoverUrl } from '../../cover-url';
+import { fetchAlbumPage, fetchTrackPage } from '../../library-api';
 import { actionMiddleware, onAction } from '../on-action';
 import type { Store } from '../on-action';
 import type { PersistedSettings, PlaylistItem, UiState } from '../types';
@@ -37,15 +38,32 @@ const appLoaded = _.debounce(() => {
   electronAPI.send('APP_LOADED', {});
 }, 500);
 
-const getLibrary = async (store: Store): Promise<Track[]> => {
-  const { port } = store.getState().uiState;
-  const response = await fetch(`http://127.0.0.1:${port}/library`);
-  if (!response.ok) throw new Error(`Failed to fetch library: ${response.status}`);
-
-  return response.json();
+const pageFetchers = {
+  tracks: (port: string, page: number) => fetchTrackPage(port, page).then((result) => ({ type: 'STORE_TRACK_PAGE' as const, payload: { page, ...result } })),
+  albums: (port: string, page: number) => fetchAlbumPage(port, page).then((result) => ({ type: 'STORE_ALBUM_PAGE' as const, payload: { page, ...result } })),
 };
 
-const loadLibrary = (store: Store) => getLibrary(store).then((library) => store.dispatch({ type: 'STORE_LIBRARY', payload: { library, finished: true } }));
+const loading = new Set<string>();
+let generation = 0;
+
+/** Fetch a page once at a time; a page that was requested before the library changed is fetched again instead of stored */
+const loadPage = (store: Store, kind: keyof typeof pageFetchers, page: number): Promise<void> => {
+  const key = `${kind}:${page}`;
+  if (loading.has(key)) return Promise.resolve();
+
+  loading.add(key);
+  const requested = generation;
+  return pageFetchers[kind](store.getState().uiState.port, page)
+    .then((action) => {
+      loading.delete(key);
+      if (requested === generation) store.dispatch(action);
+      else store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind, page } });
+    })
+    .catch((err) => {
+      loading.delete(key);
+      console.error(err);
+    });
+};
 
 const rescanInterval = 1000 * 60 * 60;
 
@@ -101,7 +119,7 @@ const start = (store: Store) => {
     if (store.getState().uiState.totalCount === 0) rescanLibrary(false);
   }, rescanInterval);
 
-  loadLibrary(store).then(appLoaded);
+  loadPage(store, 'tracks', 0).then(appLoaded);
 };
 
 const toAddedFiles = (fileList: FileList) =>
@@ -120,7 +138,14 @@ const notifyTrack = (store: Store, track: Track) =>
 const handleActions = actionMiddleware((store) => [
   onAction('FILES_ADDED', ({ payload }) => electronAPI.send('ADD_FOLDERS_TO_LIBRARY', toAddedFiles(payload.fileList))),
   onAction('RESCAN_LIBRARY', () => rescanLibrary(true)),
-  onAction('RESCAN_COMPLETE', () => loadLibrary(store)),
+  onAction('LOAD_LIBRARY_PAGE', ({ payload }) => void loadPage(store, payload.kind, payload.page)),
+  // the cached pages are fetched again when they are shown, not all at once
+  ...(['RESCAN_COMPLETE', 'TRACKS_ADDED_TO_LIBRARY'] as const).map((type) =>
+    onAction(type, () => {
+      generation += 1;
+      store.dispatch({ type: 'INVALIDATE_LIBRARY' });
+    })
+  ),
   onAction('CLOSE_APP', () => {
     store.dispatch({ type: 'SAVE_SETTINGS', payload: {} });
     electronAPI.send('CLOSE_APP', {});
