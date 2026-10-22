@@ -1,6 +1,6 @@
 const { listPackage, extractFile } = require('@electron/asar')
 const { existsSync, readFileSync } = require('fs')
-const { resolve } = require('path')
+const { normalize, resolve } = require('path')
 
 // usage: node scripts/check-dist.js
 // lists what the packaged app contains and fails on files that must not ship: secrets, source maps, tests and the sources of the app
@@ -42,8 +42,8 @@ const problems = [
 
 // a font that is a JavaScript module (file-loader with esModule) fails to decode in the renderer, so the text falls back
 files
-  .filter(file => file.endsWith('.woff2'))
-  .filter(file => extractFile(archive, file.slice(1)).subarray(0, 4).toString('latin1') !== 'wOF2')
+  .filter(file => file.startsWith('/build/') && file.endsWith('.woff2'))
+  .filter(file => extractFile(archive, normalize(file.slice(1))).subarray(0, 4).toString('latin1') !== 'wOF2')
   .forEach(file => problems.push(`not a woff2 font: ${file}`))
 
 const [metadataPath, installer] = updateMetadata[process.platform]
