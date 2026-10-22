@@ -41,7 +41,7 @@ describe('addFoldersToLibrary', () => {
 
     expect(await stored()).toEqual([folder('music')]);
     expect(scanFolders).toHaveBeenCalledWith([{ path: folder('music'), lastModified: 5 }], sender);
-    expect(send.mock.calls.map(([channel]) => channel)).toEqual(['FOLDERS_ADDED_TO_LIBRARY', 'TRACKS_ADDED_TO_LIBRARY']);
+    expect(send.mock.calls.map(([channel]) => channel)).toEqual(['STORE_FOLDERS', 'FOLDERS_ADDED_TO_LIBRARY', 'TRACKS_ADDED_TO_LIBRARY']);
   });
 
   it('ignores files, missing paths and malformed items', async () => {

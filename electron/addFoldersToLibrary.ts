@@ -1,7 +1,7 @@
 import fs from 'fs';
 import type { Database } from 'sqlite3';
 import type { WebContents } from 'electron';
-import { deleteFolders, getFoldersInside, saveFolders } from './libraryRepository';
+import { deleteFolders, getFolders, getFoldersInside, saveFolders } from './libraryRepository';
 import scanFolders from './scanFolders';
 
 interface AddedFile {
@@ -32,6 +32,7 @@ async function addFoldersToLibrary(database: Database, payload: unknown, sender:
   const nested = await Promise.all(folders.map((folder) => getFoldersInside(database, folder.path)));
   await deleteFolders(database, nested.flat());
   await saveFolders(database, folders);
+  sender.send('STORE_FOLDERS', { folders: await getFolders(database) });
   sender.send('FOLDERS_ADDED_TO_LIBRARY', { folders });
 
   await scanFolders(folders, sender);

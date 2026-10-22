@@ -75,6 +75,8 @@ export type AppAction =
   | PayloadAction<'STORE_TRACK_PAGE', { page: number; items: Track[]; total: number }>
   | PayloadAction<'STORE_ALBUM_PAGE', { page: number; items: AlbumSummary[]; total: number }>
   | PayloadAction<'FILES_ADDED', { fileList: FileList }>
+  | PayloadAction<'REMOVE_FOLDER', { path: string }>
+  | EmptyAction<'FOLDER_REMOVED_FROM_LIBRARY'>
   | PayloadAction<'CLICKED_URL', { playlist: PlaylistItem[]; url: string }>
   | PayloadAction<'RESTORE_SETTINGS', { settings: Partial<PersistedSettings> }>
   | PayloadAction<'SCANNING_FOLDER', { folder: string }>
