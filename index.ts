@@ -5,6 +5,7 @@ import minimist from 'minimist';
 import fp from 'find-free-port';
 import ws from 'windows-shortcuts-appid';
 import type { AppWindows } from './types/global';
+import getAppDataPath from './electron/appDataPath';
 import createWindow from './electron/createWindow';
 import getLoadingWindow from './electron/getLoadingWindow';
 import createDatabase from './electron/createDatabase';
@@ -29,7 +30,7 @@ if (isDev && process.platform === 'linux') {
 
 const argv = minimist(process.argv.slice(2));
 
-global._appDataPath = resolve(app.getPath('appData'), `./${packageInfo.name}`);
+global._appDataPath = getAppDataPath(app.getPath('appData'), packageInfo.name, isDev);
 const appDataPath = global._appDataPath;
 
 const windows: AppWindows = {
