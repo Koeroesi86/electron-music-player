@@ -56,4 +56,11 @@ describe('library api', () => {
 
     await expect(fetchTrackPage('3000', 0)).rejects.toThrow('500');
   });
+
+  it('does not request from a port that is not a number', async () => {
+    respond({});
+
+    await expect(fetchTrackPage('3000@example.com', 0)).rejects.toThrow('Invalid port');
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });

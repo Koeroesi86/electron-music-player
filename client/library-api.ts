@@ -1,8 +1,14 @@
 import type { Album, AlbumSummary, LibraryPage, Track } from '../types/library';
 import { pageSize } from './redux/library/pages';
 
+const toLocalUrl = (port: string, route: string) => {
+  if (!/^\d{1,5}$/.test(port)) throw new Error(`Invalid port: ${port}`);
+
+  return new URL(route, `http://127.0.0.1:${Number(port)}`);
+};
+
 const getJson = async <T>(port: string, route: string): Promise<T> => {
-  const response = await fetch(`http://127.0.0.1:${port}${route}`);
+  const response = await fetch(toLocalUrl(port, route).href);
   if (!response.ok) throw new Error(`Failed to fetch ${route}: ${response.status}`);
 
   return response.json();
