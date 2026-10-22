@@ -13,17 +13,11 @@
   ],
   "ignoreDependencies": [
     // webpack loaders, referenced by name in config/webpack.config.base.js
-    "babel-loader",
+    "esbuild-loader",
     "css-loader",
     "file-loader",
     "sass-loader",
     "style-loader",
-    // kept for the commented url-loader rule and the imports/exports webpack shims
-    "url-loader",
-    "imports-loader",
-    "exports-loader",
-    // babel preset of the overrides in .babelrc, which only applies to the files with JSX
-    "@babel/preset-react",
     // used by the scripts of the checks (scripts/smoke.js, scripts/check-dist.js, scripts/security-scan.js), which run in CI only
     "@electron/asar",
     "@doyensec/electronegativity",

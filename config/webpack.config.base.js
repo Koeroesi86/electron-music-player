@@ -1,7 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
 const StaticSitePlugin = require('./static-site-plugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const appConfig = require('./appConfig')
 const cache = require('./cache')
 
@@ -42,15 +41,13 @@ const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
       {
         test: /\.(js|jsx|ts|tsx)$/,
         exclude: /node_modules/,
-        loader: 'babel-loader',
+        loader: 'esbuild-loader',
         options: {
-          cacheDirectory: cache.babel
+          jsx: 'automatic',
+          // the renderer is the Chromium of Electron, which is newer than this
+          target: 'chrome124'
         }
       },
-      // {
-      //   test: /\.(svg|png|jpg|webm|mp4|woff|woff2|ttf|eot)$/,
-      //   loader: 'url-loader'
-      // },
       // fonts/fonts/components/player-home/fonts/fonts/open-sans-regular.woff2
       // http://localhost:3000/assets/components/player-home/fonts/fonts/open-sans-regular.woff2
       {
@@ -84,14 +81,6 @@ const createConfig = ({ name, entry, target, resolveFallback, plugins }) => ({
               injectType: 'singletonStyleTag'
             }
           },
-          // {
-          //   loader: MiniCssExtractPlugin.loader,
-          //   options: {
-          //     // you can specify a publicPath here
-          //     // by default it use publicPath in webpackOptions.output
-          //     // publicPath: '../'
-          //   }
-          // },
           {
             loader: 'css-loader', // translates CSS into CommonJS
             options: {

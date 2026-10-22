@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import _ from 'lodash';
+import { debounce } from '../utils/debounce';
 
 /** Toggle a class on the separator while the listing is scrolled down */
 export const useScrollSeparator = (scrolledClassName: string) => {
@@ -8,7 +8,7 @@ export const useScrollSeparator = (scrolledClassName: string) => {
 
   useEffect(() => {
     const element = listing.current;
-    const onScroll = _.debounce((event: Event) => {
+    const onScroll = debounce((event: Event) => {
       if (!(event.target instanceof HTMLElement)) return;
       separator.current?.classList.toggle(scrolledClassName, event.target.scrollTop > 0);
     }, 50);

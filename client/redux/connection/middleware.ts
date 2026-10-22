@@ -1,8 +1,8 @@
 import type { Middleware } from 'redux';
-import _ from 'lodash';
 import type { Folder, Track } from '../../../types/library';
 import type { RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
 import { electronAPI } from '../../electron-api';
+import { debounce } from '../../utils/debounce';
 import type { RootState } from '../reducers';
 import { getCoverUrl } from '../../cover-url';
 import { fetchAlbumPage, fetchTrackPage } from '../../library-api';
@@ -34,7 +34,7 @@ function rescanLibrary(forced = false) {
   electronAPI.send('RESCAN_LIBRARY', { forced });
 }
 
-const appLoaded = _.debounce(() => {
+const appLoaded = debounce(() => {
   electronAPI.send('APP_LOADED', {});
 }, 500);
 
@@ -83,7 +83,7 @@ const persistedKeys = [
   'equalizer',
 ] satisfies (keyof PersistedSettings)[];
 
-const saveSettings = (uiState: UiState) => electronAPI.send('SAVE_SETTINGS', _.pick(uiState, persistedKeys));
+const saveSettings = (uiState: UiState) => electronAPI.send('SAVE_SETTINGS', Object.fromEntries(persistedKeys.map((key) => [key, uiState[key]])));
 
 const toPlaylistTrack = ({ file, title }: PlaylistItem): Track => ({
   path: file,
