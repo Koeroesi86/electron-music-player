@@ -1,0 +1,44 @@
+name: Dist image
+
+# builds the image of the Linux dist job (.github/docker/dist-linux.Dockerfile); a pull request builds and checks it, master and a manual run publish it
+on:
+  push:
+    branches: [master]
+    paths:
+      - .github/docker/**
+      - .github/workflows/dist-image.yml
+  pull_request:
+    paths:
+      - .github/docker/**
+      - .github/workflows/dist-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/koeroesi86/emusic-dist-linux
+
+jobs:
+  image:
+    name: Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        run: docker build --file .github/docker/dist-linux.Dockerfile --tag "$IMAGE:latest" .github/docker
+      - name: Check the tools of the image
+        run: |
+          docker run --rm "$IMAGE:latest" sh -c 'flatpak-builder --version && bsdtar --version && xvfb-run --help >/dev/null && dbus-run-session --version && flatpak list --system --runtime'
+      - name: Publish the image
+        if: github.event_name != 'pull_request'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE:latest"
