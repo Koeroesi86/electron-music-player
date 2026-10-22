@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { describe, expect, it, vi } from 'vitest';
-import { createMockUpdateSource, runUpdate } from './updater';
+import { canUpdate, createMockUpdateSource, runUpdate } from './updater';
 import type { UpdateSource } from './updater';
 
 const createSource = (check: UpdateSource['checkForUpdates'], download: UpdateSource['downloadUpdate'] = () => Promise.resolve()) => {
@@ -114,5 +114,28 @@ describe('createMockUpdateSource', () => {
 
     const percents = report.mock.calls.map(([progress]) => progress.percent).filter((percent) => percent !== undefined);
     expect(percents).toEqual([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]);
+  });
+});
+
+describe('canUpdate', () => {
+  it.each([
+    ['a packaged app on windows', true, 'win32', {}],
+    ['a packaged app on macos', true, 'darwin', {}],
+    ['a packaged app in an AppImage', true, 'linux', { APPIMAGE: '/home/me/eMusic.AppImage' }],
+  ] as const)('updates %s', (_name, isPackaged, platform, env) => {
+    expect(canUpdate(isPackaged, platform, env)).toBe(true);
+  });
+
+  it.each([
+    ['a development run', false, 'win32', {}],
+    ['the Flatpak or a deb, which is not an AppImage', true, 'linux', {}],
+    ['a run with EMUSIC_NO_UPDATE=1', true, 'win32', { EMUSIC_NO_UPDATE: '1' }],
+    ['an AppImage with EMUSIC_NO_UPDATE=1', true, 'linux', { APPIMAGE: '/home/me/eMusic.AppImage', EMUSIC_NO_UPDATE: '1' }],
+  ] as const)('does not update %s', (_name, isPackaged, platform, env) => {
+    expect(canUpdate(isPackaged, platform, env)).toBe(false);
+  });
+
+  it('only EMUSIC_NO_UPDATE=1 turns it off', () => {
+    expect(canUpdate(true, 'win32', { EMUSIC_NO_UPDATE: '0' })).toBe(true);
   });
 });

@@ -14,7 +14,7 @@ import setupListeners from './electron/setupListeners';
 import setupServer from './electron/setupServer';
 import { createRadioBrowser } from './electron/radioBrowser';
 import { autoUpdater } from 'electron-updater';
-import { createMockUpdateSource, runUpdate } from './electron/updater';
+import { canUpdate, createMockUpdateSource, runUpdate } from './electron/updater';
 import type { UpdateSource } from './electron/updater';
 
 // compiled to out/index.js, the project root is one level up
@@ -126,14 +126,10 @@ const getPort = () => {
   });
 };
 
-// electron-updater only works in the packaged app, on Linux only in an AppImage (the Flatpak updates through its store),
-// and EMUSIC_NO_UPDATE=1 turns it off, which the smoke tests of the packaged app set
 const getUpdateSource = (): UpdateSource | undefined => {
   if (isMockUpdate) return createMockUpdateSource();
-  if (!app.isPackaged || process.env.EMUSIC_NO_UPDATE === '1') return undefined;
-  if (process.platform === 'linux' && !process.env.APPIMAGE) return undefined;
 
-  return autoUpdater;
+  return canUpdate(app.isPackaged, process.platform, process.env) ? autoUpdater : undefined;
 };
 
 // the splash stays up while the update is checked and downloaded, the app starts once it is done

@@ -35,6 +35,8 @@ export interface UiState extends PersistedSettings {
   isPlaying: boolean;
   /** The track the current radio station is playing, as the stream announces it */
   streamTitle: string | null;
+  /** Whether the app can add itself to the application menu (from an AppImage on Linux), and whether it did */
+  launcher: { available: boolean; enabled: boolean };
 }
 
 type EmptyPayload = Record<string, never>;
@@ -79,6 +81,8 @@ export type AppAction =
   | PayloadAction<'SCANNING_FILE', { fileName: string; progress: number; totalCount: number }>
   | PayloadAction<'MAXIMIZED_APP', { maximized: boolean }>
   | PayloadAction<'SET_PLAYING', { isPlaying: boolean }>
+  | PayloadAction<'LAUNCHER_STATE', { available: boolean; enabled: boolean }>
+  | PayloadAction<'SET_LAUNCHER', { enabled: boolean }>
   | PayloadAction<'SET_VIEW', { view: LibraryView }>
   | PayloadAction<'SET_ONLINE_VIEW', { view: OnlineView }>
   | PayloadAction<'SET_TAB', { tab: Tab }>

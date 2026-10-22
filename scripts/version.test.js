@@ -1,3 +1,4 @@
+import { execFileSync } from 'child_process'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -15,7 +16,6 @@ describe('createVersion', () => {
     expect(version).toBe(expected)
     expect(version).toMatch(versionPattern)
   })
-
 })
 
 describe('stampVersion', () => {
@@ -43,5 +43,20 @@ describe('stampVersion', () => {
 
     expect(() => stampVersion(packagePath, version)).toThrow('is not a version')
     expect(JSON.parse(readFileSync(packagePath, 'utf8')).version).toBe('1.0.0')
+  })
+})
+
+describe('command line', () => {
+  const run = (args, env) => {
+    const output = execFileSync(process.execPath, [join(__dirname, 'version.js'), ...args], { env, encoding: 'utf8', stdio: 'pipe' })
+    return output.trim()
+  }
+
+  it('prints the version of a new release from the run number', () => {
+    expect(run([], { GITHUB_RUN_NUMBER: '14' })).toMatch(new RegExp(`^\\d{2}\\.[1-9]\\d?\\.14$`))
+  })
+
+  it('refuses to print a version without a run number', () => {
+    expect(() => run([], {})).toThrow('GITHUB_RUN_NUMBER is not set')
   })
 })

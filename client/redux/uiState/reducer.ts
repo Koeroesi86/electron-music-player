@@ -21,6 +21,7 @@ const initialState: UiState = {
   maximized: false,
   isPlaying: false,
   streamTitle: null,
+  launcher: { available: false, enabled: false },
   shuffle: false,
   repeat: false,
   equalizer: defaultGains,
@@ -70,6 +71,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, maximized: action.payload.maximized };
     case 'SET_TAB':
       return { ...state, tab: action.payload.tab };
+    case 'LAUNCHER_STATE':
+      return { ...state, launcher: action.payload };
     case 'SET_PLAYING':
       return { ...state, isPlaying: action.payload.isPlaying };
     case 'TOGGLE_REPEAT':

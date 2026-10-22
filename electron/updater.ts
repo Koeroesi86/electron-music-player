@@ -101,3 +101,10 @@ export function createMockUpdateSource(stepDelay = 250): UpdateSource {
 
   return source;
 }
+
+/**
+ * electron-updater only works in the packaged app, on Linux only in an AppImage (the Flatpak updates through its store),
+ * and EMUSIC_NO_UPDATE=1 turns it off, which the smoke tests of the packaged app set
+ */
+export const canUpdate = (isPackaged: boolean, platform: NodeJS.Platform, env: NodeJS.ProcessEnv) =>
+  isPackaged && env.EMUSIC_NO_UPDATE !== '1' && (platform !== 'linux' || Boolean(env.APPIMAGE));
