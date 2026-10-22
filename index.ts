@@ -21,7 +21,7 @@ import type { UpdateSource } from './electron/updater';
 
 // compiled to out/index.js, the project root is one level up
 const rootPath = resolve(__dirname, '..');
-const packageInfo: { name: string; description: string; build: { appId: string } } = JSON.parse(fs.readFileSync(resolve(rootPath, 'package.json'), 'utf8'));
+const packageInfo: { name: string; description: string } = JSON.parse(fs.readFileSync(resolve(rootPath, 'package.json'), 'utf8'));
 
 process.env.ELECTRON_ENABLE_LOGGING = '1';
 
@@ -64,7 +64,7 @@ if (argv.webpackPort) {
 }
 
 function setAppId() {
-  global._appId = getAppUserModelId(packageInfo.build.appId, isDev, process.env.NODE_ENV);
+  global._appId = getAppUserModelId(isDev, process.env.NODE_ENV);
 
   if (isWin) {
     app.setAppUserModelId(global._appId);

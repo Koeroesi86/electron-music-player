@@ -1,12 +1,20 @@
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
-import { getAppUserModelId } from './appUserModelId';
+import { getAppUserModelId, installerAppId } from './appUserModelId';
 
 describe('getAppUserModelId', () => {
   it('is the installer app ID for a packaged app', () => {
-    expect(getAppUserModelId('io.github.koeroesi86.eMusic', false, 'production')).toBe('io.github.koeroesi86.eMusic');
+    expect(getAppUserModelId(false, 'production')).toBe('io.github.koeroesi86.eMusic');
   });
 
   it('differs from the installer app ID in development', () => {
-    expect(getAppUserModelId('io.github.koeroesi86.eMusic', true, 'development')).toBe('io.github.koeroesi86.eMusic-development');
+    expect(getAppUserModelId(true, 'development')).toBe('io.github.koeroesi86.eMusic-development');
+  });
+
+  it('matches the appId the installer is built with', () => {
+    const { build } = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8'));
+
+    expect(installerAppId).toBe(build.appId);
   });
 });
