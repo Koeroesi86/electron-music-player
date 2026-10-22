@@ -59,6 +59,13 @@ jobs:
       - name: Smoke test of the packaged app
         if: runner.os != 'Linux'
         run: npm run smoke:packaged
+      # the installer carries a 32 bit build as well, which the 64 bit runner can start
+      - name: Check the contents of the 32 bit package
+        if: runner.os == 'Windows'
+        run: npm run check:dist -- --ia32
+      - name: Smoke test of the 32 bit packaged app
+        if: runner.os == 'Windows'
+        run: npm run smoke:packaged -- --ia32
       - name: Smoke test of the packaged app (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run --auto-servernum npm run smoke:packaged

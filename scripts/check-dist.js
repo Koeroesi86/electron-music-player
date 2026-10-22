@@ -2,7 +2,7 @@ const { listPackage } = require('@electron/asar')
 const { existsSync, readFileSync } = require('fs')
 const { resolve } = require('path')
 
-// usage: node scripts/check-dist.js
+// usage: node scripts/check-dist.js [--ia32]
 // lists what the packaged app contains and fails on files that must not ship: secrets, source maps, tests and the sources of the app
 // the update metadata that electron-updater reads from the release, and the installer it has to list
 const updateMetadata = {
@@ -13,7 +13,7 @@ const updateMetadata = {
 const resources = {
   linux: 'dist/linux-unpacked/resources',
   darwin: 'dist/mac/eMusic.app/Contents/Resources',
-  win32: 'dist/win-unpacked/resources'
+  win32: process.argv.includes('--ia32') ? 'dist/win-ia32-unpacked/resources' : 'dist/win-unpacked/resources'
 }
 const archive = resolve(__dirname, '..', resources[process.platform], 'app.asar')
 

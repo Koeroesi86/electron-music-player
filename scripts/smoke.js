@@ -4,7 +4,7 @@ const { existsSync, mkdtempSync, readFileSync, rmSync } = require('fs')
 const { tmpdir } = require('os')
 const { dirname, join, resolve } = require('path')
 
-// usage: node scripts/smoke.js [--packaged | --flatpak]
+// usage: node scripts/smoke.js [--packaged [--ia32] | --flatpak]
 // starts the built app (out/index.js), the packaged one from dist/, or the installed flatpak (flatpak install dist/eMusic-*.flatpak), and checks that the window opens
 // and that the local server answers from the database: a missing file or a native module that does not load shows up here
 const root = resolve(__dirname, '..')
@@ -13,11 +13,14 @@ const packagedExecutables = {
   darwin: 'dist/mac/eMusic.app/Contents/MacOS/eMusic',
   win32: 'dist/win-unpacked/eMusic.exe'
 }
+// the 32 bit windows build runs on the 64 bit runner
+const packagedIa32Executable = 'dist/win-ia32-unpacked/eMusic.exe'
 const timeout = 60000
 
 const flatpak = process.argv.includes('--flatpak')
 const packaged = flatpak || process.argv.includes('--packaged')
-const executablePath = flatpak ? 'flatpak' : packaged ? resolve(root, packagedExecutables[process.platform]) : require('electron')
+const ia32 = process.argv.includes('--ia32')
+const executablePath = flatpak ? 'flatpak' : packaged ? resolve(root, ia32 ? packagedIa32Executable : packagedExecutables[process.platform]) : require('electron')
 // the flatpak starts its own sandbox: zypak sets the chromium sandbox up, so --no-sandbox is not passed
 const args = flatpak
   ? ['run', require('../package.json').build.appId]
