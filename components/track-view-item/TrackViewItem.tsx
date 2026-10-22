@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import { memo } from 'react';
 import type { MouseEventHandler, ReactNode } from 'react';
 import classNames from 'classnames';
 import type { Track } from '../../types/library';
@@ -22,46 +22,39 @@ const TrackViewItemField = ({ onClick = () => {}, className = '', children = nul
 
 interface TrackViewItemProps {
   track: Track | TrackLabels;
-  isHeader: boolean;
-  isSelected: boolean;
-  isCurrent: boolean;
-  clickTrack: (track: Track) => void;
-  doubleClickTrack: (track: Track) => void;
+  isHeader?: boolean;
+  isSelected?: boolean;
+  isCurrent?: boolean;
+  clickTrack?: (track: Track) => void;
+  doubleClickTrack?: (track: Track) => void;
 }
 
-class TrackViewItem extends PureComponent<TrackViewItemProps> {
-  // fallow-ignore-next-line unused-class-member -- React reads defaultProps, nothing references it
-  static defaultProps = {
-    isHeader: false,
-    isSelected: false,
-    isCurrent: false,
-    clickTrack: () => {},
-    doubleClickTrack: () => {},
-  };
+const TrackViewItem = ({
+  track,
+  isSelected = false,
+  isCurrent = false,
+  isHeader = false,
+  clickTrack = () => {},
+  doubleClickTrack = () => {},
+}: TrackViewItemProps) => (
+  <div
+    className={classNames(style.trackViewItem, {
+      [style.header]: isHeader,
+      [style.selected]: isSelected,
+      [style.current]: isCurrent,
+    })}
+    onClick={() => 'path' in track && clickTrack(track)}
+    onDoubleClick={() => 'path' in track && doubleClickTrack(track)}
+  >
+    <TrackViewItemField className={style.duration}>
+      {typeof track.duration === 'string' ? track.duration : <Time seconds={track.duration} />}
+    </TrackViewItemField>
+    <TrackViewItemField className={style.artist}>{track.artist || '-'}</TrackViewItemField>
+    <TrackViewItemField className={style.year}>{track.year || '-'}</TrackViewItemField>
+    <TrackViewItemField className={style.album}>{track.album || '-'}</TrackViewItemField>
+    <TrackViewItemField className={style.trackNo}>{track.track || '-'}</TrackViewItemField>
+    <TrackViewItemField className={style.title}>{track.title || '-'}</TrackViewItemField>
+  </div>
+);
 
-  render() {
-    const { track, isSelected, isCurrent, isHeader, clickTrack, doubleClickTrack } = this.props;
-    return (
-      <div
-        className={classNames(style.trackViewItem, {
-          [style.header]: isHeader,
-          [style.selected]: isSelected,
-          [style.current]: isCurrent,
-        })}
-        onClick={() => 'path' in track && clickTrack(track)}
-        onDoubleClick={() => 'path' in track && doubleClickTrack(track)}
-      >
-        <TrackViewItemField className={style.duration}>
-          {typeof track.duration === 'string' ? track.duration : <Time seconds={track.duration} />}
-        </TrackViewItemField>
-        <TrackViewItemField className={style.artist}>{track.artist || '-'}</TrackViewItemField>
-        <TrackViewItemField className={style.year}>{track.year || '-'}</TrackViewItemField>
-        <TrackViewItemField className={style.album}>{track.album || '-'}</TrackViewItemField>
-        <TrackViewItemField className={style.trackNo}>{track.track || '-'}</TrackViewItemField>
-        <TrackViewItemField className={style.title}>{track.title || '-'}</TrackViewItemField>
-      </div>
-    );
-  }
-}
-
-export default TrackViewItem;
+export default memo(TrackViewItem);

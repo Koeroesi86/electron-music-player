@@ -1,7 +1,8 @@
-import { PureComponent } from 'react';
+import { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import type { Folder } from '../../types/library';
 import { electronAPI } from '../../client/electron-api';
+import { useLatest } from '../../client/hooks/use-latest';
 import style from './PlayerHome.scss';
 import AlbumDetails from '../album-details';
 import Confirm from '../confirm';
@@ -17,137 +18,89 @@ const isLinux = navigator.userAgent.includes('Linux');
 
 interface PlayerHomeProps {
   maximized: boolean;
-  enableTransparency: boolean;
+  enableTransparency?: boolean;
   loaded: boolean;
   folders: Folder[];
   addFiles: (files: FileList) => void;
   onUnload: () => void;
 }
 
-interface PlayerHomeState {
-  confirmMessage: string | null;
+interface Confirmation {
+  message: string;
+  onConfirm: () => void;
 }
 
-export default class PlayerHome extends PureComponent<PlayerHomeProps, PlayerHomeState> {
-  // fallow-ignore-next-line unused-class-member -- React reads defaultProps, nothing references it
-  static defaultProps = {
-    enableTransparency: true,
+/** The last dropped path that is, contains or lies inside a folder of the library */
+const findContainedPath = (files: FileList, folders: Folder[]) =>
+  Array.from(files)
+    .map((file) => electronAPI.getPathForFile(file))
+    .findLast((filePath) => folders.some((folder) => folder.path.startsWith(filePath) || filePath.startsWith(folder.path)));
+
+const PlayerHome = ({ maximized, enableTransparency = true, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
+  const [confirmation, setConfirmation] = useState<Confirmation>();
+  const latestOnUnload = useLatest(onUnload);
+
+  useEffect(() => {
+    const save = () => latestOnUnload.current();
+    window.addEventListener('beforeunload', save);
+    return () => window.removeEventListener('beforeunload', save);
+  }, []);
+
+  const addDroppedFiles = (files: FileList) => {
+    if (files.length === 0) return;
+
+    const contained = findContainedPath(files, folders);
+    if (contained) setConfirmation({ message: `Are you sure you want to add this folder? ${contained}`, onConfirm: () => addFiles(files) });
+    else addFiles(files);
   };
 
-  state: PlayerHomeState = {
-    confirmMessage: null,
-  };
-
-  private confirmCallback: () => void = () => {};
-
-  constructor(props: PlayerHomeProps) {
-    super(props);
-
-    window.addEventListener('beforeunload', () => {
-      this.props.onUnload();
-    });
-  }
-
-  confirm = (message: string, callback: () => void) => {
-    this.setState(() => {
-      this.confirmCallback = callback;
-      return { confirmMessage: message };
-    });
-  };
-
-  checkFile(files: FileList) {
-    let contained: string | false = false;
-    const { folders } = this.props;
-
-    Array.from(files).forEach((file) => {
-      const filePath = electronAPI.getPathForFile(file);
-
-      // exact match
-      if (folders.find((folder) => folder.path === filePath)) {
-        contained = filePath;
-      }
-
-      // parent directory
-      if (folders.find((folder) => folder.path.indexOf(filePath) === 0)) {
-        contained = filePath;
-      }
-
-      // child directory
-      if (folders.find((folder) => filePath.indexOf(folder.path) === 0)) {
-        contained = filePath;
-      }
-    });
-
-    return contained;
-  }
-
-  addFiles = (files: FileList) => {
-    if (files.length > 0) {
-      const contained = this.checkFile(files);
-
-      if (contained) {
-        this.confirm(`Are you sure you want to add this folder? ${contained}`, () => {
-          this.props.addFiles(files);
-        });
-      } else {
-        this.props.addFiles(files);
-      }
-    }
-  };
-
-  handleCancel = () => {
-    this.confirmCallback = () => {};
-    this.setState({ confirmMessage: null });
-  };
-
-  handleConfirm = () => {
-    this.confirmCallback();
-    this.confirmCallback = () => {};
-    this.setState({ confirmMessage: null });
-  };
-
-  render() {
-    const { maximized, enableTransparency, loaded } = this.props;
-    const { confirmMessage } = this.state;
-    return (
-      <div
-        className={classNames(style.playerHome, {
-          [style.opaque]: enableTransparency,
-          [style.maximized]: maximized,
-          [style.loaded]: loaded,
-          [style.noBlur]: isLinux,
-        })}
-      >
-        <div className={style.wrapper}>
-          <div className={style.mainPanel}>
-            <div className={style.library}>
-              <div className={style.manageLibrary}>
-                <div className={style.manageLibraryPanel}>
-                  <TitleBar />
-                  <div className={style.navigationContainer}>
-                    <AudioSpectrum
-                      width={180}
-                      height={80}
-                      meterColor={'rgba(255, 255, 255, 0.4)'}
-                      capColor={'rgba(255, 255, 255, 0.8)'}
-                      capHeight={1}
-                      meterCount={45}
-                      meterWidth={2}
-                      gap={2}
-                    />
-                    <Navigation />
-                  </div>
+  return (
+    <div
+      className={classNames(style.playerHome, {
+        [style.opaque]: enableTransparency,
+        [style.maximized]: maximized,
+        [style.loaded]: loaded,
+        [style.noBlur]: isLinux,
+      })}
+    >
+      <div className={style.wrapper}>
+        <div className={style.mainPanel}>
+          <div className={style.library}>
+            <div className={style.manageLibrary}>
+              <div className={style.manageLibraryPanel}>
+                <TitleBar />
+                <div className={style.navigationContainer}>
+                  <AudioSpectrum
+                    width={180}
+                    height={80}
+                    meterColor={'rgba(255, 255, 255, 0.4)'}
+                    capColor={'rgba(255, 255, 255, 0.8)'}
+                    capHeight={1}
+                    meterCount={45}
+                    meterWidth={2}
+                    gap={2}
+                  />
+                  <Navigation />
                 </div>
               </div>
-              <PlayerTabs addFiles={this.addFiles} />
             </div>
+            <PlayerTabs addFiles={addDroppedFiles} />
           </div>
-          <PlayerControls />
         </div>
-        <AlbumDetails />
-        <Confirm message={confirmMessage} confirm={this.handleConfirm} cancel={this.handleCancel} />
-        <AudioComponent />
+        <PlayerControls />
       </div>
-    );
-  }
-}
+      <AlbumDetails />
+      <Confirm
+        message={confirmation?.message ?? null}
+        confirm={() => {
+          confirmation?.onConfirm();
+          setConfirmation(undefined);
+        }}
+        cancel={() => setConfirmation(undefined)}
+      />
+      <AudioComponent />
+    </div>
+  );
+};
+
+export default PlayerHome;

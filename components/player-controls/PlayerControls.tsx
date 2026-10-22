@@ -1,7 +1,6 @@
-import { PureComponent } from 'react';
-import type { CSSProperties } from 'react';
+import { useRef } from 'react';
+import type { ReactNode } from 'react';
 import classNames from 'classnames';
-import { basename, extname } from 'path';
 import {
   FiBarChart2 as EQIcon,
   FiVolumeX as VolumeOffIcon,
@@ -14,6 +13,9 @@ import {
 import { MdPlayCircleOutline as PlayIcon, MdPauseCircleOutline as PauseIcon } from 'react-icons/md';
 import Slider from '../slider/Slider';
 import type { Track } from '../../types/library';
+import { getCoverUrl } from '../../client/cover-url';
+import { useAudioListener } from '../../client/hooks/use-audio-listener';
+import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import style from './PlayerControls.scss';
 import ScanProgress from '../scan-progress';
 import Time from '../time';
@@ -41,187 +43,145 @@ interface PlayerControlsProps {
   previousSong: () => void;
 }
 
-class PlayerControls extends PureComponent<PlayerControlsProps> {
-  constructor(props: PlayerControlsProps) {
-    super(props);
+const round = (number: number) => Math.floor(number * 100);
 
-    this.props.addPlayStatusListener((isPlaying) => {
-      if (this.props.isPlaying !== isPlaying) {
-        this.props.setPlaying(isPlaying);
-      }
-    });
+interface IconButtonProps {
+  label: string;
+  className?: string;
+  onClick: () => void;
+  children: ReactNode;
+}
 
-    const round = (number: number) => Math.floor(number * 100);
-    this.props.addTimeChangeListener((currentTime) => {
-      if (round(currentTime) !== round(this.props.currentTime)) {
-        this.props.setCurrentTime(currentTime);
-      }
-    });
-  }
+const IconButton = ({ label, className = style.icon, onClick, children }: IconButtonProps) => (
+  <button className={className} onClick={onClick} title={label} aria-label={label}>
+    {children}
+  </button>
+);
 
-  componentDidUpdate(prevProps: PlayerControlsProps) {
-    if (this.props.currentTime !== prevProps.currentTime) {
-      this.props.seek(this.props.currentTime);
-    }
+const TrackDetails = ({ currentSong, currentTime, port }: Pick<PlayerControlsProps, 'currentSong' | 'currentTime' | 'port'>) => (
+  <div className={style.meta}>
+    <div className={style.contents}>
+      <div className={style.picture} style={currentSong?.picture ? { backgroundImage: `url("${getCoverUrl(port, currentSong.picture)}")` } : {}} />
+      <div className={style.details}>
+        <div className={style.title}>{currentSong ? currentSong.title : 'None'}</div>
+        <div className={style.album}>{currentSong ? currentSong.album : 'None'}</div>
+        <div className={style.artist}>{currentSong ? currentSong.artist : 'None'}</div>
+        <div className={style.time}>
+          <Time seconds={currentTime} /> / <Time seconds={currentSong ? currentSong.duration : 0} />
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
-    if (this.props.isPlaying !== prevProps.isPlaying) {
-      if (this.props.isPlaying) this.props.play();
-      else this.props.pause();
-    }
+type TransportButtonsProps = Pick<
+  PlayerControlsProps,
+  'currentSong' | 'isPlaying' | 'shuffle' | 'repeat' | 'play' | 'pause' | 'previousSong' | 'nextSong' | 'toggleShuffle' | 'toggleRepeat'
+>;
 
-    if (this.props.currentSong !== prevProps.currentSong) {
-      if (this.props.isPlaying) this.props.play();
-    }
-  }
+const TransportButtons = ({
+  currentSong,
+  isPlaying,
+  shuffle,
+  repeat,
+  play,
+  pause,
+  previousSong,
+  nextSong,
+  toggleShuffle,
+  toggleRepeat,
+}: TransportButtonsProps) => (
+  <div className={style.mainControlButtons}>
+    <button className={style.controlButton} onClick={previousSong} title={'Previous'}>
+      <BackIcon size={'16px'} />
+    </button>
+    <button
+      onClick={isPlaying ? pause : play}
+      className={classNames(style.playToggleButton, { [style.playing]: isPlaying })}
+      disabled={!currentSong}
+      title={isPlaying ? 'Pause' : 'Play'}
+    >
+      <PauseIcon className={style.pauseIcon} size={'40px'} />
+      <PlayIcon className={style.playIcon} size={'40px'} />
+    </button>
+    <button className={style.controlButton} onClick={nextSong} title={'Next'}>
+      <ForwardIcon size={'16px'} />
+    </button>
+    <button className={classNames(style.controlButton, { [style.active]: shuffle })} onClick={toggleShuffle} title={'Shuffle'}>
+      <ShuffleIcon size={'12px'} />
+    </button>
+    <button className={classNames(style.controlButton, { [style.active]: repeat })} onClick={toggleRepeat} title={'Repeat'}>
+      <RepeatIcon size={'12px'} />
+    </button>
+    <ScanProgress />
+  </div>
+);
 
-  toggle = () => {
-    if (this.props.isPlaying) {
-      this.props.pause();
-    } else {
-      this.props.play();
-    }
+const VolumeControls = ({ volume, setVolume, openEqualizer }: Pick<PlayerControlsProps, 'volume' | 'setVolume' | 'openEqualizer'>) => {
+  const volumeBeforeMute = useRef(0.5);
+
+  const toggleMute = () => {
+    if (volume > 0) volumeBeforeMute.current = volume;
+    setVolume(volume > 0 ? 0 : volumeBeforeMute.current);
   };
 
-  volumeBeforeMute = 0.5;
+  return (
+    <div className={style.volume}>
+      <IconButton label="Equalizer" onClick={openEqualizer}>
+        <EQIcon size={'16px'} />
+      </IconButton>
+      <IconButton label={volume > 0 ? 'Mute' : 'Unmute'} onClick={toggleMute}>
+        <VolumeOffIcon size={'16px'} />
+      </IconButton>
+      <div className={style.slider}>
+        <Slider min={0} max={1} step={0.01} value={volume} onInput={(e) => setVolume(e.currentTarget.value)} />
+      </div>
+      <IconButton label="Full volume" onClick={() => setVolume(1)}>
+        <VolumeFullIcon size={'16px'} />
+      </IconButton>
+    </div>
+  );
+};
 
-  toggleMute = () => {
-    const { volume, setVolume } = this.props;
-    if (volume > 0) this.volumeBeforeMute = volume;
-    setVolume(volume > 0 ? 0 : this.volumeBeforeMute);
-  };
+const PlayerControls = (props: PlayerControlsProps) => {
+  const { currentSong, currentTime, isPlaying, seek, play, pause, setCurrentTime, setPlaying, addPlayStatusListener, addTimeChangeListener } = props;
 
-  get coverStyle() {
-    const { currentSong, port } = this.props;
-    const coverStyle: CSSProperties = {};
+  useAudioListener(addPlayStatusListener, (playing) => {
+    if (isPlaying !== playing) setPlaying(playing);
+  });
 
-    if (currentSong && currentSong.picture) {
-      const cover = `${basename(currentSong.picture, extname(currentSong.picture))}-optimized.png`;
-      coverStyle.backgroundImage = `url("http://127.0.0.1:${port}/albumart/${cover}")`;
-    }
+  useAudioListener(addTimeChangeListener, (time) => {
+    if (round(time) !== round(currentTime)) setCurrentTime(time);
+  });
 
-    return coverStyle;
-  }
+  useUpdateEffect(() => seek(currentTime), [currentTime]);
+  useUpdateEffect(() => (isPlaying ? play() : pause()), [isPlaying]);
+  useUpdateEffect(() => {
+    if (isPlaying) play();
+  }, [currentSong]);
 
-  render() {
-    const {
-      currentSong,
-      currentTime,
-      openEqualizer,
-      setVolume,
-      volume,
-      shuffle,
-      repeat,
-      previousSong,
-      nextSong,
-      toggleRepeat,
-      toggleShuffle,
-      setCurrentTime,
-      isPlaying,
-    } = this.props;
-    return (
-      <div className={style.controls}>
-        <div className={style.controlsPanel}>
-          <div className={style.meta}>
-            <div className={style.contents}>
-              <div className={style.picture} style={this.coverStyle} />
-              <div className={style.details}>
-                <div className={style.title}>{currentSong ? currentSong.title : 'None'}</div>
-                <div className={style.album}>{currentSong ? currentSong.album : 'None'}</div>
-                <div className={style.artist}>{currentSong ? currentSong.artist : 'None'}</div>
-                <div className={style.time}>
-                  <Time seconds={currentTime} /> / <Time seconds={currentSong ? currentSong.duration : 0} />
-                </div>
-              </div>
-            </div>
+  return (
+    <div className={style.controls}>
+      <div className={style.controlsPanel}>
+        <TrackDetails currentSong={currentSong} currentTime={currentTime} port={props.port} />
+        <div className={style.controlsContainer}>
+          <div className={style.progress}>
+            <Slider
+              min={0}
+              max={currentSong?.duration ?? 0}
+              step={0.0001}
+              value={currentTime}
+              onInput={(e) => setCurrentTime(parseFloat(e.currentTarget.value))}
+            />
           </div>
-          <div className={style.controlsContainer}>
-            <div className={style.progress}>
-              <Slider
-                min={0}
-                max={currentSong?.duration ?? 0}
-                step={0.0001}
-                value={currentTime}
-                onInput={(e) => {
-                  setCurrentTime(parseFloat(e.currentTarget.value));
-                }}
-                onChange={() => {}}
-              />
-            </div>
-            <div className={style.mainControlContainer}>
-              <div className={style.mainControlButtons}>
-                <button className={style.controlButton} onClick={previousSong} title={'Previous'}>
-                  <BackIcon size={'16px'} />
-                </button>
-                <button
-                  onClick={this.toggle}
-                  className={classNames(style.playToggleButton, {
-                    [style.playing]: isPlaying,
-                  })}
-                  disabled={!currentSong}
-                  title={isPlaying ? 'Pause' : 'Play'}
-                >
-                  <PauseIcon className={style.pauseIcon} size={'40px'} />
-                  <PlayIcon className={style.playIcon} size={'40px'} />
-                </button>
-                <button className={style.controlButton} onClick={nextSong} title={'Next'}>
-                  <ForwardIcon size={'16px'} />
-                </button>
-                <button
-                  className={classNames(style.controlButton, {
-                    [style.active]: shuffle,
-                  })}
-                  onClick={toggleShuffle}
-                  title={'Shuffle'}
-                >
-                  <ShuffleIcon size={'12px'} />
-                </button>
-                <button
-                  className={classNames(style.controlButton, {
-                    [style.active]: repeat,
-                  })}
-                  onClick={toggleRepeat}
-                  title={'Repeat'}
-                >
-                  <RepeatIcon size={'12px'} />
-                </button>
-                <ScanProgress />
-              </div>
-              <div className={style.volume}>
-                <button onClick={openEqualizer} className={style.icon} title={'Equalizer'} aria-label={'Equalizer'}>
-                  <EQIcon size={'16px'} />
-                </button>
-                <button onClick={this.toggleMute} className={style.icon} title={volume > 0 ? 'Mute' : 'Unmute'} aria-label={volume > 0 ? 'Mute' : 'Unmute'}>
-                  <VolumeOffIcon size={'16px'} />
-                </button>
-                <div className={style.slider}>
-                  <Slider
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={volume}
-                    onInput={(e) => {
-                      setVolume(e.currentTarget.value);
-                    }}
-                    onChange={() => {}}
-                  />
-                </div>
-                <button
-                  className={style.icon}
-                  onClick={() => {
-                    setVolume(1);
-                  }}
-                  title={'Full volume'}
-                  aria-label={'Full volume'}
-                >
-                  <VolumeFullIcon size={'16px'} />
-                </button>
-              </div>
-            </div>
+          <div className={style.mainControlContainer}>
+            <TransportButtons {...props} />
+            <VolumeControls volume={props.volume} setVolume={props.setVolume} openEqualizer={props.openEqualizer} />
           </div>
         </div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default PlayerControls;

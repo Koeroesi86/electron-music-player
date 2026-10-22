@@ -24,140 +24,61 @@ const initialState: UiState = {
   equalizer: defaultGains,
 };
 
+const toNumber = (value: number | string) => parseFloat(`${value || 0}`);
+
 const reducer: Reducer<UiState> = (state = initialState, action) => {
   if (!isAppAction(action)) return state;
 
-  if (action.type === 'SET_VIEW') {
-    return Object.assign({}, state, { view: action.payload.view });
+  switch (action.type) {
+    case 'SET_VIEW':
+      return { ...state, view: action.payload.view };
+    case 'SET_ONLINE_VIEW':
+      return { ...state, onlineView: action.payload.view };
+    case 'PLAY_TRACKS':
+      return { ...state, nowPlaying: action.payload.tracks, played: [] };
+    case 'PLAY_TRACK':
+      return { ...state, currentSong: action.payload.track || null, isPlaying: true };
+    case 'SET_VOLUME':
+      return { ...state, volume: toNumber(action.payload.volume) };
+    case 'SET_CURRENT_TIME': {
+      const currentTime = toNumber(action.payload.currentTime);
+      return currentTime === state.currentTime ? state : { ...state, currentTime };
+    }
+    case 'SELECT_ALBUM':
+      return { ...state, selectedAlbum: action.payload.album || null };
+    case 'SET_GAIN': {
+      const { value, index } = action.payload;
+      return { ...state, equalizer: state.equalizer.map((gain, band) => (band === index ? clampGain(toNumber(value)) : gain)) };
+    }
+    case 'SCANNING_FOLDER':
+      return { ...state, scanningFolder: action.payload.folder };
+    case 'SCANNING_FILE':
+      return { ...state, progress: action.payload.progress, totalCount: action.payload.totalCount };
+    case 'STORE_LIBRARY':
+      return { ...state, scanningFolder: null };
+    case 'MAXIMIZED_APP':
+      return { ...state, maximized: action.payload.maximized };
+    case 'SET_TAB':
+      return { ...state, tab: action.payload.tab };
+    case 'SET_PLAYING':
+      return { ...state, isPlaying: action.payload.isPlaying };
+    case 'TOGGLE_REPEAT':
+      return { ...state, repeat: !state.repeat };
+    case 'TOGGLE_SHUFFLE':
+      return { ...state, shuffle: !state.shuffle };
+    case 'CLEAR_PLAYED':
+      return { ...state, played: [] };
+    case 'POP_PLAYED':
+      return { ...state, played: state.played.slice(0, -1) };
+    case 'ADD_PLAYED':
+      return { ...state, played: action.payload.track ? [...state.played, action.payload.track] : state.played };
+    case 'RESTORE_SETTINGS': {
+      const { settings } = action.payload;
+      return { ...state, ...settings, ...(settings.equalizer && { equalizer: restoreGains(settings.equalizer) }) };
+    }
+    default:
+      return state;
   }
-
-  if (action.type === 'SET_ONLINE_VIEW') {
-    return Object.assign({}, state, { onlineView: action.payload.view });
-  }
-
-  if (action.type === 'PLAY_TRACKS') {
-    const { tracks } = action.payload;
-    return Object.assign({}, state, {
-      nowPlaying: tracks,
-      played: [],
-    });
-  }
-
-  if (action.type === 'PLAY_TRACK') {
-    return Object.assign({}, state, {
-      currentSong: action.payload.track || null,
-      isPlaying: true,
-    });
-  }
-
-  if (action.type === 'SET_VOLUME') {
-    return Object.assign({}, state, {
-      volume: parseFloat(`${action.payload.volume || 0}`),
-    });
-  }
-
-  if (action.type === 'SET_CURRENT_TIME') {
-    const currentTime = parseFloat(`${action.payload.currentTime || 0}`);
-    if (currentTime === state.currentTime) return state;
-
-    return Object.assign({}, state, {
-      currentTime,
-    });
-  }
-
-  if (action.type === 'SELECT_ALBUM') {
-    return Object.assign({}, state, {
-      selectedAlbum: action.payload.album || null,
-    });
-  }
-
-  if (action.type === 'SET_GAIN') {
-    const { value, index } = action.payload;
-    const equalizer = state.equalizer.slice();
-    equalizer[index] = clampGain(parseFloat(`${value}`));
-    return Object.assign({}, state, {
-      equalizer,
-    });
-  }
-
-  if (action.type === 'SCANNING_FOLDER') {
-    const { folder } = action.payload;
-    return Object.assign({}, state, {
-      scanningFolder: folder,
-    });
-  }
-
-  if (action.type === 'SCANNING_FILE') {
-    const { progress, totalCount } = action.payload;
-    return Object.assign({}, state, {
-      progress,
-      totalCount,
-    });
-  }
-
-  if (action.type === 'STORE_LIBRARY') {
-    return Object.assign({}, state, {
-      scanningFolder: null,
-    });
-  }
-
-  if (action.type === 'MAXIMIZED_APP') {
-    return Object.assign({}, state, {
-      maximized: action.payload.maximized,
-    });
-  }
-
-  if (action.type === 'SET_TAB') {
-    return Object.assign({}, state, {
-      tab: action.payload.tab,
-    });
-  }
-
-  if (action.type === 'SET_PLAYING') {
-    return Object.assign({}, state, {
-      isPlaying: action.payload.isPlaying,
-    });
-  }
-
-  if (action.type === 'TOGGLE_REPEAT') {
-    return Object.assign({}, state, {
-      repeat: !state.repeat,
-    });
-  }
-
-  if (action.type === 'TOGGLE_SHUFFLE') {
-    return Object.assign({}, state, {
-      shuffle: !state.shuffle,
-    });
-  }
-
-  if (action.type === 'CLEAR_PLAYED') {
-    return Object.assign({}, state, {
-      played: [],
-    });
-  }
-
-  if (action.type === 'POP_PLAYED') {
-    return Object.assign({}, state, {
-      played: state.played.slice(0, -1),
-    });
-  }
-
-  if (action.type === 'ADD_PLAYED') {
-    const { track } = action.payload;
-    const played = state.played.slice();
-    if (track) played.push(track);
-    return Object.assign({}, state, {
-      played,
-    });
-  }
-
-  if (action.type === 'RESTORE_SETTINGS') {
-    const { settings } = action.payload;
-    return Object.assign({}, state, settings, settings.equalizer && { equalizer: restoreGains(settings.equalizer) });
-  }
-
-  return state;
 };
 
 export default reducer;

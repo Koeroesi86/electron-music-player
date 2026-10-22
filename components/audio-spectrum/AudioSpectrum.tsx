@@ -1,4 +1,5 @@
-import { PureComponent } from 'react';
+import { useEffect, useRef } from 'react';
+import { useAudioListener } from '../../client/hooks/use-audio-listener';
 import style from './AudioSpectrum.scss';
 
 interface MeterStop {
@@ -7,173 +8,134 @@ interface MeterStop {
 }
 
 export interface AudioSpectrumProps {
-  width: number;
-  height: number;
-  capColor: string;
-  capHeight: number;
-  meterWidth: number;
-  meterCount: number;
-  meterColor: string | MeterStop[];
-  gap: number;
-  fps: number;
-  createAnalyser: () => AnalyserNode | false;
-  addPlayStatusListener: (listener: (isPlaying: boolean) => void) => void;
+  width?: number;
+  height?: number;
+  capColor?: string;
+  capHeight?: number;
+  meterWidth?: number;
+  meterCount?: number;
+  meterColor?: string | MeterStop[];
+  gap?: number;
+  fps?: number;
+  createAnalyser?: () => AnalyserNode | false;
+  addPlayStatusListener?: (listener: (isPlaying: boolean) => void) => void;
 }
 
+const defaultMeterColor: MeterStop[] = [
+  { stop: 0, color: '#f00' },
+  { stop: 0.5, color: '#0CD7FD' },
+  { stop: 1, color: 'red' },
+];
+
+const createFill = (context: CanvasRenderingContext2D, meterColor: string | MeterStop[]) => {
+  if (typeof meterColor === 'string') return meterColor;
+
+  const gradient = context.createLinearGradient(0, 0, 0, 300);
+  meterColor.forEach(({ stop, color }) => gradient.addColorStop(stop, color));
+  return gradient;
+};
+
 // @see https://github.com/hu-ke/react-audio-spectrum
-class AudioSpectrum extends PureComponent<AudioSpectrumProps> {
-  // fallow-ignore-next-line unused-class-member -- React reads defaultProps, nothing references it
-  static defaultProps = {
-    width: 200,
-    height: 150,
-    createAnalyser: () => false,
-    addPlayStatusListener: () => {},
-    capColor: '#FFF',
-    capHeight: 2,
-    meterWidth: 2,
-    meterCount: 40 * (2 + 2),
-    meterColor: [
-      { stop: 0, color: '#f00' },
-      { stop: 0.5, color: '#0CD7FD' },
-      { stop: 1, color: 'red' },
-    ],
-    gap: 10,
-    fps: 30,
+const AudioSpectrum = ({
+  width = 200,
+  height = 150,
+  capColor = '#FFF',
+  capHeight = 2,
+  meterWidth = 2,
+  meterCount = 40 * (2 + 2),
+  meterColor = defaultMeterColor,
+  gap = 10,
+  fps = 30,
+  createAnalyser = () => false,
+  addPlayStatusListener = () => {},
+}: AudioSpectrumProps) => {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const canvasContext = useRef<CanvasRenderingContext2D | null>(null);
+  const analyser = useRef<AnalyserNode | false>(false);
+  const isPlaying = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const animationId = useRef<number>(undefined);
+
+  const stopAnimation = () => {
+    clearTimeout(timer.current);
+    window.cancelAnimationFrame(animationId.current ?? 0);
   };
 
-  private canvas: HTMLCanvasElement | null = null;
-  private canvasContext: CanvasRenderingContext2D | null = null;
-  private analyser: AnalyserNode | false = false;
-  private playStatus: 'PLAYING' | 'PAUSED' = 'PAUSED';
-  private timer: ReturnType<typeof setTimeout> | undefined;
-  private animationId: number | undefined;
-
-  componentDidMount() {
-    if (this.canvas) {
-      this.canvasContext = this.canvas.getContext('2d');
-      this.setupAudioNode();
-    }
-
-    this.props.addPlayStatusListener((isPlaying) => {
-      this.playStatus = isPlaying ? 'PLAYING' : 'PAUSED';
-
-      if (isPlaying) {
-        if (!this.analyser) this.setupAudioNode();
-        clearTimeout(this.timer);
-        this.drawSpectrum();
-      } else {
-        clearTimeout(this.timer);
-        window.cancelAnimationFrame(this.animationId ?? 0);
-      }
-    });
-  }
-
-  componentDidUpdate() {
-    if (this.canvas) {
-      this.canvasContext = this.canvas.getContext('2d');
-      this.setupAudioNode();
-    }
-  }
-
-  drawSpectrum() {
-    const { capColor, capHeight, meterCount, meterWidth, meterColor, gap, fps } = this.props;
-    const { canvas, canvasContext } = this;
-    if (!canvas || !canvasContext) return;
+  const drawSpectrum = () => {
+    const context = canvasContext.current;
+    if (!canvas.current || !context) return;
 
     // a running loop would keep drawing next to the new one
-    clearTimeout(this.timer);
-    window.cancelAnimationFrame(this.animationId ?? 0);
+    stopAnimation();
 
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height - capHeight;
-    const capYPositionArray: number[] = []; // store the vertical position of hte caps for the previous frame
-    let gradient: string | CanvasGradient = canvasContext.createLinearGradient(0, 0, 0, 300);
+    const canvasWidth = canvas.current.width;
+    const canvasHeight = canvas.current.height - capHeight;
+    const caps: number[] = []; // the vertical position of the caps in the previous frame
+    const fill = createFill(context, meterColor);
 
-    if (typeof meterColor === 'string') {
-      gradient = meterColor;
-    } else if (Array.isArray(meterColor)) {
-      const stops = meterColor;
-      const len = stops.length;
-      for (let i = 0; i < len; i++) {
-        gradient.addColorStop(stops[i].stop, stops[i].color);
-      }
-    }
-
-    const clearCanvas = () => canvasContext.clearRect(0, 0, canvasWidth, canvasHeight + capHeight);
+    const clearCanvas = () => context.clearRect(0, 0, canvasWidth, canvasHeight + capHeight);
     const getY = (value: number) => ((255 - value) * canvasHeight) / 255;
-    const drawRect = (i: number, y: number, height: number) => canvasContext.fillRect(i * (meterWidth + gap), y, meterWidth, height);
-    const drawCap = (i: number, y: number) => drawRect(i, y, capHeight);
-    const drawMeterBar = (i: number, y: number) => drawRect(i, y, canvasHeight - y + capHeight);
+    const drawRect = (i: number, y: number, rectHeight: number) => context.fillRect(i * (meterWidth + gap), y, meterWidth, rectHeight);
+
+    const drawBars = (data: Uint8Array) => {
+      const step = Math.round(data.length / meterCount); // sample limited data from the total array
+      clearCanvas();
+      for (let i = 0; i < meterCount; i++) {
+        const value = data[i * step];
+        if (caps.length < Math.round(meterCount)) caps.push(value);
+
+        context.fillStyle = capColor;
+        // the cap falls slowly and jumps up with the meter
+        caps[i] = value < caps[i] ? caps[i] - 1 : value;
+        drawRect(i, getY(caps[i]), capHeight);
+
+        context.fillStyle = fill;
+        const y = getY(value) + capHeight;
+        drawRect(i, y, canvasHeight - y + capHeight);
+      }
+    };
 
     const drawMeter = () => {
-      if (this.analyser) {
-        const dataArray = new Uint8Array(this.analyser.frequencyBinCount); // item value of array: 0 - 255
-        // this.analyser.getByteTimeDomainData(dataArray)
-        this.analyser.getByteFrequencyData(dataArray);
-        if (this.playStatus === 'PAUSED') {
-          for (let i = dataArray.length - 1; i >= 0; i--) {
-            dataArray[i] = 0;
-          }
-          let allCapsReachBottom = !capYPositionArray.some((cap) => cap > 0);
-          if (allCapsReachBottom) {
+      if (analyser.current) {
+        const data = new Uint8Array(analyser.current.frequencyBinCount); // item value of array: 0 - 255
+        analyser.current.getByteFrequencyData(data);
+        if (!isPlaying.current) {
+          data.fill(0);
+          // once all the caps reached the bottom there is nothing left to draw
+          if (!caps.some((cap) => cap > 0)) {
             clearCanvas();
-            if (this.animationId) window.cancelAnimationFrame(this.animationId);
+            if (animationId.current) window.cancelAnimationFrame(animationId.current);
             return;
           }
         }
-
-        let step = Math.round(dataArray.length / meterCount); // sample limited data from the total array
-        clearCanvas();
-        for (let i = 0; i < meterCount; i++) {
-          let value = dataArray[i * step];
-          if (capYPositionArray.length < Math.round(meterCount)) {
-            capYPositionArray.push(value);
-          }
-
-          canvasContext.fillStyle = capColor;
-          // draw the cap, with transition effect
-          if (value < capYPositionArray[i]) {
-            let preValue = --capYPositionArray[i];
-            let y = getY(preValue);
-            drawCap(i, y);
-          } else {
-            let y = getY(value);
-            drawCap(i, y);
-            capYPositionArray[i] = value;
-          }
-
-          canvasContext.fillStyle = gradient; // set the filllStyle to gradient for a better look
-
-          let y = getY(value) + capHeight;
-          drawMeterBar(i, y); // the meter
-        }
+        drawBars(data);
       }
 
-      // this.animationId = window.requestAnimationFrame(drawMeter)
-      this.timer = setTimeout(() => {
-        this.animationId = window.requestAnimationFrame(drawMeter);
+      timer.current = setTimeout(() => {
+        animationId.current = window.requestAnimationFrame(drawMeter);
       }, 1000 / fps);
     };
 
-    this.animationId = window.requestAnimationFrame(drawMeter);
-  }
+    animationId.current = window.requestAnimationFrame(drawMeter);
+  };
 
-  setupAudioNode() {
-    this.analyser = this.props.createAnalyser();
-  }
+  const connectCanvas = () => {
+    canvasContext.current = canvas.current?.getContext('2d') ?? null;
+    if (canvas.current) analyser.current = createAnalyser();
+  };
 
-  render() {
-    return (
-      <canvas
-        className={style.audioSpectrum}
-        ref={(c) => {
-          this.canvas = c;
-        }}
-        width={this.props.width}
-        height={this.props.height}
-      />
-    );
-  }
-}
+  useAudioListener(addPlayStatusListener, (playing) => {
+    isPlaying.current = playing;
+    if (!playing) return stopAnimation();
+
+    if (!analyser.current) analyser.current = createAnalyser();
+    drawSpectrum();
+  });
+
+  useEffect(connectCanvas);
+  useEffect(() => stopAnimation, []);
+
+  return <canvas className={style.audioSpectrum} ref={canvas} width={width} height={height} />;
+};
 
 export default AudioSpectrum;

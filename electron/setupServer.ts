@@ -59,24 +59,7 @@ const optimizeAlbumArt = (source: string, target: string) => {
   return job;
 };
 
-const sendFile = (filePath: string, request: Request, response: Response) => {
-  const range = request.headers.range ?? '';
-  const mime = mimeType.contentType(path.resolve(filePath));
-  if (!mime) {
-    response.status(500).send(`contentType failed`);
-    return;
-  }
-  allowLoopbackOrigin(request, response);
-  response.setHeader('Content-Type', mime);
-  if (/^image\//.test(mime)) {
-    response.setHeader('Cache-Control', 'Public');
-    pipeFile(filePath, response);
-    return;
-  }
-  if (range === '') {
-    pipeFile(filePath, response);
-    return;
-  }
+const sendRange = (filePath: string, range: string, response: Response) =>
   fs.stat(filePath, (error, stat) => {
     if (error) {
       response.sendStatus(404);
@@ -94,38 +77,51 @@ const sendFile = (filePath: string, request: Request, response: Response) => {
     response.status(206);
     pipeFile(filePath, response, bounds);
   });
+
+const sendFile = (filePath: string, request: Request, response: Response) => {
+  const mime = mimeType.contentType(path.resolve(filePath));
+  if (!mime) {
+    response.status(500).send(`contentType failed`);
+    return;
+  }
+  allowLoopbackOrigin(request, response);
+  response.setHeader('Content-Type', mime);
+
+  if (/^image\//.test(mime)) response.setHeader('Cache-Control', 'Public');
+  if (/^image\//.test(mime) || !request.headers.range) pipeFile(filePath, response);
+  else sendRange(filePath, request.headers.range, response);
+};
+
+/** The stored album art of a request; the optimized copy is generated from the original when it does not exist yet */
+const resolveAlbumArt = async (basename: string) => {
+  const folder = path.join(global._appDataPath, './albumart/');
+  const current = path.join(folder, basename);
+  if (fs.existsSync(current)) return current;
+  if (!/-optimized/.test(basename)) return undefined;
+
+  const fileName = basename.replace(/-optimized/, '').replace(path.extname(basename), '');
+  const files = await fs.promises.readdir(folder);
+  const original = files.find((file) => file.indexOf(fileName) === 0 && !file.includes('-optimized') && !file.endsWith('.part'));
+  if (!original) return undefined;
+
+  await optimizeAlbumArt(path.join(folder, original), current);
+  return current;
 };
 
 function setupServer() {
   server.use(limiter);
   server.use('/app', express.static(path.resolve(__dirname, '../../build')));
   server.use('/albumart/:albumArt', (request, response) => {
-    const albumArt = String(request.params.albumArt);
-    const basename = path.basename(albumArt);
-    const current = path.join(global._appDataPath, './albumart/', basename);
-    if (fs.existsSync(current)) {
-      sendFile(current, request, response);
-    } else if (/-optimized/.test(basename)) {
-      const fileName = basename.replace(/-optimized/, '').replace(path.extname(basename), '');
-      fs.promises
-        .readdir(path.resolve(global._appDataPath, './albumart'))
-        .then((files) => files.find((file) => file.indexOf(fileName) === 0 && !file.includes('-optimized') && !file.endsWith('.part')))
-        .then((suspectedFile) => {
-          if (!suspectedFile) {
-            response.sendStatus(404);
-            return undefined;
-          }
-          return optimizeAlbumArt(path.join(global._appDataPath, './albumart/', suspectedFile), current).then(() => sendFile(current, request, response));
-        })
-        .catch((err) =>
-          response.status(500).send(`
-            Can't generate optimized file from ${current}
+    const basename = path.basename(String(request.params.albumArt));
+
+    resolveAlbumArt(basename)
+      .then((albumArt) => (albumArt ? sendFile(albumArt, request, response) : response.sendStatus(404)))
+      .catch((err) =>
+        response.status(500).send(`
+            Can't generate optimized file from ${path.join(global._appDataPath, './albumart/', basename)}
             ${err}
           `)
-        );
-    } else {
-      response.sendStatus(404);
-    }
+      );
   });
 
   server.get('/local', (request, response) => {
@@ -147,16 +143,17 @@ function setupServer() {
 
   server.get('/library', (request, response) => {
     allowLoopbackOrigin(request, response);
-    if (global._database) {
-      executeQuery<Track>(global._database, {
-        query: `SELECT * FROM library ORDER BY path ASC`,
-        variables: [],
-      })
-        .then((library) => response.json(library))
-        .catch(() => response.sendStatus(500));
-    } else {
+    if (!global._database) {
       response.sendStatus(403);
+      return;
     }
+
+    executeQuery<Track>(global._database, {
+      query: `SELECT * FROM library ORDER BY path ASC`,
+      variables: [],
+    })
+      .then((library) => response.json(library))
+      .catch(() => response.sendStatus(500));
   });
 
   server.listen(global._port, '127.0.0.1', () => {
