@@ -3,6 +3,11 @@ name: Dist
 # builds and packages the app on every operating system, used by the workflows that check or release it
 on:
   workflow_call:
+    inputs:
+      # the version of a release (see scripts/version.js), stamped into package.json before packaging; empty keeps the one of package.json
+      version:
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -43,7 +48,7 @@ jobs:
             build-${{ matrix.platform }}-
       - name: Install Linux packaging tools
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libarchive-tools flatpak flatpak-builder
+        run: sudo apt-get update && sudo apt-get install -y flatpak flatpak-builder
       # electron-builder bundles the flatpak from the runtime, the sdk and the base app, which it does not download itself
       - name: Install the Flatpak runtime
         if: runner.os == 'Linux'
@@ -51,6 +56,11 @@ jobs:
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user --noninteractive flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08 org.electronjs.Electron2.BaseApp//25.08
       - run: npm ci
+      - name: Set the version of the release
+        if: inputs.version != ''
+        env:
+          VERSION: ${{ inputs.version }}
+        run: node scripts/version.js "$VERSION"
       - run: npm run build
       - run: npm run dist
       - name: Check the contents of the package

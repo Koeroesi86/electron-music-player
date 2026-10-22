@@ -123,6 +123,15 @@ describe('uiState reducer', () => {
     expect(run({ type: 'SET_PLAYING', payload: { isPlaying: true } }).isPlaying).toBe(true);
   });
 
+  it('stores whether the app can be added to the application menu, and whether it was', () => {
+    expect(initial.launcher).toEqual({ available: false, enabled: false, offered: false });
+    expect(run({ type: 'LAUNCHER_STATE', payload: { available: true, enabled: true, offered: true } }).launcher).toEqual({
+      available: true,
+      enabled: true,
+      offered: true,
+    });
+  });
+
   it('merges restored settings', () => {
     expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.2, tab: 'equalizer' } } })).toMatchObject({
       volume: 0.2,

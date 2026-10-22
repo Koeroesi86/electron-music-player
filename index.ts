@@ -1,4 +1,5 @@
 import { app } from 'electron';
+import type { BrowserWindow } from 'electron';
 import { resolve, basename } from 'path';
 import fs from 'fs';
 import minimist from 'minimist';
@@ -12,6 +13,9 @@ import createDatabase from './electron/createDatabase';
 import setupListeners from './electron/setupListeners';
 import setupServer from './electron/setupServer';
 import { createRadioBrowser } from './electron/radioBrowser';
+import { autoUpdater } from 'electron-updater';
+import { canUpdate, createMockUpdateSource, runUpdate } from './electron/updater';
+import type { UpdateSource } from './electron/updater';
 
 // compiled to out/index.js, the project root is one level up
 const rootPath = resolve(__dirname, '..');
@@ -27,6 +31,8 @@ const isDev = process.env.NODE_ENV === 'development';
 if (isDev && process.platform === 'linux') {
   app.setDesktopName('emusic-dev.desktop');
 }
+
+const isMockUpdate = !app.isPackaged && process.env.MOCK_UPDATE === '1';
 
 const argv = minimist(process.argv.slice(2));
 
@@ -120,17 +126,33 @@ const getPort = () => {
   });
 };
 
+const getUpdateSource = (): UpdateSource | undefined => {
+  if (isMockUpdate) return createMockUpdateSource();
+
+  return canUpdate(app.isPackaged, process.platform, process.env) ? autoUpdater : undefined;
+};
+
+// the splash stays up while the update is checked and downloaded, the app starts once it is done
+const updateOnSplash = async (loading: BrowserWindow) => {
+  const source = getUpdateSource();
+  if (!source) return;
+
+  return runUpdate(source, (progress) => loading.webContents.send('SPLASH_PROGRESS', progress), { install: !isMockUpdate });
+};
+
 app
   .whenReady()
   .then(getPort)
-  .then(() => {
+  .then(async () => {
     const loading = getLoadingWindow();
     windows.loading = loading;
-    loading.loadURL(loadingLocation ?? '');
     loading.once('ready-to-show', () => {
       loading.show();
       if (isWin) loading.setBackgroundMaterial('acrylic');
     });
+    await loading.loadURL(loadingLocation ?? '');
+
+    return updateOnSplash(loading);
   })
   .then(() => createDatabase(libraryLocation))
   .then((d) => {

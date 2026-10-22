@@ -55,9 +55,12 @@
     "win": {
       "icon": "icons/win/icon.ico",
       "target": [
-        "nsis",
-        "msi",
-        "zip"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "mac": {
@@ -68,28 +71,22 @@
       ],
       "icon": "icons/mac/icon.icns"
     },
+    "nsis": {
+      "artifactName": "eMusic-Setup-${version}.${ext}"
+    },
     "linux": {
       "artifactName": "eMusic-${version}.${ext}",
       "executableName": "eMusic",
       "category": "Audio",
       "target": [
-        "AppImage",
-        "deb",
-        "rpm",
-        "freebsd",
-        "pacman",
-        "apk",
-        "7z",
-        "zip",
-        "tar.gz"
+        "AppImage"
       ],
       "icon": "icons/png/"
     },
     "publish": {
-      "provider": "generic",
-      "url": "http://localhost",
-      "channel": "latest",
-      "publishAutoUpdate": true
+      "provider": "github",
+      "owner": "Koeroesi86",
+      "repo": "electron-music-player"
     },
     "flatpak": {
       "runtime": "org.freedesktop.Platform",
@@ -111,6 +108,7 @@
   },
   "license": "ISC",
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "electron-window-state": "^5.0.3",
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.1",

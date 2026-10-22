@@ -12,6 +12,7 @@ import TitleBar from '../title-bar';
 import Navigation from '../navigation';
 import AudioSpectrum from '../audio-spectrum';
 import PlayerTabs from '../player-tabs';
+import LauncherOffer from '../launcher-offer';
 
 // Electron can only blur behind the window on Windows and macOS
 const isLinux = navigator.userAgent.includes('Linux');
@@ -98,6 +99,7 @@ const PlayerHome = ({ maximized, enableTransparency = true, loaded, folders, add
         }}
         cancel={() => setConfirmation(undefined)}
       />
+      <LauncherOffer />
       <AudioComponent />
     </div>
   );

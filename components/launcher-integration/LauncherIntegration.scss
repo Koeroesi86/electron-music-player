@@ -1,0 +1,21 @@
+.launcherIntegration {
+  padding-left: 12px;
+
+  .sectionTitle {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 100;
+    padding: 12px 0;
+  }
+
+  .toggle {
+    -webkit-app-region: no-drag;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

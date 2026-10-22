@@ -1,0 +1,141 @@
+import { EventEmitter } from 'events';
+import { describe, expect, it, vi } from 'vitest';
+import { canUpdate, createMockUpdateSource, runUpdate } from './updater';
+import type { UpdateSource } from './updater';
+
+const createSource = (check: UpdateSource['checkForUpdates'], download: UpdateSource['downloadUpdate'] = () => Promise.resolve()) => {
+  const source: UpdateSource = Object.assign(new EventEmitter(), {
+    autoDownload: true,
+    checkForUpdates: vi.fn(check),
+    downloadUpdate: vi.fn(download),
+    quitAndInstall: vi.fn(),
+  });
+
+  return source;
+};
+
+const available = () => Promise.resolve({ isUpdateAvailable: true, updateInfo: { version: '2.0.0' } });
+
+describe('runUpdate', () => {
+  it('continues when there is no update', async () => {
+    const source = createSource(() => Promise.resolve({ isUpdateAvailable: false, updateInfo: { version: '1.0.0' } }));
+    const report = vi.fn();
+
+    await expect(runUpdate(source, report)).resolves.toBeUndefined();
+
+    expect(report).toHaveBeenCalledWith({ text: 'Checking for updates...' });
+    expect(source.downloadUpdate).not.toHaveBeenCalled();
+    expect(source.quitAndInstall).not.toHaveBeenCalled();
+  });
+
+  it('downloads the update, reports the progress and installs it', async () => {
+    const source = createSource(available, () => {
+      source.emit('download-progress', { percent: 42.4 });
+      return Promise.resolve();
+    });
+    const report = vi.fn();
+
+    await expect(runUpdate(source, report, { installTimeout: 0 })).resolves.toBeUndefined();
+
+    expect(source.autoDownload).toBe(false);
+    expect(report.mock.calls.map(([progress]) => progress)).toEqual([
+      { text: 'Checking for updates...' },
+      { text: 'Downloading update 2.0.0...', percent: 0 },
+      { text: 'Downloading update 2.0.0...', percent: 42 },
+      { text: 'Restarting to install the update...', percent: 100 },
+    ]);
+    expect(source.quitAndInstall).toHaveBeenCalledExactlyOnceWith(true, true);
+  });
+
+  it('starts the app when it did not quit after the installer started', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const source = createSource(available);
+
+    await expect(runUpdate(source, vi.fn(), { installTimeout: 1 })).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('did not quit'));
+  });
+
+  it('does not install when installing is turned off', async () => {
+    const source = createSource(available);
+
+    await expect(runUpdate(source, vi.fn(), { install: false })).resolves.toBeUndefined();
+
+    expect(source.downloadUpdate).toHaveBeenCalledOnce();
+    expect(source.quitAndInstall).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['the check fails', () => Promise.reject(new Error('offline'))],
+    ['the check does not answer in time', () => new Promise<never>(() => undefined)],
+  ])('continues when %s', async (_name, check) => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await expect(runUpdate(createSource(check), vi.fn(), { checkTimeout: 1 })).resolves.toBeUndefined();
+  });
+
+  it('continues when the download stalls', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const source = createSource(available, () => new Promise<never>(() => undefined));
+
+    await expect(runUpdate(source, vi.fn(), { downloadStallTimeout: 1 })).resolves.toBeUndefined();
+
+    expect(source.quitAndInstall).not.toHaveBeenCalled();
+  });
+
+  it('keeps a slow download going while it makes progress', async () => {
+    const source = createSource(available, () =>
+      [20, 40, 60].reduce<Promise<unknown>>(
+        (previous, percent) => previous.then(() => new Promise((resolve) => setTimeout(resolve, 15))).then(() => source.emit('download-progress', { percent })),
+        Promise.resolve()
+      )
+    );
+
+    await runUpdate(source, vi.fn(), { downloadStallTimeout: 40, installTimeout: 0 });
+
+    expect(source.quitAndInstall).toHaveBeenCalledOnce();
+  });
+
+  it('continues when the download fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const source = createSource(available, () => Promise.reject(new Error('disk full')));
+
+    await expect(runUpdate(source, vi.fn())).resolves.toBeUndefined();
+
+    expect(source.quitAndInstall).not.toHaveBeenCalled();
+  });
+});
+
+describe('createMockUpdateSource', () => {
+  it('goes through a whole update without installing anything', async () => {
+    const report = vi.fn();
+
+    await expect(runUpdate(createMockUpdateSource(0), report, { install: false })).resolves.toBeUndefined();
+
+    const percents = report.mock.calls.map(([progress]) => progress.percent).filter((percent) => percent !== undefined);
+    expect(percents).toEqual([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]);
+  });
+});
+
+describe('canUpdate', () => {
+  it.each([
+    ['a packaged app on windows', true, 'win32', {}],
+    ['a packaged app on macos', true, 'darwin', {}],
+    ['a packaged app in an AppImage', true, 'linux', { APPIMAGE: '/home/me/eMusic.AppImage' }],
+  ] as const)('updates %s', (_name, isPackaged, platform, env) => {
+    expect(canUpdate(isPackaged, platform, env)).toBe(true);
+  });
+
+  it.each([
+    ['a development run', false, 'win32', {}],
+    ['the Flatpak or a deb, which is not an AppImage', true, 'linux', {}],
+    ['a run with EMUSIC_NO_UPDATE=1', true, 'win32', { EMUSIC_NO_UPDATE: '1' }],
+    ['an AppImage with EMUSIC_NO_UPDATE=1', true, 'linux', { APPIMAGE: '/home/me/eMusic.AppImage', EMUSIC_NO_UPDATE: '1' }],
+  ] as const)('does not update %s', (_name, isPackaged, platform, env) => {
+    expect(canUpdate(isPackaged, platform, env)).toBe(false);
+  });
+
+  it('only EMUSIC_NO_UPDATE=1 turns it off', () => {
+    expect(canUpdate(true, 'win32', { EMUSIC_NO_UPDATE: '0' })).toBe(true);
+  });
+});

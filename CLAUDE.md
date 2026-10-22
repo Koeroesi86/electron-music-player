@@ -4,7 +4,7 @@ Electron lossless audio player: main process in `electron/` (TypeScript, SQLite 
 
 ## Checks
 
-CI (`.github/workflows/`: `test.yml`, `dist.yml`, wired together by `pr-checks.yml` for pull requests and `build.yml` for `master` and tags) runs these on Linux, macOS and Windows, in this order:
+CI (`.github/workflows/`: `test.yml`, `dist.yml`, wired together by `pr-checks.yml` for pull requests and `build.yml` for `master`) runs these on Linux, macOS and Windows, in this order:
 
 1. `npm run lint` (ESLint with Prettier; fix with `npm run lint:fix`, not `prettier --write`)
 2. `npm run fallow` (dead code, unused dependencies and stale suppressions fail; complexity and duplication are reported)
@@ -15,11 +15,13 @@ CI (`.github/workflows/`: `test.yml`, `dist.yml`, wired together by `pr-checks.y
 
 Pull requests also run `fallow audit --base` (findings of the changed files), CodeQL, dependency review (high severity, GPL/AGPL licences denied) and OSV.
 
+Releases come from `release.yml`: Monday and Thursday 06:00 UTC and by hand, from `master` only. A scheduled run skips when only docs or `.github/` changed since the latest `vYY.M.N` tag. The version is `YY.M.<run number>` (`scripts/version.js`, stamped into `package.json` in the packaging job; never edit `version` by hand, no zero padded month and no prerelease part, electron-updater would take it for a channel), and the published release is what installed apps update from. `EMUSIC_NO_UPDATE=1` turns the updater off (the smoke tests set it).
+
 If `node` is not found, use `~/.nvm/versions/node/<version>/bin` directly.
 
 ## Conventions
 
 - A test next to the code (`name.test.ts`) that fails without the change; no fixed sleeps.
-- A new migration goes in `migrations/`; do not edit one that has shipped.
+- A new migration goes in `migrations/` as `NNN-name.sql` with the next number; it runs once per library (the number is stored as `PRAGMA user_version`), so it may `ALTER TABLE`. Do not edit one that has shipped. `001` to `003` ran on every start before the number was stored, so they stay safe to run again.
 - No `any` or casts; fallow suppressions need a reason.
 - Workflow changes: actions stay on the major versions already used, with minimal `permissions`.

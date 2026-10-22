@@ -31,15 +31,16 @@ const platforms = [
   [isLinux, 'linux', 'Linux']
 ]
 
-// snap removes chrome-sandbox from the shared unpacked dir, so it must not run alongside the other linux targets;
 // flatpak needs flatpak-builder on the machine and is not known to be safe next to the other targets, so it has its own build
+// flatpak updates through its own store: without a publish config it writes no latest-linux.yml over the one of the AppImage, and the package has no app-update.yml, so electron-updater stays inactive
 const extraBuilds = {
   win: [],
   mac: [],
-  linux: [{ linux: ['flatpak'] }, { linux: ['snap'] }]
+  linux: [{ linux: ['flatpak'], config: { publish: null } }]
 }
 
-const build = options => electronBuilder.build(options)
+// the release workflow uploads the files, electron-builder only writes the update metadata next to them
+const build = options => electronBuilder.build({ ...options, publish: 'never' })
 
 platforms
   .filter(([enabled]) => enabled)

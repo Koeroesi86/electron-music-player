@@ -3,7 +3,6 @@ name: Build
 on:
   push:
     branches: [master]
-    tags: ['*']
 
 permissions:
   contents: read
@@ -15,19 +14,3 @@ jobs:
   dist:
     needs: test
     uses: ./.github/workflows/dist.yml
-
-  release:
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: dist
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          path: dist
-          merge-multiple: true
-      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
-        with:
-          draft: true
-          files: dist/*
