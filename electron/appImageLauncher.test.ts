@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { posix } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildDesktopEntry,
@@ -13,6 +13,10 @@ import {
   wasLauncherOffered,
 } from './appImageLauncher';
 import type { LauncherOptions } from './appImageLauncher';
+
+// the entry only takes paths without a backslash, the temporary folder of Windows is full of them
+const { join } = posix;
+const createFolder = (prefix: string) => mkdtemp(join(tmpdir(), prefix)).then((folder) => folder.replaceAll('\\', '/'));
 
 const sizes = [16, 24, 32, 48, 64, 128, 256, 512];
 
@@ -53,7 +57,7 @@ describe('launcher on disk', () => {
     );
 
   beforeEach(async () => {
-    folder = await mkdtemp(join(tmpdir(), 'emusic-launcher-'));
+    folder = await createFolder('emusic-launcher-');
     await mkdir(join(folder, 'icons'));
     await Promise.all(sizes.map((size) => writeFile(join(folder, 'icons', `${size}x${size}.png`), `icon ${size}`)));
     refresh = vi.fn(() => Promise.resolve());
@@ -143,7 +147,7 @@ describe('launcher on disk', () => {
 
 describe('launcher offer', () => {
   it('was not made until it is marked, and stays marked', async () => {
-    const folder = await mkdtemp(join(tmpdir(), 'emusic-offer-'));
+    const folder = await createFolder('emusic-offer-');
     const userData = join(folder, 'userData');
 
     await expect(wasLauncherOffered(userData)).resolves.toBe(false);

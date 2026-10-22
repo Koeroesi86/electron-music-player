@@ -1,9 +1,12 @@
 import { mkdtemp, readFile, rm, stat } from 'fs/promises';
 import { tmpdir } from 'os';
-import { join, resolve } from 'path';
+import { posix, resolve } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IpcMainEvent } from 'electron';
 import type { LauncherOptions } from './appImageLauncher';
+
+// the entry only takes paths without a backslash, the temporary folder of Windows is full of them
+const { join } = posix;
 
 type Listener = (event: IpcMainEvent, payload?: unknown) => void;
 
@@ -35,7 +38,7 @@ describe('registerLauncherListeners', () => {
   const lastState = () => new Promise((resolve) => send.mockImplementation((_channel, state) => resolve(state)));
 
   beforeEach(async () => {
-    home = await mkdtemp(join(tmpdir(), 'emusic-listeners-'));
+    home = (await mkdtemp(join(tmpdir(), 'emusic-listeners-'))).replaceAll('\\', '/');
     vi.stubEnv('XDG_DATA_HOME', join(home, 'data'));
     listeners.clear();
     send.mockReset();
