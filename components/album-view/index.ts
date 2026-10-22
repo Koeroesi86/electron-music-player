@@ -6,13 +6,14 @@ import type { AppAction } from '../../client/redux/types';
 import AlbumView from './AlbumView';
 
 const mapState = (state: RootState) => ({
-  loaded: state.library.loaded,
+  port: state.uiState.port,
   albums: state.library.albums,
 });
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
   selectAlbum: (album: Album | null) => dispatch({ type: 'SELECT_ALBUM', payload: { album } }),
   playTracks: (tracks: Track[]) => dispatch({ type: 'PLAY_TRACKS', payload: { tracks } }),
+  loadPage: (page: number) => dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'albums', page } }),
 });
 
 export default connect(mapState, mapDispatch)(AlbumView);

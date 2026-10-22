@@ -1,4 +1,4 @@
-import type { Album, Folder, Track } from '../../types/library';
+import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { RadioQuery, RadioStation, RadioTag } from '../../types/radio';
 
 export type LibraryView = 'albums' | 'tracks' | 'folders';
@@ -68,7 +68,10 @@ export type AppAction =
   | PayloadAction<'RADIO_STREAM_TITLE', { uuid: string; title: string }>
   | PayloadAction<'FOLDERS_ADDED_TO_LIBRARY', { folders: Folder[] }>
   | PayloadAction<'STORE_FOLDERS', { folders: Folder[] }>
-  | PayloadAction<'STORE_LIBRARY', { library: Track[]; finished: boolean }>
+  | EmptyAction<'INVALIDATE_LIBRARY'>
+  | PayloadAction<'LOAD_LIBRARY_PAGE', { kind: 'tracks' | 'albums'; page: number }>
+  | PayloadAction<'STORE_TRACK_PAGE', { page: number; items: Track[]; total: number }>
+  | PayloadAction<'STORE_ALBUM_PAGE', { page: number; items: AlbumSummary[]; total: number }>
   | PayloadAction<'FILES_ADDED', { fileList: FileList }>
   | PayloadAction<'CLICKED_URL', { playlist: PlaylistItem[]; url: string }>
   | PayloadAction<'RESTORE_SETTINGS', { settings: Partial<PersistedSettings> }>

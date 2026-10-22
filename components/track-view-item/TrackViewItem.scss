@@ -5,6 +5,10 @@
   will-change: background-color;
 
   &:not(.header) {
+    // the rows of a long list are windowed, so their height is fixed
+    height: 20px;
+    line-height: 20px;
+    overflow: hidden;
     cursor: pointer;
   }
 

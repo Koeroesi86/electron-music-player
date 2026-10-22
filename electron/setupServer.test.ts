@@ -136,4 +136,31 @@ describe('setupServer /local', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(expect.arrayContaining([expect.objectContaining({ path: libraryFile() })]));
   });
+
+  describe('windows of the library', () => {
+    const get = (route: string) => fetch(`${baseUrl}${route}`);
+
+    it('answers with a page of tracks and the total', async () => {
+      const body = await (await get('/library/tracks?offset=0&limit=1')).json();
+
+      expect(body.items).toHaveLength(1);
+      expect(body.total).toBeGreaterThanOrEqual(1);
+    });
+
+    it('answers with a page of albums and the tracks of an album', async () => {
+      const { items, total } = await (await get('/library/albums?limit=5')).json();
+      expect(total).toBeGreaterThanOrEqual(1);
+
+      const tracks = await (await get(`/library/album?path=${encodeURIComponent(items[0].path)}&title=${encodeURIComponent(items[0].title ?? '')}`)).json();
+      expect(tracks).toHaveLength(items[0].trackCount);
+    });
+
+    it('limits the page size and falls back for a bad window', async () => {
+      expect((await (await get('/library/tracks?offset=-4&limit=100000')).json()).items.length).toBeLessThanOrEqual(500);
+    });
+
+    it('rejects an album request without a folder and a title', async () => {
+      expect((await get('/library/album')).status).toBe(400);
+    });
+  });
 });

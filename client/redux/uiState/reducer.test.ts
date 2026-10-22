@@ -97,11 +97,11 @@ describe('uiState reducer', () => {
     expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { equalizer: Array(12).fill(-40) } } }).equalizer).toEqual(Array(10).fill(0));
   });
 
-  it('tracks scanning progress and ends scanning when the library is stored', () => {
+  it('tracks scanning progress and ends scanning when the rescan is complete', () => {
     const scanning = run({ type: 'SCANNING_FOLDER', payload: { folder: '/music' } });
     expect(scanning.scanningFolder).toBe('/music');
     expect(run({ type: 'SCANNING_FILE', payload: { fileName: 'a', progress: 3, totalCount: 10 } }, scanning)).toMatchObject({ progress: 3, totalCount: 10 });
-    expect(run({ type: 'STORE_LIBRARY', payload: { library: [], finished: true } }, scanning).scanningFolder).toBeNull();
+    expect(run({ type: 'RESCAN_COMPLETE' }, scanning).scanningFolder).toBeNull();
   });
 
   it('toggles repeat and shuffle', () => {

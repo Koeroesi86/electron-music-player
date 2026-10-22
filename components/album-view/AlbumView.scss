@@ -38,5 +38,23 @@
     padding: 12px;
     overflow-y: auto;
     will-change: transform;
+
+    .window {
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 160px;
+      overflow: hidden;
+    }
+
+    .placeholder {
+      flex: 0 0 auto;
+      width: 112px;
+    }
   }
 }

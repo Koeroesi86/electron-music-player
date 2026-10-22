@@ -35,6 +35,15 @@
     will-change: transform;
   }
 
+  .window {
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .placeholder {
+    height: 20px;
+  }
+
   .controls {
     position: absolute;
     bottom: 0;
