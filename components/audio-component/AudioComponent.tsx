@@ -36,7 +36,7 @@ const AudioComponent = ({ currentSong, volume, port, trackEnded, connectNode }: 
     if (audio.current) audio.current.src = currentSong ? sourceOf(currentSong, port) : '';
   }, [currentSong]);
 
-  return <audio style={{ display: 'none' }} ref={audio} crossOrigin="anonymous" onEnded={trackEnded} />;
+  return <audio style={{ display: 'none' }} ref={audio} crossOrigin="anonymous" autoPlay onEnded={trackEnded} />;
 };
 
 export default AudioComponent;
