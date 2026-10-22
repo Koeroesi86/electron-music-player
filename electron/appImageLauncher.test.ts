@@ -2,7 +2,16 @@ import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'fs/promi
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildDesktopEntry, disableLauncher, enableLauncher, isLauncherEnabled, readLauncherTarget, syncLauncher } from './appImageLauncher';
+import {
+  buildDesktopEntry,
+  disableLauncher,
+  enableLauncher,
+  isLauncherEnabled,
+  markLauncherOffered,
+  readLauncherTarget,
+  syncLauncher,
+  wasLauncherOffered,
+} from './appImageLauncher';
 import type { LauncherOptions } from './appImageLauncher';
 
 const sizes = [16, 24, 32, 48, 64, 128, 256, 512];
@@ -129,5 +138,19 @@ describe('launcher on disk', () => {
       await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(false);
       await expect(exists(join(folder, 'data/icons/hicolor/16x16/apps/emusic.png'))).resolves.toBe(false);
     });
+  });
+});
+
+describe('launcher offer', () => {
+  it('was not made until it is marked, and stays marked', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'emusic-offer-'));
+    const userData = join(folder, 'userData');
+
+    await expect(wasLauncherOffered(userData)).resolves.toBe(false);
+    await markLauncherOffered(userData);
+    await markLauncherOffered(userData);
+
+    await expect(wasLauncherOffered(userData)).resolves.toBe(true);
+    await rm(folder, { recursive: true, force: true });
   });
 });

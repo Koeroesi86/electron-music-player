@@ -85,3 +85,10 @@ export const syncLauncher = async (appImage: string | undefined, options: Launch
 
   await (appImage ? enableLauncher(appImage, options) : disableLauncher(options));
 };
+
+const getOfferedFile = (folder: string) => join(folder, 'launcher-offered');
+
+/** Whether the user was asked about the application menu entry already, in whatever way they answered */
+export const wasLauncherOffered = (folder: string) => exists(getOfferedFile(folder));
+
+export const markLauncherOffered = (folder: string) => mkdir(folder, { recursive: true }).then(() => writeFile(getOfferedFile(folder), ''));

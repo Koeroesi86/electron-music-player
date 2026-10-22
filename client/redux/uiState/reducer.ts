@@ -21,7 +21,7 @@ const initialState: UiState = {
   maximized: false,
   isPlaying: false,
   streamTitle: null,
-  launcher: { available: false, enabled: false },
+  launcher: { available: false, enabled: false, offered: false },
   shuffle: false,
   repeat: false,
   equalizer: defaultGains,

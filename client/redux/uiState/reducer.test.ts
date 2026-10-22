@@ -124,8 +124,12 @@ describe('uiState reducer', () => {
   });
 
   it('stores whether the app can be added to the application menu, and whether it was', () => {
-    expect(initial.launcher).toEqual({ available: false, enabled: false });
-    expect(run({ type: 'LAUNCHER_STATE', payload: { available: true, enabled: true } }).launcher).toEqual({ available: true, enabled: true });
+    expect(initial.launcher).toEqual({ available: false, enabled: false, offered: false });
+    expect(run({ type: 'LAUNCHER_STATE', payload: { available: true, enabled: true, offered: true } }).launcher).toEqual({
+      available: true,
+      enabled: true,
+      offered: true,
+    });
   });
 
   it('merges restored settings', () => {

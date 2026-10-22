@@ -1,0 +1,38 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import LauncherOffer from './LauncherOffer';
+
+const question = 'Add eMusic to the application menu? You can change this later in the settings.';
+
+describe('LauncherOffer', () => {
+  afterEach(cleanup);
+
+  it('asks on the first run from an AppImage and adds the app when the user agrees', () => {
+    const setEnabled = vi.fn();
+    render(<LauncherOffer available enabled={false} offered={false} setEnabled={setEnabled} />);
+
+    fireEvent.click(screen.getByText('Add'));
+
+    expect(screen.getByText(question)).toBeTruthy();
+    expect(setEnabled).toHaveBeenCalledExactlyOnceWith(true);
+  });
+
+  it('remembers the answer when the user declines', () => {
+    const setEnabled = vi.fn();
+    render(<LauncherOffer available enabled={false} offered={false} setEnabled={setEnabled} />);
+
+    fireEvent.click(screen.getByText('Not now'));
+
+    expect(setEnabled).toHaveBeenCalledExactlyOnceWith(false);
+  });
+
+  it.each([
+    ['outside an AppImage', { available: false, enabled: false, offered: false }],
+    ['after it was asked', { available: true, enabled: false, offered: true }],
+    ['when the app is in the menu already', { available: true, enabled: true, offered: false }],
+  ])('does not ask %s', (_name, state) => {
+    render(<LauncherOffer {...state} setEnabled={vi.fn()} />);
+
+    expect(screen.queryByText(question)).toBeNull();
+  });
+});
