@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import type { Folder } from '../../types/library';
 import style from './FolderManagement.scss';
@@ -8,56 +8,37 @@ interface FolderManagementProps {
   addFiles: (files: FileList) => void;
 }
 
-class FolderManagement extends PureComponent<FolderManagementProps> {
-  private upload: (HTMLInputElement & { allowdirs?: boolean }) | null = null;
+const FolderManagement = ({ folders, addFiles }: FolderManagementProps) => {
+  const upload = useRef<HTMLInputElement>(null);
 
-  componentDidMount() {
-    if (this.upload) {
-      this.upload.allowdirs = true;
-      this.upload.webkitdirectory = true;
-    }
-  }
+  useEffect(() => {
+    if (upload.current) Object.assign(upload.current, { allowdirs: true, webkitdirectory: true });
+  }, []);
 
-  handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.stopPropagation();
     event.preventDefault();
     const { files } = event.target;
 
-    if (files) this.props.addFiles(files);
+    if (files) addFiles(files);
   };
 
-  render() {
-    const { folders } = this.props;
-    return (
-      <section className={style.folderManagement}>
-        <div className={style.sectionTitle}>Folders</div>
-        <div className={style.folders}>
-          {folders.map((folder) => (
-            <div key={`folder-${folder.path}`} className={style.folder} title={folder.path}>
-              {folder.path}
-            </div>
-          ))}
-          <div
-            className={style.addItems}
-            onClick={() => {
-              this.upload?.click();
-            }}
-          >
-            Drop music folders here
-            <input
-              type="file"
-              ref={(ref) => {
-                this.upload = ref;
-              }}
-              className={style.fileInput}
-              multiple
-              onChange={this.handleFileChange}
-            />
+  return (
+    <section className={style.folderManagement}>
+      <div className={style.sectionTitle}>Folders</div>
+      <div className={style.folders}>
+        {folders.map((folder) => (
+          <div key={`folder-${folder.path}`} className={style.folder} title={folder.path}>
+            {folder.path}
           </div>
+        ))}
+        <div className={style.addItems} onClick={() => upload.current?.click()}>
+          Drop music folders here
+          <input type="file" ref={upload} className={style.fileInput} multiple onChange={handleFileChange} />
         </div>
-      </section>
-    );
-  }
-}
+      </div>
+    </section>
+  );
+};
 
 export default FolderManagement;

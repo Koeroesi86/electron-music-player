@@ -1,5 +1,6 @@
-import { PureComponent } from 'react';
+import { useEffect, useRef } from 'react';
 import type { Track } from '../../types/library';
+import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 
 interface AudioComponentProps {
   currentSong: Track | null;
@@ -9,61 +10,28 @@ interface AudioComponentProps {
   connectNode: (node: HTMLAudioElement | null) => void;
 }
 
-class AudioComponent extends PureComponent<AudioComponentProps> {
-  private audio: HTMLAudioElement | null = null;
+const sourceOf = (track: Track, port: string) =>
+  /^http/.test(track.path) ? track.path : `http://127.0.0.1:${port}/local?path=${encodeURIComponent(track.path)}`;
 
-  componentDidMount() {
-    if (this.audio) {
-      this.setVolume();
+const AudioComponent = ({ currentSong, volume, port, trackEnded, connectNode }: AudioComponentProps) => {
+  const audio = useRef<HTMLAudioElement>(null);
 
-      this.props.connectNode(this.audio);
+  useEffect(() => {
+    if (audio.current && audio.current.volume !== volume) {
+      audio.current.volume = volume;
     }
-  }
+  }, [volume]);
 
-  componentDidUpdate(prevProps: AudioComponentProps) {
-    if (prevProps.currentSong !== this.props.currentSong) {
-      if (this.props.currentSong) {
-        this.playTrack(this.props.currentSong);
-      } else if (this.audio) {
-        this.audio.src = '';
-      }
-    }
+  useEffect(() => {
+    if (audio.current) connectNode(audio.current);
+    // the audio element lives as long as the component
+  }, []);
 
-    if (prevProps.volume !== this.props.volume) {
-      this.setVolume();
-    }
-  }
+  useUpdateEffect(() => {
+    if (audio.current) audio.current.src = currentSong ? sourceOf(currentSong, port) : '';
+  }, [currentSong]);
 
-  playTrack(track: Track) {
-    if (!this.audio) return;
-
-    const src = track.path;
-    if (/^http/.test(src)) {
-      this.audio.src = src;
-    } else {
-      this.audio.src = `http://127.0.0.1:${this.props.port}/local?path=${encodeURIComponent(track.path)}`;
-    }
-  }
-
-  setVolume() {
-    if (this.audio && this.audio.volume !== this.props.volume) {
-      this.audio.volume = this.props.volume;
-    }
-  }
-
-  render() {
-    const { trackEnded } = this.props;
-    return (
-      <audio
-        style={{ display: 'none' }}
-        ref={(a) => {
-          this.audio = a;
-        }}
-        crossOrigin="anonymous"
-        onEnded={trackEnded}
-      />
-    );
-  }
-}
+  return <audio style={{ display: 'none' }} ref={audio} crossOrigin="anonymous" onEnded={trackEnded} />;
+};
 
 export default AudioComponent;

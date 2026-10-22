@@ -1,4 +1,3 @@
-import { PureComponent } from 'react';
 import type { DragEvent } from 'react';
 import classNames from 'classnames';
 import { FaSyncAlt } from 'react-icons/fa';
@@ -7,6 +6,8 @@ import AlbumView from '../album-view';
 import TrackView from '../track-view';
 import style from './LocalCollection.scss';
 import FolderManagement from '../folder-management';
+import ViewSwitcher from '../view-switcher/ViewSwitcher';
+import type { ViewItem } from '../view-switcher/ViewSwitcher';
 
 interface LocalCollectionProps {
   view: LibraryView;
@@ -16,83 +17,36 @@ interface LocalCollectionProps {
   addFiles: (files: FileList) => void;
 }
 
-class LocalCollection extends PureComponent<LocalCollectionProps> {
-  handleDrop = (event: DragEvent<HTMLDivElement>) => {
+const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFiles }: LocalCollectionProps) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    const { files } = event.dataTransfer;
-
-    this.props.addFiles(files);
+    addFiles(event.dataTransfer.files);
   };
 
-  render() {
-    const { view, setView, rescanLibrary, scanningFolder, addFiles } = this.props;
-    return (
-      <div className={style.localCollection} onDragOver={(e) => e.preventDefault()} onDrop={this.handleDrop}>
-        <div className={style.viewControls}>
-          <div
-            className={classNames(style.view, {
-              [style.current]: view === 'albums',
-            })}
-            onClick={() => setView('albums')}
-          >
-            Albums
-          </div>
-          <div
-            className={classNames(style.view, {
-              [style.current]: view === 'tracks',
-            })}
-            onClick={() => setView('tracks')}
-          >
-            Songs
-          </div>
-          <div
-            className={classNames(style.view, {
-              [style.current]: view === 'folders',
-            })}
-            onClick={() => setView('folders')}
-          >
-            Folders
-          </div>
+  const views: ViewItem<LibraryView>[] = [
+    { view: 'albums', label: 'Albums', panel: <AlbumView /> },
+    { view: 'tracks', label: 'Songs', panel: <TrackView /> },
+    { view: 'folders', label: 'Folders', panel: <FolderManagement addFiles={addFiles} /> },
+  ];
+
+  return (
+    <div className={style.localCollection} onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
+      <ViewSwitcher
+        views={views}
+        current={view}
+        setView={setView}
+        controls={
           <div className={style.libraryControls}>
-            <button
-              onClick={rescanLibrary}
-              disabled={!!scanningFolder}
-              className={classNames({
-                [style.spinning]: scanningFolder,
-              })}
-            >
+            <button onClick={rescanLibrary} disabled={!!scanningFolder} className={classNames({ [style.spinning]: scanningFolder })}>
               <FaSyncAlt />
               Rescan
             </button>
           </div>
-        </div>
-        <div className={style.viewPanels}>
-          <div
-            className={classNames(style.viewPanel, {
-              [style.active]: view === 'albums',
-            })}
-          >
-            <AlbumView />
-          </div>
-          <div
-            className={classNames(style.viewPanel, {
-              [style.active]: view === 'tracks',
-            })}
-          >
-            <TrackView />
-          </div>
-          <div
-            className={classNames(style.viewPanel, {
-              [style.active]: view === 'folders',
-            })}
-          >
-            <FolderManagement addFiles={addFiles} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-}
+        }
+      />
+    </div>
+  );
+};
 
 export default LocalCollection;
