@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useAudioListener } from '../../client/hooks/use-audio-listener';
+import { getBandValues } from './getBandValues';
 import style from './AudioSpectrum.scss';
 
 interface MeterStop {
@@ -78,10 +79,10 @@ const AudioSpectrum = ({
     const drawRect = (i: number, y: number, rectHeight: number) => context.fillRect(i * (meterWidth + gap), y, meterWidth, rectHeight);
 
     const drawBars = (data: Uint8Array) => {
-      const step = Math.round(data.length / meterCount); // sample limited data from the total array
+      const values = getBandValues(data, meterCount);
       clearCanvas();
       for (let i = 0; i < meterCount; i++) {
-        const value = data[i * step];
+        const value = values[i];
         if (caps.length < Math.round(meterCount)) caps.push(value);
 
         context.fillStyle = capColor;
@@ -126,7 +127,8 @@ const AudioSpectrum = ({
 
   useAudioListener(addPlayStatusListener, (playing) => {
     isPlaying.current = playing;
-    if (!playing) return stopAnimation();
+    // the running loop lets the bars fall and stops itself
+    if (!playing) return;
 
     if (!analyser.current) analyser.current = createAnalyser();
     drawSpectrum();

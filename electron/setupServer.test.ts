@@ -36,9 +36,8 @@ describe('setupServer /local', () => {
     );
     global._database = database;
     global._appDataPath = folder;
-    global._port = await getFreePort();
+    global._port = await setupServer({ resolveStream: () => Promise.reject(new Error('no radio')), onTitle: () => {} }, await getFreePort());
     baseUrl = `http://127.0.0.1:${global._port}`;
-    setupServer({ resolveStream: () => Promise.reject(new Error('no radio')), onTitle: () => {} });
   });
 
   afterAll(() => {
@@ -162,5 +161,21 @@ describe('setupServer /local', () => {
     it('rejects an album request without a folder and a title', async () => {
       expect((await get('/library/album')).status).toBe(400);
     });
+  });
+});
+
+describe('setupServer port', () => {
+  const radio = { resolveStream: () => Promise.reject(new Error('no radio')), onTitle: () => {} };
+
+  it('takes the next port when the first one is occupied', async () => {
+    const start = await getFreePort();
+    const occupant = net.createServer();
+    await new Promise<void>((resolve) => occupant.listen(start, '127.0.0.1', resolve));
+
+    const port = await setupServer(radio, start);
+
+    occupant.close();
+    expect(port).toBeGreaterThan(start);
+    expect(global._port).toBe(port);
   });
 });

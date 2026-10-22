@@ -1,5 +1,6 @@
 import express from 'express';
-import type { Request, Response } from 'express';
+import type { Express, Request, Response } from 'express';
+import { createServer } from 'http';
 import path from 'path';
 import { rateLimit } from 'express-rate-limit';
 import { resolveAlbumArt } from './albumArt';
@@ -81,7 +82,24 @@ const serveAlbumTracks = serveFromLibrary((database, { query }) =>
   typeof query.path === 'string' && typeof query.title === 'string' ? getAlbumTracks(database, query.path, query.title) : undefined
 );
 
-function setupServer(radio: RadioStreamDeps) {
+const defaultPort = 3000;
+const maxPortAttempts = 100;
+
+// a probe of a free port can be taken before the server binds it, so the bind itself decides; the next port is tried when it is occupied
+const listenOnFreePort = (server: Express, port: number, attempt = 1): Promise<number> =>
+  new Promise<number>((resolve, reject) => {
+    // not app.listen: Express 5 also calls its callback with a bind error
+    const listener = createServer(server);
+    listener.once('listening', () => resolve(port));
+    listener.once('error', (err: NodeJS.ErrnoException) => {
+      if (err.code !== 'EADDRINUSE' || attempt >= maxPortAttempts) return reject(err);
+
+      resolve(listenOnFreePort(server, port + 1, attempt + 1));
+    });
+    listener.listen(port, '127.0.0.1');
+  });
+
+function setupServer(radio: RadioStreamDeps, startPort = defaultPort) {
   const server = express();
 
   server.use(limiter);
@@ -94,8 +112,10 @@ function setupServer(radio: RadioStreamDeps) {
   server.get('/library/albums', serveAlbumPage);
   server.get('/library/album', serveAlbumTracks);
 
-  server.listen(global._port, '127.0.0.1', () => {
-    console.log(`Example app listening on port ${global._port}!`);
+  return listenOnFreePort(server, startPort).then((port) => {
+    global._port = port;
+    console.log(`Example app listening on port ${port}!`);
+    return port;
   });
 }
 

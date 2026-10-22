@@ -1,9 +1,8 @@
 import { app } from 'electron';
 import type { BrowserWindow } from 'electron';
-import { resolve, basename } from 'path';
+import { join, resolve, basename } from 'path';
 import fs from 'fs';
 import minimist from 'minimist';
-import fp from 'find-free-port';
 import ws from 'windows-shortcuts-appid';
 import type { AppWindows } from './types/global';
 import getAppDataPath from './electron/appDataPath';
@@ -13,6 +12,8 @@ import createDatabase from './electron/createDatabase';
 import setupListeners from './electron/setupListeners';
 import setupServer from './electron/setupServer';
 import { createRadioBrowser } from './electron/radioBrowser';
+import { registerDevDesktopEntry, removeDevDesktopEntry } from './electron/devDesktopEntry';
+import closeDatabase from './electron/closeDatabase';
 import { autoUpdater } from 'electron-updater';
 import { canUpdate, createMockUpdateSource, runUpdate } from './electron/updater';
 import type { UpdateSource } from './electron/updater';
@@ -27,9 +28,18 @@ const isWin = process.platform === 'win32';
 const isMac = process.platform === 'darwin';
 const isDev = process.env.NODE_ENV === 'development';
 
-// scripts/prebuild.js registers this desktop entry, which gives the development window its icon on linux
+// the development window gets its icon on linux from this desktop entry, which only exists while it runs
 if (isDev && process.platform === 'linux') {
+  const dataHome = process.env.XDG_DATA_HOME || join(app.getPath('home'), '.local/share');
+
   app.setDesktopName('emusic-dev.desktop');
+  registerDevDesktopEntry(dataHome, resolve(__dirname, '../icons/png/512x512.png'));
+  app.on('will-quit', () => removeDevDesktopEntry(dataHome));
+}
+
+// the entry the AppImage launcher installs (electron/appImageLauncher.ts), so the running window gets its icon in the dock and taskbar
+if (!isDev && process.platform === 'linux') {
+  app.setDesktopName('emusic.desktop');
 }
 
 const isMockUpdate = !app.isPackaged && process.env.MOCK_UPDATE === '1';
@@ -109,22 +119,18 @@ const libraryLocation = resolve(appDataPath, './library.sqlite');
 
 const radio = createRadioBrowser(`eMusic/${app.getVersion()}`);
 
-const getPort = () => {
-  return fp(3000, '127.0.0.1').then((freePorts) => {
-    global._port = freePorts[0];
+const getPort = () =>
+  setupServer({
+    resolveStream: radio.resolveStream,
+    onTitle: (uuid, title) => windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title }),
+  }).then((port) => {
     if (!windowLocation || !loadingLocation) {
-      windowLocation = `http://127.0.0.1:${global._port}/app/index.html?port=${global._port}`;
-      loadingLocation = `http://127.0.0.1:${global._port}/app/loading.html`;
+      windowLocation = `http://127.0.0.1:${port}/app/index.html?port=${port}`;
+      loadingLocation = `http://127.0.0.1:${port}/app/loading.html`;
     } else {
-      windowLocation += `?port=${global._port}`;
+      windowLocation += `?port=${port}`;
     }
-
-    setupServer({
-      resolveStream: radio.resolveStream,
-      onTitle: (uuid, title) => windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title }),
-    });
   });
-};
 
 const getUpdateSource = (): UpdateSource | undefined => {
   if (isMockUpdate) return createMockUpdateSource();
@@ -161,6 +167,16 @@ app
 
     initWindow();
     setupListeners(d, windows, radio);
+
+    // the native sqlite3 addon aborts the process when it is torn down with the database open, so it is closed before the app exits
+    let databaseClosed = false;
+    app.on('will-quit', (event) => {
+      if (databaseClosed) return;
+
+      event.preventDefault();
+      databaseClosed = true;
+      closeDatabase(d).then(() => app.quit());
+    });
 
     app.on('window-all-closed', () => {
       if (!isMac) {

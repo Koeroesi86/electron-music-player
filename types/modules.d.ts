@@ -17,10 +17,6 @@ declare module 'windows-shortcuts-appid' {
   export function addAppId(shortcutPath: string, appId: string, callback: Callback): void;
 }
 
-declare module 'find-free-port' {
-  export default function findFreePort(start: number, host?: string): Promise<number[]>;
-}
-
 declare module '*.scss' {
   const classNames: Record<string, string>;
   export default classNames;
