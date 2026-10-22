@@ -4,6 +4,7 @@ import type { RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
 import { electronAPI } from '../../electron-api';
 import { debounce } from '../../utils/debounce';
 import type { RootState } from '../reducers';
+import toAddedFiles from '../../added-files';
 import { getCoverUrl } from '../../cover-url';
 import { fetchAlbumPage, fetchTrackPage } from '../../library-api';
 import { actionMiddleware, onAction } from '../on-action';
@@ -125,13 +126,6 @@ const start = (store: Store) => {
   loadPage(store, 'tracks', 0).then(appLoaded);
 };
 
-const toAddedFiles = (fileList: FileList) =>
-  Array.from(fileList).map((file) => ({
-    name: file.name,
-    path: electronAPI.getPathForFile(file),
-    lastModified: file.lastModified,
-  }));
-
 const notifyTrack = (store: Store, track: Track) =>
   notifyPlaying(track, store.getState().uiState.port, () => {
     store.dispatch({ type: 'CLICK_NOTIFICATION', payload: {} });
@@ -139,7 +133,7 @@ const notifyTrack = (store: Store, track: Track) =>
   });
 
 const handleActions = actionMiddleware((store) => [
-  onAction('FILES_ADDED', ({ payload }) => electronAPI.send('ADD_FOLDERS_TO_LIBRARY', toAddedFiles(payload.fileList))),
+  onAction('FILES_ADDED', ({ payload }) => electronAPI.send('ADD_FOLDERS_TO_LIBRARY', toAddedFiles(Array.from(payload.fileList), electronAPI.getPathForFile))),
   onAction('RESCAN_LIBRARY', () => rescanLibrary(true)),
   onAction('LOAD_LIBRARY_PAGE', ({ payload }) => void loadPage(store, payload.kind, payload.page)),
   // the cached pages are fetched again when they are shown, not all at once
