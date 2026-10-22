@@ -1,5 +1,6 @@
 import type { OnlineView } from '../../client/redux/types';
 import OnlineSourcePanel from '../online-source-panel';
+import RadioStations from '../radio-stations';
 import ViewSwitcher from '../view-switcher/ViewSwitcher';
 import type { ViewItem } from '../view-switcher/ViewSwitcher';
 
@@ -9,7 +10,7 @@ interface OnlineSourcesProps {
 }
 
 const views: ViewItem<OnlineView>[] = [
-  { view: 'shoutcast', label: 'Shoutcast', panel: <OnlineSourcePanel src={'http://www.shoutcast.com/scradioinwinamp/'} /> },
+  { view: 'radio', label: 'Radio', panel: <RadioStations /> },
   { view: 'spotify', label: 'Spotify', panel: <OnlineSourcePanel src={'https://open.spotify.com/browse'} /> },
 ];
 

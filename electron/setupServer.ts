@@ -3,6 +3,8 @@ import type { Request, Response } from 'express';
 import path from 'path';
 import { rateLimit } from 'express-rate-limit';
 import { resolveAlbumArt } from './albumArt';
+import { createRadioStreamHandler } from './radioProxy';
+import type { RadioStreamDeps } from './radioProxy';
 import { findTrackPath, getLibrary } from './libraryRepository';
 import { allowLoopbackOrigin, sendFile } from './sendFile';
 
@@ -48,7 +50,7 @@ const serveLibrary = (request: Request, response: Response) => {
     .catch(() => response.sendStatus(500));
 };
 
-function setupServer() {
+function setupServer(radio: RadioStreamDeps) {
   const server = express();
 
   server.use(limiter);
@@ -56,6 +58,7 @@ function setupServer() {
   server.use('/albumart/:albumArt', serveAlbumArt);
   server.get('/local', serveLocalFile);
   server.get('/library', serveLibrary);
+  server.get('/radio/:uuid', createRadioStreamHandler(radio));
 
   server.listen(global._port, '127.0.0.1', () => {
     console.log(`Example app listening on port ${global._port}!`);

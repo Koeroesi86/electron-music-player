@@ -1,4 +1,5 @@
 import type { Track } from '../../../types/library';
+import { toRadioTrack } from '../../radio-track';
 import { actionMiddleware, onAction } from '../on-action';
 import type { Store } from '../on-action';
 import type { UiState } from '../types';
@@ -53,6 +54,7 @@ const middleware = actionMiddleware((store) => [
     store.dispatch({ type: 'CLEAR_PLAYED', payload: {} });
     store.dispatch({ type: 'PLAY_TRACK', payload: { track: payload.track } });
   }),
+  onAction('PLAY_RADIO_STATION', ({ payload }) => store.dispatch({ type: 'PLAY_TRACKS', payload: { tracks: [toRadioTrack(payload.station)] } })),
   onAction('NEXT_SONG', () => playNext(store)),
   onAction('PREVIOUS_SONG', () => playPrevious(store)),
   onAction('PLAY_TRACKS', ({ payload }) => store.dispatch({ type: 'PLAY_TRACK', payload: { track: payload.tracks[0] || null } })),

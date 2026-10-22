@@ -1,7 +1,8 @@
 import type { Album, Folder, Track } from '../../types/library';
+import type { RadioQuery, RadioStation, RadioTag } from '../../types/radio';
 
 export type LibraryView = 'albums' | 'tracks' | 'folders';
-export type OnlineView = 'shoutcast' | 'spotify';
+export type OnlineView = 'radio' | 'spotify';
 export type Tab = 'now-playing' | 'local' | 'online-sources' | 'equalizer' | 'settings';
 
 export interface PlaylistItem {
@@ -32,6 +33,8 @@ export interface UiState extends PersistedSettings {
   progress: number;
   totalCount: number;
   isPlaying: boolean;
+  /** The track the current radio station is playing, as the stream announces it */
+  streamTitle: string | null;
 }
 
 type EmptyPayload = Record<string, never>;
@@ -56,7 +59,13 @@ export type AppAction =
   | EmptyAction<'TOGGLE_SHUFFLE'>
   | EmptyAction<'CLEAR_PLAYED'>
   | EmptyAction<'POP_PLAYED'>
+  | EmptyAction<'LOAD_RADIO_TAGS'>
   | EmptyAction<'CLICK_NOTIFICATION'>
+  | PayloadAction<'SEARCH_RADIO', { query: RadioQuery }>
+  | PayloadAction<'RADIO_STATIONS', { query: RadioQuery; stations: RadioStation[]; error?: string }>
+  | PayloadAction<'RADIO_TAGS_LOADED', { tags: RadioTag[] }>
+  | PayloadAction<'PLAY_RADIO_STATION', { station: RadioStation }>
+  | PayloadAction<'RADIO_STREAM_TITLE', { uuid: string; title: string }>
   | PayloadAction<'FOLDERS_ADDED_TO_LIBRARY', { folders: Folder[] }>
   | PayloadAction<'STORE_FOLDERS', { folders: Folder[] }>
   | PayloadAction<'STORE_LIBRARY', { library: Track[]; finished: boolean }>

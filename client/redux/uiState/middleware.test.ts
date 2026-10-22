@@ -161,4 +161,15 @@ describe('uiState middleware', () => {
       expect(store.getState().uiState.currentSong).toEqual(c);
     });
   });
+
+  it('PLAY_RADIO_STATION plays the station as the only track', () => {
+    const store = createTestStore({});
+    const station = { uuid: 'abc', name: 'Jazz FM', country: 'Hungary', tags: ['jazz'], codec: 'MP3', bitrate: 128 };
+    dispatch(store, { type: 'PLAY_RADIO_STATION', payload: { station } });
+
+    const { currentSong, nowPlaying, isPlaying } = store.getState().uiState;
+    expect(currentSong).toMatchObject({ path: 'radio:abc', title: 'Jazz FM' });
+    expect(nowPlaying).toEqual([currentSong]);
+    expect(isPlaying).toBe(true);
+  });
 });

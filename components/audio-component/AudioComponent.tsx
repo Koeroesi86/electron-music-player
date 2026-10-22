@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { Track } from '../../types/library';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
+import { radioUuidOf } from '../../client/radio-track';
 
 interface AudioComponentProps {
   currentSong: Track | null;
@@ -10,8 +11,12 @@ interface AudioComponentProps {
   connectNode: (node: HTMLAudioElement | null) => void;
 }
 
-const sourceOf = (track: Track, port: string) =>
-  /^http/.test(track.path) ? track.path : `http://127.0.0.1:${port}/local?path=${encodeURIComponent(track.path)}`;
+const sourceOf = (track: Track, port: string) => {
+  const station = radioUuidOf(track.path);
+  if (station) return `http://127.0.0.1:${port}/radio/${encodeURIComponent(station)}`;
+
+  return /^http/.test(track.path) ? track.path : `http://127.0.0.1:${port}/local?path=${encodeURIComponent(track.path)}`;
+};
 
 const AudioComponent = ({ currentSong, volume, port, trackEnded, connectNode }: AudioComponentProps) => {
   const audio = useRef<HTMLAudioElement>(null);
@@ -31,7 +36,7 @@ const AudioComponent = ({ currentSong, volume, port, trackEnded, connectNode }: 
     if (audio.current) audio.current.src = currentSong ? sourceOf(currentSong, port) : '';
   }, [currentSong]);
 
-  return <audio style={{ display: 'none' }} ref={audio} crossOrigin="anonymous" onEnded={trackEnded} />;
+  return <audio style={{ display: 'none' }} ref={audio} crossOrigin="anonymous" autoPlay onEnded={trackEnded} />;
 };
 
 export default AudioComponent;
