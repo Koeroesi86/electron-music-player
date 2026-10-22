@@ -1,6 +1,6 @@
 import { app } from 'electron';
 import type { BrowserWindow } from 'electron';
-import { join, resolve, basename } from 'path';
+import { join, resolve } from 'path';
 import fs from 'fs';
 import minimist from 'minimist';
 import ws from 'windows-shortcuts-appid';
@@ -12,6 +12,7 @@ import createDatabase from './electron/createDatabase';
 import setupListeners from './electron/setupListeners';
 import setupServer from './electron/setupServer';
 import { createRadioBrowser } from './electron/radioBrowser';
+import { getAppUserModelId } from './electron/appUserModelId';
 import { registerDevDesktopEntry, removeDevDesktopEntry } from './electron/devDesktopEntry';
 import closeDatabase from './electron/closeDatabase';
 import { autoUpdater } from 'electron-updater';
@@ -20,7 +21,7 @@ import type { UpdateSource } from './electron/updater';
 
 // compiled to out/index.js, the project root is one level up
 const rootPath = resolve(__dirname, '..');
-const packageInfo: { name: string; description: string } = JSON.parse(fs.readFileSync(resolve(rootPath, 'package.json'), 'utf8'));
+const packageInfo: { name: string; description: string; build: { appId: string } } = JSON.parse(fs.readFileSync(resolve(rootPath, 'package.json'), 'utf8'));
 
 process.env.ELECTRON_ENABLE_LOGGING = '1';
 
@@ -63,18 +64,14 @@ if (argv.webpackPort) {
 }
 
 function setAppId() {
-  const exeName = basename(process.execPath).replace(/\.exe$/i, '');
+  global._appId = getAppUserModelId(packageInfo.build.appId, isDev, process.env.NODE_ENV);
 
-  if (isDev) {
-    global._appId = `com.squirrel.${exeName}-${process.env.NODE_ENV}`;
-  } else {
-    global._appId = `com.squirrel.${exeName}`;
+  if (isWin) {
+    app.setAppUserModelId(global._appId);
+    console.log('Registered app ID', global._appId);
   }
 
   if (isWin && isDev) {
-    app.setAppUserModelId(global._appId);
-    console.log('Registered app ID', global._appId);
-
     const shortcutPath = `${app.getPath('appData')}\\Microsoft\\Windows\\Start Menu\\Programs\\eMusic${isDev ? '-' + process.env.NODE_ENV : ''}.lnk`;
 
     if (fs.existsSync(shortcutPath)) {
