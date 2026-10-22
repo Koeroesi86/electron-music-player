@@ -71,6 +71,9 @@
       ],
       "icon": "icons/mac/icon.icns"
     },
+    "nsis": {
+      "artifactName": "eMusic-Setup-${version}.${ext}"
+    },
     "linux": {
       "artifactName": "eMusic-${version}.${ext}",
       "executableName": "eMusic",

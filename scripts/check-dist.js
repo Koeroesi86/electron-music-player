@@ -43,7 +43,15 @@ const problems = [
 const [metadataPath, installer] = updateMetadata[process.platform]
 const metadataFile = resolve(__dirname, '..', metadataPath)
 if (!existsSync(metadataFile)) problems.push(`missing: ${metadataPath}`)
-else if (!installer.test(readFileSync(metadataFile, 'utf8'))) problems.push(`${metadataPath} does not list ${installer}`)
+else {
+  const metadata = readFileSync(metadataFile, 'utf8')
+  if (!installer.test(metadata)) problems.push(`${metadataPath} does not list ${installer}`)
+  // the release workflow uploads the files as they are named here, and GitHub renames an asset with a space in its name,
+  // so the updater would ask for a file that is not in the release
+  const listed = [...metadata.matchAll(/^\s*(?:- )?url: (.+)$/gm)].map(([, name]) => name.trim())
+  listed.filter(name => !existsSync(resolve(__dirname, '..', 'dist', name))).forEach(name => problems.push(`${metadataPath} lists ${name}, which is not in dist/`))
+  listed.filter(name => !/^[\w.-]+$/.test(name)).forEach(name => problems.push(`${metadataPath} lists ${name}, which GitHub would rename`))
+}
 // the packaged app must know where to look for updates, linux-unpacked is rebuilt by the flatpak build, which has none on purpose
 if (process.platform !== 'linux' && !existsSync(resolve(archive, '..', 'app-update.yml'))) problems.push('missing: app-update.yml')
 
