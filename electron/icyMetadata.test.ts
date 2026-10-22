@@ -1,0 +1,54 @@
+import { describe, expect, it } from 'vitest';
+import { IcyMetadataStripper, parseStreamTitle } from './icyMetadata';
+
+const metadataBlock = (text: string) => {
+  const body = Buffer.from(text);
+  const padded = Buffer.alloc(Math.ceil(body.length / 16) * 16);
+  body.copy(padded);
+  return Buffer.concat([Buffer.from([padded.length / 16]), padded]);
+};
+
+const strip = async (metaint: number, chunks: Buffer[]) => {
+  const titles: string[] = [];
+  const stripper = new IcyMetadataStripper(metaint, (title) => titles.push(title));
+  const audio: Buffer[] = [];
+  stripper.on('data', (data: Buffer) => audio.push(data));
+  chunks.forEach((chunk) => stripper.write(chunk));
+  await new Promise((resolve) => stripper.end(resolve));
+  return { audio: Buffer.concat(audio).toString(), titles };
+};
+
+describe('parseStreamTitle', () => {
+  it('reads the title of a metadata block', () => {
+    expect(parseStreamTitle("StreamTitle='Artist - Song';StreamUrl='';")).toBe('Artist - Song');
+  });
+
+  it.each(['', "StreamTitle='';", "StreamUrl='x';"])('has no title in %j', (metadata) => {
+    expect(parseStreamTitle(metadata)).toBeUndefined();
+  });
+});
+
+describe('IcyMetadataStripper', () => {
+  it('passes the audio through without the metadata', async () => {
+    const stream = Buffer.concat([Buffer.from('aaaa'), metadataBlock("StreamTitle='One';"), Buffer.from('bbbb'), Buffer.from([0]), Buffer.from('cc')]);
+
+    expect(await strip(4, [stream])).toEqual({ audio: 'aaaabbbbcc', titles: ['One'] });
+  });
+
+  it('handles a metadata block that is split over chunks, down to single bytes', async () => {
+    const stream = Buffer.concat([Buffer.from('aaaa'), metadataBlock("StreamTitle='Split title';"), Buffer.from('bbbb')]);
+    const bytes = Array.from(stream, (byte) => Buffer.from([byte]));
+
+    expect(await strip(4, bytes)).toEqual({ audio: 'aaaabbbb', titles: ['Split title'] });
+  });
+
+  it('reports every title of the stream', async () => {
+    const stream = Buffer.concat([Buffer.from('aa'), metadataBlock("StreamTitle='One';"), Buffer.from('bb'), metadataBlock("StreamTitle='Two';")]);
+
+    expect((await strip(2, [stream])).titles).toEqual(['One', 'Two']);
+  });
+
+  it('does not report an empty block', async () => {
+    expect(await strip(2, [Buffer.concat([Buffer.from('aa'), Buffer.from([0]), Buffer.from('bb')])])).toEqual({ audio: 'aabb', titles: [] });
+  });
+});

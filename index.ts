@@ -10,6 +10,7 @@ import getLoadingWindow from './electron/getLoadingWindow';
 import createDatabase from './electron/createDatabase';
 import setupListeners from './electron/setupListeners';
 import setupServer from './electron/setupServer';
+import { createRadioBrowser } from './electron/radioBrowser';
 
 // compiled to out/index.js, the project root is one level up
 const rootPath = resolve(__dirname, '..');
@@ -94,6 +95,8 @@ if (!fs.existsSync(appDataPath)) {
 
 const libraryLocation = resolve(appDataPath, './library.sqlite');
 
+const radio = createRadioBrowser(`eMusic/${app.getVersion()}`);
+
 const getPort = () => {
   return fp(3000, '127.0.0.1').then((freePorts) => {
     global._port = freePorts[0];
@@ -104,7 +107,10 @@ const getPort = () => {
       windowLocation += `?port=${global._port}`;
     }
 
-    setupServer();
+    setupServer({
+      resolveStream: radio.resolveStream,
+      onTitle: (uuid, title) => windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title }),
+    });
   });
 };
 
@@ -126,7 +132,7 @@ app
     global._database = d;
 
     initWindow();
-    setupListeners(d, windows);
+    setupListeners(d, windows, radio);
 
     app.on('window-all-closed', () => {
       if (!isMac) {

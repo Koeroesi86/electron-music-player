@@ -7,6 +7,7 @@ import NowPlaying from './NowPlaying';
 
 const mapState = (state: RootState) => ({
   port: state.uiState.port,
+  streamTitle: state.uiState.streamTitle,
   currentSong: state.uiState.currentSong,
   nowPlaying: state.uiState.nowPlaying,
 });

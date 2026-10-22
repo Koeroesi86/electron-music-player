@@ -9,10 +9,11 @@ interface NowPlayingProps {
   nowPlaying: Track[];
   currentSong: Track | null;
   port: string;
+  streamTitle: string | null;
   playTrack: (track: Track) => void;
 }
 
-const NowPlaying = ({ nowPlaying, currentSong, port, playTrack }: NowPlayingProps) => (
+const NowPlaying = ({ nowPlaying, currentSong, port, streamTitle, playTrack }: NowPlayingProps) => (
   <div className={style.nowPlaying}>
     <div className={style.header}>Now playing</div>
     <div className={style.contents}>
@@ -27,6 +28,7 @@ const NowPlaying = ({ nowPlaying, currentSong, port, playTrack }: NowPlayingProp
               {currentSong.track ? <span className={style.trackNo}>#{currentSong.track}</span> : ''}
               {currentSong.title}
             </div>
+            {streamTitle && <div className={style.streamTitle}>{streamTitle}</div>}
             <div className={style.album}>{currentSong.album}</div>
             <div className={style.artist}>{currentSong.artist}</div>
           </div>

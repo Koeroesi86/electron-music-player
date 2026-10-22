@@ -38,7 +38,7 @@ describe('setupServer /local', () => {
     global._appDataPath = folder;
     global._port = await getFreePort();
     baseUrl = `http://127.0.0.1:${global._port}`;
-    setupServer();
+    setupServer({ resolveStream: () => Promise.reject(new Error('no radio')), onTitle: () => {} });
   });
 
   afterAll(() => {

@@ -1,6 +1,7 @@
 import type { Middleware } from 'redux';
 import _ from 'lodash';
 import type { Folder, Track } from '../../../types/library';
+import type { RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
 import { electronAPI } from '../../electron-api';
 import type { RootState } from '../reducers';
 import { getCoverUrl } from '../../cover-url';
@@ -20,6 +21,11 @@ function addListeners(store: Store) {
   electronAPI.on<{ isPlaying: boolean }>('SET_PLAYING', (payload) => store.dispatch({ type: 'SET_PLAYING', payload }));
   electronAPI.on<{ settings: Partial<PersistedSettings> }>('RESTORE_SETTINGS', (payload) => store.dispatch({ type: 'RESTORE_SETTINGS', payload }));
   electronAPI.on<{ fileName: string; progress: number; totalCount: number }>('SCANNING_FILE', (payload) => store.dispatch({ type: 'SCANNING_FILE', payload }));
+  electronAPI.on<{ query: RadioQuery; stations: RadioStation[]; error?: string }>('RADIO_STATIONS', (payload) =>
+    store.dispatch({ type: 'RADIO_STATIONS', payload })
+  );
+  electronAPI.on<{ tags: RadioTag[] }>('RADIO_TAGS_LOADED', (payload) => store.dispatch({ type: 'RADIO_TAGS_LOADED', payload }));
+  electronAPI.on<{ uuid: string; title: string }>('RADIO_STREAM_TITLE', (payload) => store.dispatch({ type: 'RADIO_STREAM_TITLE', payload }));
   electronAPI.on<{ folder: string }>('SCANNING_FOLDER', (payload) => store.dispatch({ type: 'SCANNING_FOLDER', payload }));
 }
 
@@ -124,6 +130,8 @@ const handleActions = actionMiddleware((store) => [
   onAction('PLAY_TRACK', ({ payload }) => {
     if (payload.track) notifyTrack(store, payload.track);
   }),
+  onAction('SEARCH_RADIO', ({ payload }) => electronAPI.send('RADIO_SEARCH', payload.query)),
+  onAction('LOAD_RADIO_TAGS', () => electronAPI.send('RADIO_TAGS')),
   onAction('SAVE_SETTINGS', () => saveSettings(store.getState().uiState)),
 ]);
 

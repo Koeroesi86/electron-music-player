@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import {
   MdEqualizer as EQIcon,
   MdSettings as SettingsIcon,
-  MdCloudQueue as ShoutCastIcon,
+  MdCloudQueue as OnlineIcon,
   MdMusicNote as NowPlayingIcon,
   MdQueueMusic as LocalLibraryIcon,
 } from 'react-icons/md';
@@ -41,7 +41,7 @@ function Navigation({ setTab = () => {}, tab = 'local' }: NavigationProps) {
           [style.active]: tab === 'online-sources',
         })}
       >
-        <ShoutCastIcon size={'12px'} />
+        <OnlineIcon size={'12px'} />
         <span className={style.label}>Online</span>
       </div>
       <div

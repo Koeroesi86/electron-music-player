@@ -1,12 +1,13 @@
 import type { Reducer } from 'redux';
 import { isAppAction } from '../types';
-import type { UiState } from '../types';
+import type { OnlineView, UiState } from '../types';
+import { radioUuidOf } from '../../radio-track';
 import { clampGain, defaultGains, restoreGains } from '../../audio/equalizer';
 
 const initialState: UiState = {
   view: 'albums',
   port: window.location.search.match(/^\?port=([0-9]+)/)?.[1] ?? '3000',
-  onlineView: 'shoutcast',
+  onlineView: 'radio',
   tab: 'local',
   nowPlaying: [],
   played: [],
@@ -19,10 +20,14 @@ const initialState: UiState = {
   totalCount: 0,
   maximized: false,
   isPlaying: false,
+  streamTitle: null,
   shuffle: false,
   repeat: false,
   equalizer: defaultGains,
 };
+
+// the Shoutcast page is gone, a saved view that is not Spotify shows the radio
+const restoreOnlineView = (view: string): OnlineView => (view === 'spotify' ? 'spotify' : 'radio');
 
 const toNumber = (value: number | string) => parseFloat(`${value || 0}`);
 
@@ -37,7 +42,7 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
     case 'PLAY_TRACKS':
       return { ...state, nowPlaying: action.payload.tracks, played: [] };
     case 'PLAY_TRACK':
-      return { ...state, currentSong: action.payload.track || null, isPlaying: true };
+      return { ...state, currentSong: action.payload.track || null, isPlaying: true, streamTitle: null };
     case 'SET_VOLUME':
       return { ...state, volume: toNumber(action.payload.volume) };
     case 'SET_CURRENT_TIME': {
@@ -49,6 +54,10 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
     case 'SET_GAIN': {
       const { value, index } = action.payload;
       return { ...state, equalizer: state.equalizer.map((gain, band) => (band === index ? clampGain(toNumber(value)) : gain)) };
+    }
+    case 'RADIO_STREAM_TITLE': {
+      const { uuid, title } = action.payload;
+      return state.currentSong && radioUuidOf(state.currentSong.path) === uuid ? { ...state, streamTitle: title } : state;
     }
     case 'SCANNING_FOLDER':
       return { ...state, scanningFolder: action.payload.folder };
@@ -74,7 +83,12 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, played: action.payload.track ? [...state.played, action.payload.track] : state.played };
     case 'RESTORE_SETTINGS': {
       const { settings } = action.payload;
-      return { ...state, ...settings, ...(settings.equalizer && { equalizer: restoreGains(settings.equalizer) }) };
+      return {
+        ...state,
+        ...settings,
+        ...(settings.onlineView && { onlineView: restoreOnlineView(settings.onlineView) }),
+        ...(settings.equalizer && { equalizer: restoreGains(settings.equalizer) }),
+      };
     }
     default:
       return state;

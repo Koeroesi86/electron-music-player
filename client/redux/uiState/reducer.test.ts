@@ -130,4 +130,35 @@ describe('uiState reducer', () => {
       view: 'albums',
     });
   });
+
+  describe('radio', () => {
+    const playing = { ...initial, currentSong: track('radio:abc'), streamTitle: null };
+
+    it('shows the radio first', () => {
+      expect(initial.onlineView).toBe('radio');
+    });
+
+    it.each(['shoutcast', 'unknown'])('restores the saved %s view as the radio', (saved) => {
+      const settings = { onlineView: saved } as never;
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings } }).onlineView).toBe('radio');
+    });
+
+    it('restores the Spotify view', () => {
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { onlineView: 'spotify' } } }).onlineView).toBe('spotify');
+    });
+
+    it('keeps the title the stream announces', () => {
+      expect(run({ type: 'RADIO_STREAM_TITLE', payload: { uuid: 'abc', title: 'Artist - Song' } }, playing).streamTitle).toBe('Artist - Song');
+    });
+
+    it('ignores the title of a station that is not playing', () => {
+      expect(run({ type: 'RADIO_STREAM_TITLE', payload: { uuid: 'other', title: 'Artist - Song' } }, playing)).toBe(playing);
+      expect(run({ type: 'RADIO_STREAM_TITLE', payload: { uuid: 'abc', title: 'Artist - Song' } })).toBe(initial);
+    });
+
+    it('forgets the title when another track starts', () => {
+      const titled = { ...playing, streamTitle: 'Artist - Song' };
+      expect(run({ type: 'PLAY_TRACK', payload: { track: track('/music/a.flac') } }, titled).streamTitle).toBeNull();
+    });
+  });
 });
