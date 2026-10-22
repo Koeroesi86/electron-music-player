@@ -36,7 +36,8 @@ export const pagesToLoad = <T>(cache: PageCache<T>, start: number, end: number):
   if (cache.total === undefined) return cache.pages[0] ? [] : [0];
 
   const first = Math.floor(start / pageSize);
-  const last = Math.floor((Math.min(end, cache.total) - 1) / pageSize);
+  // an empty list still has its first page, which is stale when the library was empty and then filled
+  const last = Math.floor(Math.max(Math.min(end, cache.total) - 1, 0) / pageSize);
   return Array.from({ length: Math.max(last - first + 1, 0) }, (_, offset) => first + offset).filter(
     (page) => !cache.pages[page] || cache.stale.includes(page)
   );
