@@ -45,6 +45,14 @@ describe('uiState reducer', () => {
     expect(run({ type: 'SET_TAB', payload: { tab: 'settings' } }).tab).toBe('settings');
   });
 
+  it('shows the albums once the added folders are scanned, and keeps any other view', () => {
+    expect(run({ type: 'TRACKS_ADDED_TO_LIBRARY' }, { ...initial, view: 'folders', scanningFolder: '/music' })).toMatchObject({
+      view: 'albums',
+      scanningFolder: null,
+    });
+    expect(run({ type: 'TRACKS_ADDED_TO_LIBRARY' }, { ...initial, view: 'tracks' }).view).toBe('tracks');
+  });
+
   it('replaces the queue and clears history on PLAY_TRACKS', () => {
     const state = run({ type: 'PLAY_TRACKS', payload: { tracks: [track('a')] } }, { ...initial, played: [track('old')] });
 

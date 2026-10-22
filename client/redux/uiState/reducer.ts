@@ -65,8 +65,10 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
     case 'SCANNING_FILE':
       return { ...state, progress: action.payload.progress, totalCount: action.payload.totalCount };
     case 'RESCAN_COMPLETE':
-    case 'TRACKS_ADDED_TO_LIBRARY':
       return { ...state, scanningFolder: null };
+    case 'TRACKS_ADDED_TO_LIBRARY':
+      // the added folders are shown as soon as they are scanned, instead of the folder list they were added from
+      return { ...state, scanningFolder: null, view: state.view === 'folders' ? 'albums' : state.view };
     case 'MAXIMIZED_APP':
       return { ...state, maximized: action.payload.maximized };
     case 'SET_TAB':
