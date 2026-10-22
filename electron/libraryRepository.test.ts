@@ -1,3 +1,4 @@
+import path from 'path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from 'sqlite3';
 import { deleteFolders, deleteTracks, findTrackPath, getFolders, getFoldersInside, getLibrary, saveFolders } from './libraryRepository';
@@ -28,13 +29,14 @@ describe('libraryRepository', () => {
   });
 
   it('finds the folders below a folder, with % and _ in the name matching themselves', async () => {
+    const music = path.resolve('music');
     await saveFolders(database, [
-      { path: '/music/100%', lastModified: 1 },
-      { path: '/music/100%/live', lastModified: 1 },
-      { path: '/music/1000/live', lastModified: 1 },
+      { path: path.join(music, '100%'), lastModified: 1 },
+      { path: path.join(music, '100%', 'live'), lastModified: 1 },
+      { path: path.join(music, '1000', 'live'), lastModified: 1 },
     ]);
 
-    expect((await getFoldersInside(database, '/music/100%/')).map((folder) => folder.path)).toEqual(['/music/100%/live']);
+    expect((await getFoldersInside(database, path.join(music, '100%'))).map((folder) => folder.path)).toEqual([path.join(music, '100%', 'live')]);
   });
 
   it('deletes folders and tracks by path', async () => {
