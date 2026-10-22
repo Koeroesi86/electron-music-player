@@ -28,6 +28,13 @@ export const deleteFolders = (database: Database, folders: Pick<Folder, 'path'>[
     folders.map((folder) => ({ query: `DELETE FROM folders WHERE path = ?`, variables: [folder.path] }))
   );
 
+/** Remove the tracks below a folder from the library, the files stay on disk */
+export const deleteTracksInside = (database: Database, folderPath: string) =>
+  executeQuery(database, {
+    query: `DELETE FROM library WHERE path LIKE ? ESCAPE '!'`,
+    variables: [`${escapeLike(folderPath.replace(/[\\/]+$/, '') + path.sep)}%`],
+  });
+
 export const getLibrary = (database: Database) => executeQuery<Track>(database, { query: `SELECT * FROM library ORDER BY path ASC`, variables: [] });
 
 // the folder of a track including the trailing separator, for both separators: rtrim drops the characters after the last one

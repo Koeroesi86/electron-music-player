@@ -1,4 +1,5 @@
 import { connect } from 'react-redux';
+import type { Dispatch } from 'redux';
 import type { RootState } from '../../client/redux/reducers';
 import FolderManagement from './FolderManagement';
 
@@ -6,4 +7,8 @@ const mapState = (state: RootState) => ({
   folders: state.folders,
 });
 
-export default connect(mapState)(FolderManagement);
+const mapDispatch = (dispatch: Dispatch) => ({
+  removeFolder: (path: string) => dispatch({ type: 'REMOVE_FOLDER', payload: { path } }),
+});
+
+export default connect(mapState, mapDispatch)(FolderManagement);

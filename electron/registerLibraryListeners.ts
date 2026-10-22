@@ -1,6 +1,7 @@
 import { ipcMain, shell } from 'electron';
 import type { ListenerContext } from './listenerContext';
 import addFoldersToLibrary from './addFoldersToLibrary';
+import removeFolderFromLibrary from './removeFolderFromLibrary';
 import rescanLibrary from './rescanLibrary';
 import openLibraryPath from './openLibraryPath';
 
@@ -9,6 +10,10 @@ const isForced = (payload: unknown) => typeof payload === 'object' && payload !=
 const registerLibraryListeners = ({ database }: ListenerContext) => {
   ipcMain.on('ADD_FOLDERS_TO_LIBRARY', (event, files: unknown) => {
     addFoldersToLibrary(database, files, event.sender).catch((e) => console.error(e));
+  });
+
+  ipcMain.on('REMOVE_FOLDER_FROM_LIBRARY', (event, target: unknown) => {
+    removeFolderFromLibrary(database, target, event.sender).catch((e) => console.error(e));
   });
 
   ipcMain.on('RESCAN_LIBRARY', (event, payload: unknown) => {

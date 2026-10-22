@@ -15,11 +15,23 @@
   .folders {
     .folder {
       -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin-bottom: 6px;
       font-size: 12px;
-      overflow-x: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+
+      .path {
+        overflow-x: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .remove {
+        flex: none;
+        cursor: pointer;
+        font-size: 12px;
+      }
     }
 
     .addItems {

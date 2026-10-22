@@ -30,6 +30,12 @@ describe('page cache', () => {
     expect(pagesToLoad(storePage(createPageCache<number>(), 0, [], 0), 0, 0)).toEqual([]);
   });
 
+  it('requests the first page of an empty list again when it is stale', () => {
+    const empty = storePage(createPageCache<number>(), 0, [], 0);
+
+    expect(pagesToLoad(markStale(empty), 0, 0)).toEqual([0]);
+  });
+
   it('requests stale pages of the range again and leaves the others stale', () => {
     const cache = markStale(storePage(storePage(createPageCache<number>(), 0, page(0), 1000), 5, page(500), 1000));
 
