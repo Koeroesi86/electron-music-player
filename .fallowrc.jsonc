@@ -22,6 +22,8 @@
     "url-loader",
     "imports-loader",
     "exports-loader",
+    // babel preset of the overrides in .babelrc, which only applies to the files with JSX
+    "@babel/preset-react",
     // used by the scripts of the checks (scripts/smoke.js, scripts/check-dist.js, scripts/security-scan.js), which run in CI only
     "@electron/asar",
     "@doyensec/electronegativity",
