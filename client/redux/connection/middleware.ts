@@ -74,7 +74,6 @@ const rescanInterval = 1000 * 60 * 60;
 
 const persistedKeys = [
   'view',
-  'onlineView',
   'tab',
   'nowPlaying',
   'played',

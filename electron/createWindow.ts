@@ -22,7 +22,6 @@ const createWindow = () => {
     webPreferences: {
       backgroundThrottling: false,
       preload: resolve(__dirname, './preload.js'),
-      webviewTag: true,
     },
   });
   mainWindowState.manage(mainWindow);

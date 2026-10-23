@@ -1,13 +1,12 @@
 import type { Reducer } from 'redux';
 import { isAppAction } from '../types';
-import type { OnlineView, UiState } from '../types';
+import type { UiState } from '../types';
 import { radioUuidOf } from '../../radio-track';
 import { clampGain, defaultGains, restoreGains } from '../../audio/equalizer';
 
 const initialState: UiState = {
   view: 'albums',
   port: window.location.search.match(/^\?port=([0-9]+)/)?.[1] ?? '3000',
-  onlineView: 'radio',
   tab: 'local',
   nowPlaying: [],
   played: [],
@@ -27,9 +26,6 @@ const initialState: UiState = {
   equalizer: defaultGains,
 };
 
-// the Shoutcast page is gone, a saved view that is not Spotify shows the radio
-const restoreOnlineView = (view: string): OnlineView => (view === 'spotify' ? 'spotify' : 'radio');
-
 const toNumber = (value: number | string) => parseFloat(`${value || 0}`);
 
 const reducer: Reducer<UiState> = (state = initialState, action) => {
@@ -38,8 +34,6 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
   switch (action.type) {
     case 'SET_VIEW':
       return { ...state, view: action.payload.view };
-    case 'SET_ONLINE_VIEW':
-      return { ...state, onlineView: action.payload.view };
     case 'PLAY_TRACKS':
       return { ...state, nowPlaying: action.payload.tracks, played: [] };
     case 'PLAY_TRACK':
@@ -92,7 +86,6 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return {
         ...state,
         ...settings,
-        ...(settings.onlineView && { onlineView: restoreOnlineView(settings.onlineView) }),
         ...(settings.equalizer && { equalizer: restoreGains(settings.equalizer) }),
       };
     }

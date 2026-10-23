@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import type { Tab } from '../../client/redux/types';
 import LocalCollection from '../local-collection';
 import NowPlaying from '../now-playing';
-import OnlineSources from '../online-sources';
+import RadioStations from '../radio-stations';
 import Equalizer from '../equalizer';
 import FolderManagement from '../folder-management';
 import LauncherIntegration from '../launcher-integration';
@@ -35,7 +35,7 @@ function PlayerTabs({ tab = 'local', addFiles = () => {} }: PlayerTabsProps) {
           [style.active]: tab === 'online-sources',
         })}
       >
-        <OnlineSources />
+        <RadioStations />
       </div>
       <div
         className={classNames(style.tab, {
