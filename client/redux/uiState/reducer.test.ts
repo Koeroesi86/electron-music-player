@@ -41,6 +41,7 @@ describe('uiState reducer', () => {
 
   it('switches views and tabs', () => {
     expect(run({ type: 'SET_VIEW', payload: { view: 'tracks' } }).view).toBe('tracks');
+    expect(run({ type: 'SET_ONLINE_VIEW', payload: { view: 'radio' } }).onlineView).toBe('radio');
     expect(run({ type: 'SET_TAB', payload: { tab: 'settings' } }).tab).toBe('settings');
   });
 
@@ -149,6 +150,15 @@ describe('uiState reducer', () => {
 
   describe('radio', () => {
     const playing = { ...initial, currentSong: track('radio:abc'), streamTitle: null };
+
+    it('shows the radio first', () => {
+      expect(initial.onlineView).toBe('radio');
+    });
+
+    it.each(['shoutcast', 'spotify', 'unknown'])('restores the saved %s view as the radio', (saved) => {
+      const settings = { onlineView: saved } as never;
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings } }).onlineView).toBe('radio');
+    });
 
     it('keeps the title the stream announces', () => {
       expect(run({ type: 'RADIO_STREAM_TITLE', payload: { uuid: 'abc', title: 'Artist - Song' } }, playing).streamTitle).toBe('Artist - Song');

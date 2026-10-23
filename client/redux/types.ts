@@ -2,6 +2,7 @@ import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { RadioQuery, RadioStation, RadioTag } from '../../types/radio';
 
 export type LibraryView = 'albums' | 'tracks' | 'folders';
+export type OnlineView = 'radio';
 export type Tab = 'now-playing' | 'local' | 'online-sources' | 'equalizer' | 'settings';
 
 export interface PlaylistItem {
@@ -12,6 +13,7 @@ export interface PlaylistItem {
 /** The part of the UI state that is persisted between sessions */
 export interface PersistedSettings {
   view: LibraryView;
+  onlineView: OnlineView;
   tab: Tab;
   nowPlaying: Track[];
   played: Track[];
@@ -84,6 +86,7 @@ export type AppAction =
   | PayloadAction<'LAUNCHER_STATE', { available: boolean; enabled: boolean; offered: boolean }>
   | PayloadAction<'SET_LAUNCHER', { enabled: boolean }>
   | PayloadAction<'SET_VIEW', { view: LibraryView }>
+  | PayloadAction<'SET_ONLINE_VIEW', { view: OnlineView }>
   | PayloadAction<'SET_TAB', { tab: Tab }>
   | PayloadAction<'SET_VOLUME', { volume: number | string }>
   | PayloadAction<'SET_CURRENT_TIME', { currentTime: number | string }>
