@@ -3,22 +3,18 @@ const { createServer } = require('net')
 const { existsSync, mkdtempSync, readFileSync, rmSync } = require('fs')
 const { tmpdir } = require('os')
 const { dirname, join, resolve } = require('path')
+const { packagedExecutable } = require('./dist-layout')
 
 // usage: node scripts/smoke.js [--packaged | --flatpak]
 // starts the built app (out/index.js), the packaged one from dist/, or the installed flatpak (flatpak install dist/eMusic-*.flatpak), and checks that the window opens
 // and that the local server answers from the database: a missing file or a native module that does not load shows up here
 // the updater is turned off (EMUSIC_NO_UPDATE), so a newer release can not be downloaded and installed in the middle of the run
 const root = resolve(__dirname, '..')
-const packagedExecutables = {
-  linux: 'dist/linux-unpacked/eMusic',
-  darwin: 'dist/mac/eMusic.app/Contents/MacOS/eMusic',
-  win32: 'dist/win-unpacked/eMusic.exe'
-}
 const timeout = 60000
 
 const flatpak = process.argv.includes('--flatpak')
 const packaged = flatpak || process.argv.includes('--packaged')
-const executablePath = flatpak ? 'flatpak' : packaged ? resolve(root, packagedExecutables[process.platform]) : require('electron')
+const executablePath = flatpak ? 'flatpak' : packaged ? resolve(root, packagedExecutable(process.platform, process.arch)) : require('electron')
 // the flatpak starts its own sandbox: zypak sets the chromium sandbox up, so --no-sandbox is not passed
 const args = flatpak
   ? ['run', '--env=EMUSIC_NO_UPDATE=1', require('../package.json').build.appId]

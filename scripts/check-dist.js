@@ -1,21 +1,13 @@
 const { listPackage, extractFile } = require('@electron/asar')
 const { existsSync, readFileSync } = require('fs')
 const { normalize, resolve } = require('path')
+const { resourcesFolder, updateMetadata } = require('./dist-layout')
 
 // usage: node scripts/check-dist.js
 // lists what the packaged app contains and fails on files that must not ship: secrets, source maps, tests and the sources of the app
 // the update metadata that electron-updater reads from the release, and the installer it has to list
-const updateMetadata = {
-  linux: ['dist/latest-linux.yml', /\.AppImage\b/],
-  darwin: ['dist/latest-mac.yml', /\.zip\b/],
-  win32: ['dist/latest.yml', /\.exe\b/]
-}
-const resources = {
-  linux: 'dist/linux-unpacked/resources',
-  darwin: 'dist/mac/eMusic.app/Contents/Resources',
-  win32: 'dist/win-unpacked/resources'
-}
-const archive = resolve(__dirname, '..', resources[process.platform], 'app.asar')
+// the packaged app is the one of the architecture of the machine (see scripts/dist-layout.js)
+const archive = resolve(__dirname, '..', resourcesFolder(process.platform, process.arch), 'app.asar')
 
 const forbidden = [
   [/(^|\/)\.env(\.|$)/, 'environment file'],
@@ -46,7 +38,7 @@ files
   .filter(file => extractFile(archive, normalize(file.slice(1))).subarray(0, 4).toString('latin1') !== 'wOF2')
   .forEach(file => problems.push(`not a woff2 font: ${file}`))
 
-const [metadataPath, installer] = updateMetadata[process.platform]
+const [metadataPath, installer] = updateMetadata(process.platform, process.arch)
 const metadataFile = resolve(__dirname, '..', metadataPath)
 if (!existsSync(metadataFile)) problems.push(`missing: ${metadataPath}`)
 else {

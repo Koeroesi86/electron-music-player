@@ -69,13 +69,15 @@
         "dmg",
         "zip"
       ],
-      "icon": "icons/mac/icon.icns"
+      "icon": "icons/mac/icon.icns",
+      "identity": "-",
+      "hardenedRuntime": false
     },
     "nsis": {
-      "artifactName": "eMusic-Setup-${version}.${ext}"
+      "artifactName": "eMusic-Setup-${version}-${arch}.${ext}"
     },
     "linux": {
-      "artifactName": "eMusic-${version}.${ext}",
+      "artifactName": "eMusic-${version}-${arch}.${ext}",
       "executableName": "eMusic",
       "category": "Audio",
       "target": [

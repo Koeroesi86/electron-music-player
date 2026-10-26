@@ -31,12 +31,13 @@ const platforms = [
   [isLinux, 'linux', 'Linux']
 ]
 
-// flatpak needs flatpak-builder on the machine and is not known to be safe next to the other targets, so it has its own build
+// flatpak needs flatpak-builder on the machine and is not known to be safe next to the other targets, so it has its own build; it is built for x64 only,
+// the AppImage is the package of linux arm64
 // flatpak updates through its own store: without a publish config it writes no latest-linux.yml over the one of the AppImage, and the package has no app-update.yml, so electron-updater stays inactive
 const extraBuilds = {
   win: [],
   mac: [],
-  linux: [{ linux: ['flatpak'], config: { publish: null } }]
+  linux: process.arch === 'x64' ? [{ linux: ['flatpak'], config: { publish: null } }] : []
 }
 
 // the release workflow uploads the files, electron-builder only writes the update metadata next to them

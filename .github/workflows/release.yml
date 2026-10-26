@@ -70,8 +70,13 @@ jobs:
         with:
           # not the coverage report of the test job
           pattern: dist-*
-          path: dist
-          merge-multiple: true
+          path: artifacts
+      # windows and macOS write one update file for both architectures from separate runners: one list of files for electron-updater to choose from
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Merge the artifacts of the runners
+        run: node scripts/merge-update-files.js artifacts dist
       # the update files have to name the version of the release, or the updater of a platform compares against another one
       - name: Check the version of the update files
         env:
