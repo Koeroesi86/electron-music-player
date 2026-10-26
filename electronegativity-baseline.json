@@ -4,6 +4,7 @@
   "CONTEXT_ISOLATION_JS_CHECK createWindow.ts",
   "CONTEXT_ISOLATION_JS_CHECK getLoadingWindow.ts",
   "CSP_GLOBAL_CHECK file:///",
+  "OPEN_EXTERNAL_JS_CHECK registerUpdateListeners.ts",
   "PERMISSION_REQUEST_HANDLER_GLOBAL_CHECK file:///",
   "PRELOAD_JS_CHECK createWindow.ts",
   "PRELOAD_JS_CHECK getLoadingWindow.ts",

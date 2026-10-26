@@ -64,5 +64,22 @@
   "splash.loading": "{title} is loading...",
   "update.checking": "Checking for updates...",
   "update.downloading": "Downloading update {version}...",
-  "update.restarting": "Restarting to install the update..."
+  "update.restarting": "Restarting to install the update...",
+  "about.title": "About",
+  "about.version": "Version {version}",
+  "about.details": "Electron {electron} · Chromium {chrome}",
+  "about.check": "Check for updates",
+  "about.checking": "Checking for updates...",
+  "about.upToDate": "Up to date, checked at {time}",
+  "about.downloading": "Downloading update {version}... {percent}%",
+  "about.ready": "Update {version} is ready",
+  "about.restart": "Restart to install",
+  "about.restartPlaying": "The playback stops for the restart. The queue and the position are kept.",
+  "about.failed": "The update failed: {message}",
+  "about.retry": "Try again",
+  "about.unavailable.development": "Updates are off in a development run",
+  "about.unavailable.disabled": "Updates are turned off",
+  "about.unavailable.flatpak": "Updates come through Flatpak",
+  "about.unavailable.managed": "Updates come through the package manager",
+  "about.releases": "Open the releases page"
 }

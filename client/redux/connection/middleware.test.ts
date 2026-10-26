@@ -51,4 +51,37 @@ describe('connection middleware', () => {
 
     expect(send).toHaveBeenCalledWith('SAVE_SETTINGS', expect.objectContaining({ language: 'hu' }));
   });
+
+  it('asks the main process for the version when it starts and stores the update state it reports', async () => {
+    const { store, send, listen } = await setup();
+    const state = { version: '26.10.5', electron: '40.0.0', chrome: '140.0.0', unavailable: undefined, status: { kind: 'checking' } };
+
+    listen('UPDATE_STATE', state);
+
+    expect(send).toHaveBeenCalledWith('GET_APP_VERSION');
+    expect(store.getState().update).toEqual(state);
+  });
+
+  it('sends the request to check for updates and to open the releases to the main process', async () => {
+    const { store, send } = await setup();
+
+    store.dispatch({ type: 'CHECK_FOR_UPDATES' });
+    store.dispatch({ type: 'OPEN_RELEASES' });
+
+    expect(send).toHaveBeenCalledWith('CHECK_FOR_UPDATES');
+    expect(send).toHaveBeenCalledWith('OPEN_RELEASES');
+  });
+
+  it('saves the queue and the position before the restart for an update', async () => {
+    const { store, send } = await setup();
+    const track = { path: '/a.flac', title: 'A', artist: '', album: '', year: '', track: '', disk: '', genre: '', picture: null, duration: 1 };
+    store.dispatch({ type: 'PLAY_TRACKS', payload: { tracks: [track] } });
+    store.dispatch({ type: 'SET_CURRENT_TIME', payload: { currentTime: 42 } });
+    send.mockClear();
+
+    store.dispatch({ type: 'INSTALL_UPDATE' });
+
+    expect(send.mock.calls.map(([channel]) => channel)).toEqual(['SAVE_SETTINGS', 'INSTALL_UPDATE']);
+    expect(send.mock.calls[0][1]).toMatchObject({ nowPlaying: [track], currentTime: 42 });
+  });
 });

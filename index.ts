@@ -18,7 +18,8 @@ import closeDatabase from './electron/closeDatabase';
 import { getMainTranslator, setPickedLanguage } from './electron/language';
 import { getSettings } from './electron/settingsRepository';
 import { autoUpdater } from 'electron-updater';
-import { canUpdate, createMockUpdateSource, runUpdate } from './electron/updater';
+import { createMockUpdateSource, getUpdateUnavailableReason, runUpdate } from './electron/updater';
+import { createUpdateManager } from './electron/updateManager';
 import type { UpdateSource } from './electron/updater';
 
 // compiled to out/index.js, the project root is one level up
@@ -131,18 +132,28 @@ const getPort = () =>
     }
   });
 
+// a development run updates from the mock source only when asked to
+const unavailable = isMockUpdate ? undefined : getUpdateUnavailableReason(app.isPackaged, process.platform, process.env);
+
 const getUpdateSource = (): UpdateSource | undefined => {
   if (isMockUpdate) return createMockUpdateSource();
 
-  return canUpdate(app.isPackaged, process.platform, process.env) ? autoUpdater : undefined;
+  return unavailable ? undefined : autoUpdater;
 };
+
+// the splash and the settings share one source; the settings flow starts after the splash one is done
+const updateSource = getUpdateSource();
+const updates = createUpdateManager({
+  source: updateSource,
+  info: { version: app.getVersion(), electron: process.versions.electron, chrome: process.versions.chrome, unavailable },
+  publish: (state) => windows.main?.webContents.send('UPDATE_STATE', state),
+});
 
 // the splash stays up while the update is checked and downloaded, the app starts once it is done
 const updateOnSplash = async (loading: BrowserWindow) => {
-  const source = getUpdateSource();
-  if (!source) return;
+  if (!updateSource) return;
 
-  return runUpdate(source, (progress) => loading.webContents.send('SPLASH_PROGRESS', progress), {
+  return runUpdate(updateSource, (progress) => loading.webContents.send('SPLASH_PROGRESS', progress), {
     install: !isMockUpdate,
     translate: getMainTranslator().t,
   });
@@ -175,7 +186,7 @@ app
   })
   .then((d) => {
     initWindow();
-    setupListeners(d, windows, radio);
+    setupListeners(d, windows, radio, updates);
 
     // the native sqlite3 addon aborts the process when it is torn down with the database open, so it is closed before the app exits
     let databaseClosed = false;

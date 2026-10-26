@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { getTranslator } from '../locales';
 import type { Translate } from '../locales/translate';
+import type { UpdateUnavailableReason } from '../types/update';
 
 export interface SplashProgress {
   text: string;
@@ -41,8 +42,18 @@ const withTimeout = <T>(promise: Promise<T>, timeout: number) => {
   return Promise.race([promise, timedOut]).finally(() => clearTimeout(timer));
 };
 
-const downloadWithStallTimeout = (source: UpdateSource, timeout: number) => {
+/** The version of the update, undefined when the installed version is the newest */
+export const checkForUpdate = async (source: UpdateSource, timeout = defaultCheckTimeout): Promise<string | undefined> => {
+  source.autoDownload = false;
+  const result = await withTimeout(source.checkForUpdates(), timeout);
+
+  return result?.isUpdateAvailable ? result.updateInfo.version : undefined;
+};
+
+/** Downloads the checked update, it fails when no progress arrives for the stall timeout; the progress listener is removed again */
+export const downloadUpdate = (source: UpdateSource, onProgress: (percent: number) => void, timeout = defaultDownloadStallTimeout) => {
   let timer: NodeJS.Timeout | undefined;
+  let listener: ((progress: { percent: number }) => void) | undefined;
   const stalled = new Promise<never>((_resolve, reject) => {
     const arm = () => {
       clearTimeout(timer);
@@ -50,11 +61,21 @@ const downloadWithStallTimeout = (source: UpdateSource, timeout: number) => {
     };
 
     arm();
-    source.on('download-progress', arm);
+    listener = ({ percent }) => {
+      arm();
+      onProgress(Math.round(percent));
+    };
+    source.on('download-progress', listener);
   });
 
-  return Promise.race([source.downloadUpdate(), stalled]).finally(() => clearTimeout(timer));
+  return Promise.race([source.downloadUpdate(), stalled]).finally(() => {
+    clearTimeout(timer);
+    if (listener) source.off('download-progress', listener);
+  });
 };
+
+// silent on windows, so the installer shows nothing, and the app is started again afterwards
+export const installUpdate = (source: UpdateSource) => source.quitAndInstall(true, true);
 
 // the installer quits the app, so with an update installed this only returns when something went wrong or nothing was installed:
 // any failure lets the installed version start
@@ -68,23 +89,19 @@ export async function runUpdate(source: UpdateSource, report: (progress: SplashP
   } = options;
 
   try {
-    source.autoDownload = false;
     report({ text: translate('update.checking') });
-    const result = await withTimeout(source.checkForUpdates(), checkTimeout);
+    const version = await checkForUpdate(source, checkTimeout);
 
-    if (!result?.isUpdateAvailable) return;
+    if (!version) return;
 
-    const { version } = result.updateInfo;
     const downloading = translate('update.downloading', { version });
     report({ text: downloading, percent: 0 });
-    source.on('download-progress', ({ percent }: { percent: number }) => report({ text: downloading, percent: Math.round(percent) }));
-    await downloadWithStallTimeout(source, downloadStallTimeout);
+    await downloadUpdate(source, (percent) => report({ text: downloading, percent }), downloadStallTimeout);
 
     if (!install) return;
 
     report({ text: translate('update.restarting'), percent: 100 });
-    // silent on windows, so the installer shows nothing, and the app is started again afterwards
-    source.quitAndInstall(true, true);
+    installUpdate(source);
     await wait(installTimeout);
     console.error(`The app did not quit ${installTimeout} ms after the update was installed, starting the installed version`);
   } catch (error) {
@@ -109,8 +126,13 @@ export function createMockUpdateSource(stepDelay = 250): UpdateSource {
 }
 
 /**
- * electron-updater only works in the packaged app, on Linux only in an AppImage (the Flatpak updates through its store),
- * and EMUSIC_NO_UPDATE=1 turns it off, which the smoke tests of the packaged app set
+ * electron-updater only works in the packaged app, on Linux only in an AppImage (the Flatpak updates through its store, any other package
+ * through its package manager), and EMUSIC_NO_UPDATE=1 turns it off, which the smoke tests of the packaged app set
  */
-export const canUpdate = (isPackaged: boolean, platform: NodeJS.Platform, env: NodeJS.ProcessEnv) =>
-  isPackaged && env.EMUSIC_NO_UPDATE !== '1' && (platform !== 'linux' || Boolean(env.APPIMAGE));
+export const getUpdateUnavailableReason = (isPackaged: boolean, platform: NodeJS.Platform, env: NodeJS.ProcessEnv): UpdateUnavailableReason | undefined => {
+  if (!isPackaged) return 'development';
+  if (env.EMUSIC_NO_UPDATE === '1') return 'disabled';
+  if (platform !== 'linux' || env.APPIMAGE) return undefined;
+
+  return env.FLATPAK_ID ? 'flatpak' : 'managed';
+};

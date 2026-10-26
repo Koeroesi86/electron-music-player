@@ -1,5 +1,6 @@
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { RadioQuery, RadioStation, RadioTag } from '../../types/radio';
+import type { UpdateState } from '../../types/update';
 
 export type LibraryView = 'albums' | 'tracks' | 'folders';
 export type OnlineView = 'radio';
@@ -68,6 +69,10 @@ export type AppAction =
   | EmptyAction<'POP_PLAYED'>
   | EmptyAction<'LOAD_RADIO_TAGS'>
   | EmptyAction<'CLICK_NOTIFICATION'>
+  | EmptyAction<'CHECK_FOR_UPDATES'>
+  | EmptyAction<'INSTALL_UPDATE'>
+  | EmptyAction<'OPEN_RELEASES'>
+  | PayloadAction<'UPDATE_STATE', UpdateState>
   | PayloadAction<'SEARCH_RADIO', { query: RadioQuery }>
   | PayloadAction<'RADIO_STATIONS', { query: RadioQuery; stations: RadioStation[]; error?: string }>
   | PayloadAction<'RADIO_TAGS_LOADED', { tags: RadioTag[] }>

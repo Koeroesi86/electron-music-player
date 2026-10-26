@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { describe, expect, it, vi } from 'vitest';
-import { canUpdate, createMockUpdateSource, runUpdate } from './updater';
+import { checkForUpdate, createMockUpdateSource, downloadUpdate, getUpdateUnavailableReason, installUpdate, runUpdate } from './updater';
 import type { UpdateSource } from './updater';
 
 const createSource = (check: UpdateSource['checkForUpdates'], download: UpdateSource['downloadUpdate'] = () => Promise.resolve()) => {
@@ -15,6 +15,72 @@ const createSource = (check: UpdateSource['checkForUpdates'], download: UpdateSo
 };
 
 const available = () => Promise.resolve({ isUpdateAvailable: true, updateInfo: { version: '2.0.0' } });
+
+describe('checkForUpdate', () => {
+  it('turns the automatic download off and gives the version of the update', async () => {
+    const source = createSource(available);
+
+    await expect(checkForUpdate(source)).resolves.toBe('2.0.0');
+
+    expect(source.autoDownload).toBe(false);
+  });
+
+  it.each([
+    ['no result', () => Promise.resolve(null)],
+    ['no update', () => Promise.resolve({ isUpdateAvailable: false, updateInfo: { version: '1.0.0' } })],
+  ])('gives no version for %s', async (_name, check) => {
+    await expect(checkForUpdate(createSource(check))).resolves.toBeUndefined();
+  });
+
+  it('fails when the check fails', async () => {
+    await expect(checkForUpdate(createSource(() => Promise.reject(new Error('offline'))))).rejects.toThrow('offline');
+  });
+
+  it('fails when the check takes too long', async () => {
+    await expect(
+      checkForUpdate(
+        createSource(() => new Promise(() => undefined)),
+        1
+      )
+    ).rejects.toThrow('took longer than 1 ms');
+  });
+});
+
+describe('downloadUpdate', () => {
+  it('reports the rounded progress and stops listening afterwards', async () => {
+    const source = createSource(available, () => Promise.resolve(source.emit('download-progress', { percent: 41.6 })));
+    const onProgress = vi.fn();
+
+    await downloadUpdate(source, onProgress);
+
+    expect(onProgress).toHaveBeenCalledExactlyOnceWith(42);
+    expect(source.listenerCount('download-progress')).toBe(0);
+  });
+
+  it('fails when no progress arrives and stops listening', async () => {
+    const source = createSource(available, () => new Promise(() => undefined));
+
+    await expect(downloadUpdate(source, vi.fn(), 1)).rejects.toThrow('no progress for 1 ms');
+
+    expect(source.listenerCount('download-progress')).toBe(0);
+  });
+
+  it('fails when the download fails', async () => {
+    const source = createSource(available, () => Promise.reject(new Error('disk full')));
+
+    await expect(downloadUpdate(source, vi.fn())).rejects.toThrow('disk full');
+  });
+});
+
+describe('installUpdate', () => {
+  it('installs silently and starts the app again', () => {
+    const source = createSource(available);
+
+    installUpdate(source);
+
+    expect(source.quitAndInstall).toHaveBeenCalledExactlyOnceWith(true, true);
+  });
+});
 
 describe('runUpdate', () => {
   it('reports in the language it is given', async () => {
@@ -127,25 +193,22 @@ describe('createMockUpdateSource', () => {
   });
 });
 
-describe('canUpdate', () => {
+describe('getUpdateUnavailableReason', () => {
   it.each([
-    ['a packaged app on windows', true, 'win32', {}],
-    ['a packaged app on macos', true, 'darwin', {}],
-    ['a packaged app in an AppImage', true, 'linux', { APPIMAGE: '/home/me/eMusic.AppImage' }],
-  ] as const)('updates %s', (_name, isPackaged, platform, env) => {
-    expect(canUpdate(isPackaged, platform, env)).toBe(true);
+    ['a development run', false, 'linux', { APPIMAGE: '/x.AppImage' }, 'development'],
+    ['a run with EMUSIC_NO_UPDATE=1', true, 'win32', { EMUSIC_NO_UPDATE: '1' }, 'disabled'],
+    ['an AppImage with EMUSIC_NO_UPDATE=1', true, 'linux', { APPIMAGE: '/x.AppImage', EMUSIC_NO_UPDATE: '1' }, 'disabled'],
+    ['the Flatpak', true, 'linux', { FLATPAK_ID: 'io.github.koeroesi86.emusic' }, 'flatpak'],
+    ['another Linux package', true, 'linux', {}, 'managed'],
+  ] as const)('names the reason for %s', (_name, isPackaged, platform, env, reason) => {
+    expect(getUpdateUnavailableReason(isPackaged, platform, env)).toBe(reason);
   });
 
   it.each([
-    ['a development run', false, 'win32', {}],
-    ['the Flatpak or a deb, which is not an AppImage', true, 'linux', {}],
-    ['a run with EMUSIC_NO_UPDATE=1', true, 'win32', { EMUSIC_NO_UPDATE: '1' }],
-    ['an AppImage with EMUSIC_NO_UPDATE=1', true, 'linux', { APPIMAGE: '/home/me/eMusic.AppImage', EMUSIC_NO_UPDATE: '1' }],
-  ] as const)('does not update %s', (_name, isPackaged, platform, env) => {
-    expect(canUpdate(isPackaged, platform, env)).toBe(false);
-  });
-
-  it('only EMUSIC_NO_UPDATE=1 turns it off', () => {
-    expect(canUpdate(true, 'win32', { EMUSIC_NO_UPDATE: '0' })).toBe(true);
+    ['windows', 'win32', {}],
+    ['macos', 'darwin', {}],
+    ['an AppImage', 'linux', { APPIMAGE: '/x.AppImage' }],
+  ] as const)('has no reason on %s', (_name, platform, env) => {
+    expect(getUpdateUnavailableReason(true, platform, env)).toBeUndefined();
   });
 });
