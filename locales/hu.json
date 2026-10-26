@@ -64,5 +64,22 @@
   "splash.loading": "{title} betöltése...",
   "update.checking": "Frissítések keresése...",
   "update.downloading": "A(z) {version} frissítés letöltése...",
-  "update.restarting": "Újraindítás a frissítés telepítéséhez..."
+  "update.restarting": "Újraindítás a frissítés telepítéséhez...",
+  "about.title": "Névjegy",
+  "about.version": "{version}. verzió",
+  "about.details": "Electron {electron} · Chromium {chrome}",
+  "about.check": "Frissítések keresése",
+  "about.checking": "Frissítések keresése...",
+  "about.upToDate": "Naprakész, ellenőrizve: {time}",
+  "about.downloading": "A(z) {version} frissítés letöltése... {percent}%",
+  "about.ready": "A(z) {version} frissítés készen áll",
+  "about.restart": "Újraindítás a telepítéshez",
+  "about.restartPlaying": "A lejátszás leáll az újraindítás idejére. A lejátszási lista és a pozíció megmarad.",
+  "about.failed": "A frissítés sikertelen: {message}",
+  "about.retry": "Újra",
+  "about.unavailable.development": "A frissítések ki vannak kapcsolva fejlesztői futtatásban",
+  "about.unavailable.disabled": "A frissítések ki vannak kapcsolva",
+  "about.unavailable.flatpak": "A frissítések a Flatpakon keresztül érkeznek",
+  "about.unavailable.managed": "A frissítések a csomagkezelőn keresztül érkeznek",
+  "about.releases": "A kiadások oldalának megnyitása"
 }

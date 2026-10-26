@@ -1,6 +1,7 @@
 import type { Middleware } from 'redux';
 import type { Folder, Track } from '../../../types/library';
 import type { RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
+import type { UpdateState } from '../../../types/update';
 import { electronAPI } from '../../electron-api';
 import { debounce } from '../../utils/debounce';
 import type { RootState } from '../reducers';
@@ -25,6 +26,7 @@ function addListeners(store: Store) {
   electronAPI.on<{ available: boolean; enabled: boolean; offered: boolean }>('LAUNCHER_STATE', (payload) =>
     store.dispatch({ type: 'LAUNCHER_STATE', payload })
   );
+  electronAPI.on<UpdateState>('UPDATE_STATE', (payload) => store.dispatch({ type: 'UPDATE_STATE', payload }));
   electronAPI.on<{ settings: Partial<PersistedSettings> }>('RESTORE_SETTINGS', (payload) => store.dispatch({ type: 'RESTORE_SETTINGS', payload }));
   electronAPI.on<{ fileName: string; progress: number; totalCount: number }>('SCANNING_FILE', (payload) => store.dispatch({ type: 'SCANNING_FILE', payload }));
   electronAPI.on<{ query: RadioQuery; stations: RadioStation[]; error?: string }>('RADIO_STATIONS', (payload) =>
@@ -121,6 +123,7 @@ const notifyPlaying = (track: Track, port: string, onClick: () => void) => {
 const start = (store: Store) => {
   addListeners(store);
   electronAPI.send('APP_READY', 'Ready to receive');
+  electronAPI.send('GET_APP_VERSION');
 
   setInterval(() => {
     if (store.getState().uiState.totalCount === 0) rescanLibrary(false);
@@ -158,6 +161,13 @@ const handleActions = actionMiddleware((store) => [
   }),
   onAction('SEARCH_RADIO', ({ payload }) => electronAPI.send('RADIO_SEARCH', payload.query)),
   onAction('LOAD_RADIO_TAGS', () => electronAPI.send('RADIO_TAGS')),
+  onAction('CHECK_FOR_UPDATES', () => electronAPI.send('CHECK_FOR_UPDATES')),
+  onAction('OPEN_RELEASES', () => electronAPI.send('OPEN_RELEASES')),
+  // the restart quits the app, so the queue and the position are saved first (the main process closes the database after what it has queued)
+  onAction('INSTALL_UPDATE', () => {
+    saveSettings(store.getState().uiState);
+    electronAPI.send('INSTALL_UPDATE');
+  }),
   onAction('SET_LAUNCHER', ({ payload }) => electronAPI.send('SET_LAUNCHER', payload)),
   // the main process has text of its own and follows the language from the saved settings
   // the handlers run before the reducer, so the saved settings get the new language here

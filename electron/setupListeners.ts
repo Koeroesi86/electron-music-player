@@ -1,6 +1,7 @@
 import type { Database } from 'sqlite3';
 import type { AppWindows } from '../types/global';
 import type { RadioBrowser } from './radioBrowser';
+import type { UpdateManager } from './updateManager';
 import type { ListenerContext } from './listenerContext';
 import registerWindowListeners from './registerWindowListeners';
 import registerStateListeners from './registerStateListeners';
@@ -8,6 +9,7 @@ import registerLibraryListeners from './registerLibraryListeners';
 import registerPlaylistDownload from './registerPlaylistDownload';
 import registerRadioListeners from './registerRadioListeners';
 import registerLauncherListeners from './registerLauncherListeners';
+import registerUpdateListeners from './registerUpdateListeners';
 
 const registrars: ((context: ListenerContext) => void)[] = [
   registerWindowListeners,
@@ -16,10 +18,11 @@ const registrars: ((context: ListenerContext) => void)[] = [
   registerPlaylistDownload,
   registerRadioListeners,
   registerLauncherListeners,
+  registerUpdateListeners,
 ];
 
-function setupListeners(database: Database, windows: AppWindows, radio: RadioBrowser) {
-  registrars.forEach((register) => register({ database, windows, radio }));
+function setupListeners(database: Database, windows: AppWindows, radio: RadioBrowser, updates: UpdateManager) {
+  registrars.forEach((register) => register({ database, windows, radio, updates }));
 }
 
 export default setupListeners;
