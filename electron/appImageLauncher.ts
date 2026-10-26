@@ -75,13 +75,32 @@ const exists = (path: string) =>
     () => false
   );
 
+const readIfThere = (path: string) => readFile(path).catch(() => undefined);
+
+/** Whether the installed entry and icons are what a fresh `enableLauncher` would write */
+const isCurrent = async (appImage: string, { dataHome, iconsPath }: LauncherOptions) => {
+  const entry = await readIfThere(getDesktopFile(dataHome));
+  const icons = await Promise.all(
+    iconSizes.map((size) =>
+      Promise.all([readFile(join(iconsPath, `${size}x${size}.png`)), readIfThere(getIconFile(dataHome, size))]).then(
+        ([bundled, installed]) => installed?.equals(bundled) === true
+      )
+    )
+  );
+
+  return entry?.toString() === buildDesktopEntry(appImage) && icons.every(Boolean);
+};
+
 /**
  * Keeps an enabled entry working: it points to the running AppImage when the one it started was moved,
- * and goes away when that one is gone and the app does not run from an AppImage; an entry that still works is left alone
+ * and goes away when that one is gone and the app does not run from an AppImage; an entry of the running AppImage is rewritten
+ * when its content or icons changed with the version, and an entry that still works for another AppImage is left alone
  */
 export const syncLauncher = async (appImage: string | undefined, options: LauncherOptions) => {
   const target = await readLauncherTarget(options.dataHome);
-  if (target === undefined || (await exists(target))) return;
+  if (target === undefined) return;
+  if (appImage && target === appImage && !(await isCurrent(appImage, options))) return enableLauncher(appImage, options);
+  if (await exists(target)) return;
 
   await (appImage ? enableLauncher(appImage, options) : disableLauncher(options));
 };

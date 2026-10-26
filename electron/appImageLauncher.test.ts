@@ -126,6 +126,48 @@ describe('launcher on disk', () => {
       expect(refresh).not.toHaveBeenCalled();
     });
 
+    it('leaves the entry of the running AppImage alone while its content is the same', async () => {
+      await createAppImage(appImage());
+      await enableLauncher(appImage(), options);
+      refresh.mockClear();
+
+      await syncLauncher(appImage(), options);
+
+      expect(refresh).not.toHaveBeenCalled();
+    });
+
+    it('rewrites the entry of the running AppImage when its content changed', async () => {
+      await createAppImage(appImage());
+      await enableLauncher(appImage(), options);
+      await writeFile(desktopFile(), buildDesktopEntry(appImage()).replace('Icon=emusic', 'Icon=old'));
+      refresh.mockClear();
+
+      await syncLauncher(appImage(), options);
+
+      await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(buildDesktopEntry(appImage()));
+      expect(refresh).toHaveBeenCalledOnce();
+    });
+
+    it('rewrites the icons of the running AppImage when they changed', async () => {
+      await createAppImage(appImage());
+      await enableLauncher(appImage(), options);
+      await writeFile(join(folder, 'icons/256x256.png'), 'new icon 256');
+
+      await syncLauncher(appImage(), options);
+
+      await expect(readFile(join(folder, 'data/icons/hicolor/256x256/apps/emusic.png'), 'utf8')).resolves.toBe('new icon 256');
+    });
+
+    it('restores an icon that went missing', async () => {
+      await createAppImage(appImage());
+      await enableLauncher(appImage(), options);
+      await rm(join(folder, 'data/icons/hicolor/16x16/apps/emusic.png'));
+
+      await syncLauncher(appImage(), options);
+
+      await expect(exists(join(folder, 'data/icons/hicolor/16x16/apps/emusic.png'))).resolves.toBe(true);
+    });
+
     it('points the entry to the running AppImage when the AppImage was moved', async () => {
       await enableLauncher(join(folder, 'old/eMusic.AppImage'), options);
 
