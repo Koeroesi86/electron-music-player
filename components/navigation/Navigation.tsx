@@ -8,6 +8,7 @@ import {
 } from 'react-icons/md';
 import type { Tab } from '../../client/redux/types';
 import style from './Navigation.scss';
+import { useTranslation } from '../../client/i18n';
 
 interface NavigationProps {
   setTab?: (tab: Tab) => void;
@@ -15,6 +16,8 @@ interface NavigationProps {
 }
 
 function Navigation({ setTab = () => {}, tab = 'local' }: NavigationProps) {
+  const { t } = useTranslation();
+
   return (
     <div className={style.navigation}>
       <div
@@ -24,7 +27,7 @@ function Navigation({ setTab = () => {}, tab = 'local' }: NavigationProps) {
         })}
       >
         <NowPlayingIcon size={'12px'} />
-        <span className={style.label}>Now playing</span>
+        <span className={style.label}>{t('nav.nowPlaying')}</span>
       </div>
       <div
         onClick={() => setTab('local')}
@@ -33,7 +36,7 @@ function Navigation({ setTab = () => {}, tab = 'local' }: NavigationProps) {
         })}
       >
         <LocalLibraryIcon size={'12px'} />
-        <span className={style.label}>Local collection</span>
+        <span className={style.label}>{t('nav.local')}</span>
       </div>
       <div
         onClick={() => setTab('online-sources')}
@@ -42,7 +45,7 @@ function Navigation({ setTab = () => {}, tab = 'local' }: NavigationProps) {
         })}
       >
         <OnlineIcon size={'12px'} />
-        <span className={style.label}>Online</span>
+        <span className={style.label}>{t('nav.online')}</span>
       </div>
       <div
         onClick={() => setTab('equalizer')}
@@ -51,7 +54,7 @@ function Navigation({ setTab = () => {}, tab = 'local' }: NavigationProps) {
         })}
       >
         <EQIcon size={'12px'} />
-        <span className={style.label}>Equalizer</span>
+        <span className={style.label}>{t('nav.equalizer')}</span>
       </div>
       <div
         onClick={() => setTab('settings')}
@@ -60,7 +63,7 @@ function Navigation({ setTab = () => {}, tab = 'local' }: NavigationProps) {
         })}
       >
         <SettingsIcon size={'12px'} />
-        <span className={style.label}>Settings</span>
+        <span className={style.label}>{t('nav.settings')}</span>
       </div>
     </div>
   );

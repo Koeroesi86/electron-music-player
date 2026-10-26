@@ -4,6 +4,7 @@ import { resolve } from 'path';
 import type { AppWindows } from '../types/global';
 import { getMainWindow } from './getMainWindow';
 import type { ListenerContext } from './listenerContext';
+import { getMainTranslator, onLanguageChange } from './language';
 
 const isWin = process.platform === 'win32';
 const showDelay = 200;
@@ -13,6 +14,11 @@ const playbackButton = (main: BrowserWindow, tooltip: string, icon: string, isPl
   icon: nativeImage.createFromPath(resolve(__dirname, `../../assets/${icon}`)),
   click: () => main.webContents.send('SET_PLAYING', { isPlaying }),
 });
+
+const setPlaybackButtons = (main: BrowserWindow) => {
+  const { t } = getMainTranslator();
+  main.setThumbarButtons([playbackButton(main, t('player.play'), 'icons_play.png', true), playbackButton(main, t('player.pause'), 'icons_pause.png', false)]);
+};
 
 const showMainWindow = (windows: AppWindows) => {
   const main = getMainWindow(windows);
@@ -25,7 +31,7 @@ const showMainWindow = (windows: AppWindows) => {
     return;
   }
   main.setBackgroundMaterial('acrylic');
-  main.setThumbarButtons([playbackButton(main, 'Play', 'icons_play.png', true), playbackButton(main, 'Pause', 'icons_pause.png', false)]);
+  setPlaybackButtons(main);
 };
 
 const listenForMaximize = (main: BrowserWindow) => {
@@ -56,6 +62,7 @@ const registerWindowListeners = ({ windows }: ListenerContext) => {
   ipcMain.on('MINIMIZE_APP', () => main().minimize());
   ipcMain.on('NOTIFICATION_CLICKED', () => focusMainWindow(main()));
   listenForMaximize(main());
+  if (isWin) onLanguageChange(() => setPlaybackButtons(main()));
 };
 
 export default registerWindowListeners;

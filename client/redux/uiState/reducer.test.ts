@@ -125,6 +125,13 @@ describe('uiState reducer', () => {
     expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { desktopBlur: true } } }).desktopBlur).toBe(true);
   });
 
+  it('follows the system language until one is picked, and restores the picked one', () => {
+    expect(initial.language).toBeUndefined();
+    expect(run({ type: 'SET_LANGUAGE', payload: { language: 'hu' } }).language).toBe('hu');
+    expect(run({ type: 'SET_LANGUAGE', payload: { language: undefined } }, { ...initial, language: 'hu' }).language).toBeUndefined();
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { language: 'hu' } } }).language).toBe('hu');
+  });
+
   it('records and clears played tracks, ignoring null tracks', () => {
     const one = run({ type: 'ADD_PLAYED', payload: { track: track('a') } });
     expect(one.played).toEqual([track('a')]);

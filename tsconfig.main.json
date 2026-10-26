@@ -10,8 +10,8 @@
     "rootDir": ".",
     "sourceMap": true,
     "isolatedModules": false,
-    "resolveJsonModule": false
+    "resolveJsonModule": true
   },
-  "include": ["electron", "index.ts", "types"],
-  "exclude": ["electron/**/*.test.ts", "electron/test-database.ts"]
+  "include": ["electron", "locales", "index.ts", "types"],
+  "exclude": ["electron/**/*.test.ts", "electron/test-database.ts", "locales/**/*.test.ts"]
 }

@@ -2,6 +2,7 @@ import classNames from 'classnames';
 import { faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { Album, Track } from '../../types/library';
+import { useTranslation } from '../../client/i18n';
 import { useDelayedValue } from '../../client/hooks/use-delayed-value';
 import style from './AlbumDetails.scss';
 import Time from '../time';
@@ -14,6 +15,7 @@ interface AlbumDetailsProps {
 }
 
 const AlbumDetails = ({ album, playTracks, close, port }: AlbumDetailsProps) => {
+  const { t } = useTranslation();
   const displayed: Partial<Album> = { ...useDelayedValue(album, 2) };
 
   return (
@@ -43,7 +45,7 @@ const AlbumDetails = ({ album, playTracks, close, port }: AlbumDetailsProps) => 
       </div>
       <div className={style.playAlbum} onClick={() => playTracks(displayed.tracks ?? [])}>
         <FontAwesomeIcon icon={faPlay} size="sm" />
-        <span className={style.label}>Play album</span>
+        <span className={style.label}>{t('album.play')}</span>
       </div>
     </div>
   );

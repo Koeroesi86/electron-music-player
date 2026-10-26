@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react';
 import type { Folder } from '../../types/library';
 import Confirm from '../confirm';
 import style from './FolderManagement.scss';
+import { useTranslation } from '../../client/i18n';
 
 interface FolderManagementProps {
   folders: Folder[];
@@ -11,6 +12,7 @@ interface FolderManagementProps {
 }
 
 const FolderManagement = ({ folders, addFiles, removeFolder }: FolderManagementProps) => {
+  const { t } = useTranslation();
   const [removing, setRemoving] = useState<string>();
   const upload = useRef<HTMLInputElement>(null);
 
@@ -28,7 +30,7 @@ const FolderManagement = ({ folders, addFiles, removeFolder }: FolderManagementP
 
   return (
     <section className={style.folderManagement}>
-      <div className={style.sectionTitle}>Folders</div>
+      <div className={style.sectionTitle}>{t('folders.title')}</div>
       <div className={style.folders}>
         {folders.map((folder) => (
           <div key={`folder-${folder.path}`} className={style.folder}>
@@ -36,19 +38,19 @@ const FolderManagement = ({ folders, addFiles, removeFolder }: FolderManagementP
               {folder.path}
             </span>
             <button className={style.remove} onClick={() => setRemoving(folder.path)}>
-              Remove
+              {t('folders.remove')}
             </button>
           </div>
         ))}
         <div className={style.addItems} onClick={() => upload.current?.click()}>
-          Drop music folders here
+          {t('folders.drop')}
           <input type="file" ref={upload} className={style.fileInput} multiple onChange={handleFileChange} />
         </div>
       </div>
       <Confirm
-        message={removing ? `Remove this folder from the library? The files stay on disk. ${removing}` : null}
-        confirmLabel="Remove from library"
-        cancelLabel="Keep"
+        message={removing ? t('folders.removeConfirm', { path: removing }) : null}
+        confirmLabel={t('folders.removeLabel')}
+        cancelLabel={t('folders.keep')}
         confirm={() => {
           if (removing) removeFolder(removing);
           setRemoving(undefined);

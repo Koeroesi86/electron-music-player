@@ -1,3 +1,4 @@
+import { useTranslation } from '../../client/i18n';
 import type { OnlineView } from '../../client/redux/types';
 import RadioStations from '../radio-stations';
 import ViewSwitcher from '../view-switcher/ViewSwitcher';
@@ -8,8 +9,11 @@ interface OnlineSourcesProps {
   setView: (view: OnlineView) => void;
 }
 
-const views: ViewItem<OnlineView>[] = [{ view: 'radio', label: 'Radio', panel: <RadioStations /> }];
+const OnlineSources = ({ view, setView }: OnlineSourcesProps) => {
+  const { t } = useTranslation();
+  const views: ViewItem<OnlineView>[] = [{ view: 'radio', label: t('online.radio'), panel: <RadioStations /> }];
 
-const OnlineSources = ({ view, setView }: OnlineSourcesProps) => <ViewSwitcher views={views} current={view} setView={setView} />;
+  return <ViewSwitcher views={views} current={view} setView={setView} />;
+};
 
 export default OnlineSources;

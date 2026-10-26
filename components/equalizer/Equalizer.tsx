@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import style from './Equalizer.scss';
+import { useTranslation } from '../../client/i18n';
 import Slider from '../slider/Slider';
 import { useLatest } from '../../client/hooks/use-latest';
 import { bandType, equalizerBands, maxGain, minGain } from '../../client/audio/equalizer';
@@ -14,6 +15,7 @@ interface EqualizerProps {
 }
 
 const Equalizer = ({ gains, createBiquadFilter, connectDestination, connectToSource, onAudioMounted, setGain }: EqualizerProps) => {
+  const { t } = useTranslation();
   const filters = useRef<BiquadFilterNode[]>([]);
   const latestGains = useLatest(gains);
 
@@ -47,7 +49,7 @@ const Equalizer = ({ gains, createBiquadFilter, connectDestination, connectToSou
 
   return (
     <div className={style.equalizer}>
-      <div className={style.header}>Equalizer</div>
+      <div className={style.header}>{t('equalizer.title')}</div>
       <div className={style.sliders}>
         {equalizerBands.map(({ label }, index) => (
           <div className={style.slider} key={label}>

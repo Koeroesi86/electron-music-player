@@ -43,4 +43,12 @@ describe('connection middleware', () => {
 
     expect(send).toHaveBeenCalledWith('SET_LAUNCHER', { enabled: true });
   });
+
+  it('saves the picked language with the settings, so the main process follows it', async () => {
+    const { store, send } = await setup();
+
+    store.dispatch({ type: 'SET_LANGUAGE', payload: { language: 'hu' } });
+
+    expect(send).toHaveBeenCalledWith('SAVE_SETTINGS', expect.objectContaining({ language: 'hu' }));
+  });
 });

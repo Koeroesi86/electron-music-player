@@ -25,6 +25,8 @@ describe('buildDesktopEntry', () => {
     const entry = buildDesktopEntry('/home/me/Apps/eMusic-26.10.1.AppImage');
 
     expect(entry).toContain('Exec="/home/me/Apps/eMusic-26.10.1.AppImage" %U');
+    expect(entry).toContain('Comment=Lossless Audio Player');
+    expect(entry).toContain('Comment[hu]=');
     expect(entry).toContain('Icon=emusic');
     expect(entry).toContain('Categories=AudioVideo;Audio;Player;');
     expect(entry).toContain('StartupWMClass=eMusic');

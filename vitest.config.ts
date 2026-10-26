@@ -9,7 +9,7 @@ export default defineConfig({
   test: {
     coverage: {
       provider: 'v8',
-      include: ['electron/**/*.ts', 'client/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
+      include: ['electron/**/*.ts', 'locales/**/*.ts', 'client/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
       exclude: ['**/*.test.{ts,tsx}', 'electron/test-database.ts'],
       // just below the current coverage, so it can not drop; raise them as tests are added
       thresholds: { statements: 13, branches: 22, functions: 8, lines: 13 },
@@ -21,7 +21,7 @@ export default defineConfig({
         test: {
           name: 'backend',
           environment: 'node',
-          include: ['electron/**/*.test.ts', 'scripts/**/*.test.js'],
+          include: ['electron/**/*.test.ts', 'locales/**/*.test.ts', 'scripts/**/*.test.js'],
         },
       },
       {

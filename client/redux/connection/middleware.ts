@@ -87,6 +87,7 @@ const persistedKeys = [
   'repeat',
   'equalizer',
   'desktopBlur',
+  'language',
 ] satisfies (keyof PersistedSettings)[];
 
 const saveSettings = (uiState: UiState) => electronAPI.send('SAVE_SETTINGS', Object.fromEntries(persistedKeys.map((key) => [key, uiState[key]])));
@@ -158,6 +159,9 @@ const handleActions = actionMiddleware((store) => [
   onAction('SEARCH_RADIO', ({ payload }) => electronAPI.send('RADIO_SEARCH', payload.query)),
   onAction('LOAD_RADIO_TAGS', () => electronAPI.send('RADIO_TAGS')),
   onAction('SET_LAUNCHER', ({ payload }) => electronAPI.send('SET_LAUNCHER', payload)),
+  // the main process has text of its own and follows the language from the saved settings
+  // the handlers run before the reducer, so the saved settings get the new language here
+  onAction('SET_LANGUAGE', ({ payload }) => saveSettings({ ...store.getState().uiState, language: payload.language })),
   onAction('SAVE_SETTINGS', () => saveSettings(store.getState().uiState)),
 ]);
 

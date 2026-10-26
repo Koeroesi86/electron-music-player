@@ -8,6 +8,7 @@ import style from './LocalCollection.scss';
 import FolderManagement from '../folder-management';
 import ViewSwitcher from '../view-switcher/ViewSwitcher';
 import type { ViewItem } from '../view-switcher/ViewSwitcher';
+import { useTranslation } from '../../client/i18n';
 
 interface LocalCollectionProps {
   view: LibraryView;
@@ -18,6 +19,8 @@ interface LocalCollectionProps {
 }
 
 const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFiles }: LocalCollectionProps) => {
+  const { t } = useTranslation();
+
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -25,9 +28,9 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFile
   };
 
   const views: ViewItem<LibraryView>[] = [
-    { view: 'albums', label: 'Albums', panel: <AlbumView /> },
-    { view: 'tracks', label: 'Songs', panel: <TrackView /> },
-    { view: 'folders', label: 'Folders', panel: <FolderManagement addFiles={addFiles} /> },
+    { view: 'albums', label: t('library.albums'), panel: <AlbumView /> },
+    { view: 'tracks', label: t('library.songs'), panel: <TrackView /> },
+    { view: 'folders', label: t('library.folders'), panel: <FolderManagement addFiles={addFiles} /> },
   ];
 
   return (
@@ -40,7 +43,7 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFile
           <div className={style.libraryControls}>
             <button onClick={rescanLibrary} disabled={!!scanningFolder} className={classNames({ [style.spinning]: scanningFolder })}>
               <FaSyncAlt />
-              Rescan
+              {t('library.rescan')}
             </button>
           </div>
         }

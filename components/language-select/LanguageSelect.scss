@@ -1,0 +1,25 @@
+.languageSelect {
+  padding-left: 12px;
+
+  .sectionTitle {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 100;
+    padding: 12px 0;
+  }
+
+  .select {
+    -webkit-app-region: no-drag;
+    height: 28px;
+    padding: 0 8px;
+    color: inherit;
+    font-size: 12px;
+    border: 0;
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.1);
+
+    option {
+      color: #000;
+    }
+  }
+}

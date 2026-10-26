@@ -1,6 +1,7 @@
 import type { MouseEventHandler } from 'react';
 import classNames from 'classnames';
 import style from './Confirm.scss';
+import { useTranslation } from '../../client/i18n';
 
 interface ConfirmProps {
   message?: string | null;
@@ -10,7 +11,9 @@ interface ConfirmProps {
   cancel: MouseEventHandler<HTMLButtonElement>;
 }
 
-function Confirm({ message, confirm = () => {}, cancel, confirmLabel = 'Yes', cancelLabel = 'No' }: ConfirmProps) {
+function Confirm({ message, confirm = () => {}, cancel, confirmLabel, cancelLabel }: ConfirmProps) {
+  const { t } = useTranslation();
+
   return (
     <div
       className={classNames(style.confirm, {
@@ -20,10 +23,10 @@ function Confirm({ message, confirm = () => {}, cancel, confirmLabel = 'Yes', ca
       <div className={style.message}>{message}</div>
       <div className={style.buttons}>
         <button onClick={confirm} className={style.button}>
-          {confirmLabel}
+          {confirmLabel ?? t('confirm.yes')}
         </button>
         <button onClick={cancel} className={style.button}>
-          {cancelLabel}
+          {cancelLabel ?? t('confirm.no')}
         </button>
       </div>
     </div>

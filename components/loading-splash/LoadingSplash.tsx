@@ -60,9 +60,7 @@ function LoadingSplash(props: { locals: Pick<PageLocals, 'title'> }) {
         <div style={style.container}>
           <div style={style.wrapper}>
             <img src={loading} />
-            <div id="status" style={style.text}>
-              {props.locals.title} is loading...
-            </div>
+            <div id="status" style={style.text} />
             <div id="progress-track" style={{ ...style.track, alignSelf: 'center' }} hidden>
               <div id="progress-bar" style={style.bar} />
             </div>

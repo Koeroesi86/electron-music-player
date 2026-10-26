@@ -15,6 +15,8 @@ import { createRadioBrowser } from './electron/radioBrowser';
 import { getAppUserModelId } from './electron/appUserModelId';
 import { registerDevDesktopEntry, removeDevDesktopEntry } from './electron/devDesktopEntry';
 import closeDatabase from './electron/closeDatabase';
+import { getMainTranslator, setPickedLanguage } from './electron/language';
+import { getSettings } from './electron/settingsRepository';
 import { autoUpdater } from 'electron-updater';
 import { canUpdate, createMockUpdateSource, runUpdate } from './electron/updater';
 import type { UpdateSource } from './electron/updater';
@@ -140,7 +142,10 @@ const updateOnSplash = async (loading: BrowserWindow) => {
   const source = getUpdateSource();
   if (!source) return;
 
-  return runUpdate(source, (progress) => loading.webContents.send('SPLASH_PROGRESS', progress), { install: !isMockUpdate });
+  return runUpdate(source, (progress) => loading.webContents.send('SPLASH_PROGRESS', progress), {
+    install: !isMockUpdate,
+    translate: getMainTranslator().t,
+  });
 };
 
 app
@@ -154,6 +159,8 @@ app
       if (isWin) loading.setBackgroundMaterial('acrylic');
     });
     await loading.loadURL(loadingLocation ?? '');
+    // the splash page is static and shows the text the main process sends; the picked language is in the library, which opens after the splash
+    loading.webContents.send('SPLASH_PROGRESS', { text: getMainTranslator().t('splash.loading', { title: 'eMusic' }) });
 
     return updateOnSplash(loading);
   })
@@ -162,6 +169,11 @@ app
     console.log(`Connected to library ${libraryLocation}`);
     global._database = d;
 
+    return getSettings(d)
+      .then(setPickedLanguage)
+      .then(() => d);
+  })
+  .then((d) => {
     initWindow();
     setupListeners(d, windows, radio);
 
