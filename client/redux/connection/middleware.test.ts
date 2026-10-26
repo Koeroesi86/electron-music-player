@@ -6,7 +6,7 @@ const setup = async () => {
   const on = vi.fn();
   vi.resetModules();
   vi.stubGlobal('fetch', () => Promise.reject(new Error('no server')));
-  window.electronAPI = { send, on, getPathForFile: () => '' };
+  window.electronAPI = { send, on, getPathForFile: () => '', blurred: false };
 
   const { default: reducers } = await import('../reducers');
   const { default: middleware } = await import('./middleware');

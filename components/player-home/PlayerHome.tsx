@@ -14,9 +14,6 @@ import AudioSpectrum from '../audio-spectrum';
 import PlayerTabs from '../player-tabs';
 import LauncherOffer from '../launcher-offer';
 
-// Electron can only blur behind the window on Windows and macOS
-const isLinux = navigator.userAgent.includes('Linux');
-
 interface PlayerHomeProps {
   maximized: boolean;
   enableTransparency?: boolean;
@@ -61,7 +58,8 @@ const PlayerHome = ({ maximized, enableTransparency = true, loaded, folders, add
         [style.opaque]: enableTransparency,
         [style.maximized]: maximized,
         [style.loaded]: loaded,
-        [style.noBlur]: isLinux,
+        [style.blurred]: electronAPI.blurred,
+        [style.noBlur]: !electronAPI.blurred,
       })}
     >
       <div className={style.wrapper}>
