@@ -2,8 +2,10 @@ import { BrowserWindow } from 'electron';
 import { resolve } from 'path';
 import windowStateKeeper from 'electron-window-state';
 import lockNavigation from './lockNavigation';
+import { applyWindowBackdrop, getBackdropArguments, getWindowBackdrop } from './windowBackdrop';
 
 const createWindow = () => {
+  const backdrop = getWindowBackdrop(process.platform);
   const mainWindowState = windowStateKeeper({
     defaultWidth: 1200,
     defaultHeight: 800,
@@ -22,8 +24,10 @@ const createWindow = () => {
     webPreferences: {
       backgroundThrottling: false,
       preload: resolve(__dirname, './preload.js'),
+      additionalArguments: getBackdropArguments(backdrop),
     },
   });
+  applyWindowBackdrop(mainWindow, backdrop);
   mainWindowState.manage(mainWindow);
   lockNavigation(mainWindow.webContents);
   mainWindow.setFullScreenable(false);

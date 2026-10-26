@@ -14,12 +14,10 @@ import AudioSpectrum from '../audio-spectrum';
 import PlayerTabs from '../player-tabs';
 import LauncherOffer from '../launcher-offer';
 
-// Electron can only blur behind the window on Windows and macOS
-const isLinux = navigator.userAgent.includes('Linux');
-
 interface PlayerHomeProps {
   maximized: boolean;
   enableTransparency?: boolean;
+  blurred: boolean;
   loaded: boolean;
   folders: Folder[];
   addFiles: (files: FileList) => void;
@@ -37,7 +35,7 @@ const findContainedPath = (files: FileList, folders: Folder[]) =>
     .map((file) => electronAPI.getPathForFile(file))
     .findLast((filePath) => folders.some((folder) => folder.path.startsWith(filePath) || filePath.startsWith(folder.path)));
 
-const PlayerHome = ({ maximized, enableTransparency = true, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
+const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const latestOnUnload = useLatest(onUnload);
 
@@ -61,7 +59,8 @@ const PlayerHome = ({ maximized, enableTransparency = true, loaded, folders, add
         [style.opaque]: enableTransparency,
         [style.maximized]: maximized,
         [style.loaded]: loaded,
-        [style.noBlur]: isLinux,
+        [style.blurred]: blurred,
+        [style.noBlur]: !blurred,
       })}
     >
       <div className={style.wrapper}>

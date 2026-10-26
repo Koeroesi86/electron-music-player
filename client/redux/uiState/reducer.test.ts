@@ -118,6 +118,13 @@ describe('uiState reducer', () => {
     expect(run({ type: 'TOGGLE_REPEAT' }, { ...initial, repeat: true }).repeat).toBe(false);
   });
 
+  it('toggles whether the desktop blurs behind the window, off until it is turned on', () => {
+    expect(initial.desktopBlur).toBe(false);
+    expect(run({ type: 'TOGGLE_DESKTOP_BLUR' }).desktopBlur).toBe(true);
+    expect(run({ type: 'TOGGLE_DESKTOP_BLUR' }, { ...initial, desktopBlur: true }).desktopBlur).toBe(false);
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { desktopBlur: true } } }).desktopBlur).toBe(true);
+  });
+
   it('records and clears played tracks, ignoring null tracks', () => {
     const one = run({ type: 'ADD_PLAYED', payload: { track: track('a') } });
     expect(one.played).toEqual([track('a')]);
