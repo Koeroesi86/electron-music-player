@@ -61,18 +61,27 @@ jobs:
       # the downloads of apt are kept between runs; the first try skips the update of the package lists, which needs the mirror, and falls back to it when a package is gone from there
       - name: Restore the packaging tools
         if: runner.os == 'Linux'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: apt-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/apt-archives
-          key: apt-flatpak-${{ matrix.arch }}-${{ hashFiles('.github/workflows/dist.yml') }}
+          key: apt-flatpak-${{ matrix.arch }}-${{ github.run_id }}
+          restore-keys: apt-flatpak-${{ matrix.arch }}-
       - name: Install Linux packaging tools
         if: runner.os == 'Linux'
         timeout-minutes: 15
         run: |
           mkdir -p ~/apt-archives/partial
-          install() { sudo timeout 5m apt-get install -y -o Acquire::Retries=3 -o Dir::Cache::archives="$HOME/apt-archives" flatpak flatpak-builder; }
-          install || { sudo timeout 5m apt-get update && install; }
+          install() { sudo timeout 10m apt-get install -y -o Acquire::Retries=3 -o Dir::Cache::archives="$HOME/apt-archives" flatpak flatpak-builder; }
+          install || { sudo timeout 10m apt-get update && install; }
           sudo chown -R "$USER" ~/apt-archives
+      # saved when the install fails too: the mirror of x64 is slow at times, and the next run continues with the packages that were downloaded
+      - name: Keep the packaging tools
+        if: always() && runner.os == 'Linux' && steps.apt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/apt-archives
+          key: apt-flatpak-${{ matrix.arch }}-${{ github.run_id }}
       # electron-builder bundles the flatpak from the runtime, the sdk and the base app, which it does not download itself
       - name: Install the Flatpak runtime
         if: runner.os == 'Linux'
