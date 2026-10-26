@@ -58,15 +58,15 @@ jobs:
           restore-keys: |
             build-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('package-lock.json') }}-
             build-${{ matrix.platform }}-${{ matrix.arch }}-
-      # the flatpak is built for x64 only (the AppImage is the package of linux arm64); the downloads of apt are kept between runs, the first try skips the update of the package lists, which needs the mirror, and falls back to it when a package is gone from there
+      # the downloads of apt are kept between runs; the first try skips the update of the package lists, which needs the mirror, and falls back to it when a package is gone from there
       - name: Restore the packaging tools
-        if: runner.os == 'Linux' && matrix.arch == 'x64'
+        if: runner.os == 'Linux'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/apt-archives
-          key: apt-flatpak-${{ hashFiles('.github/workflows/dist.yml') }}
+          key: apt-flatpak-${{ matrix.arch }}-${{ hashFiles('.github/workflows/dist.yml') }}
       - name: Install Linux packaging tools
-        if: runner.os == 'Linux' && matrix.arch == 'x64'
+        if: runner.os == 'Linux'
         timeout-minutes: 15
         run: |
           mkdir -p ~/apt-archives/partial
@@ -75,7 +75,7 @@ jobs:
           sudo chown -R "$USER" ~/apt-archives
       # electron-builder bundles the flatpak from the runtime, the sdk and the base app, which it does not download itself
       - name: Install the Flatpak runtime
-        if: runner.os == 'Linux' && matrix.arch == 'x64'
+        if: runner.os == 'Linux'
         timeout-minutes: 15
         run: |
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -101,7 +101,7 @@ jobs:
         run: xvfb-run --auto-servernum npm run smoke:packaged
       # the sandbox, the finish args and the zypak wrapper of the bundle only show when the installed flatpak starts
       - name: Smoke test of the Flatpak bundle
-        if: runner.os == 'Linux' && matrix.arch == 'x64'
+        if: runner.os == 'Linux'
         run: |
           flatpak install --user --noninteractive --bundle dist/eMusic-*.flatpak
           xvfb-run --auto-servernum dbus-run-session npm run smoke:flatpak
