@@ -40,7 +40,8 @@ const extraBuilds = {
 }
 
 // the release workflow uploads the files, electron-builder only writes the update metadata next to them
-const build = options => electronBuilder.build({ ...options, publish: 'never' })
+// the architecture of the machine is passed on (x64: true, arm64: true): with an empty list of targets electron-builder takes it from the configuration, which is x64
+const build = options => electronBuilder.build({ ...options, [process.arch]: true, publish: 'never' })
 
 platforms
   .filter(([enabled]) => enabled)
