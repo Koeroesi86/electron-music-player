@@ -15,7 +15,7 @@ CI (`.github/workflows/`: `test.yml`, `dist.yml`, wired together by `pr-checks.y
 
 Pull requests also run `fallow audit --base` (findings of the changed files), CodeQL, dependency review (high severity, GPL/AGPL licences denied) and OSV.
 
-Releases come from `release.yml`: Monday and Thursday 06:00 UTC and by hand, from `master` only. A scheduled run skips when only docs or `.github/` changed since the latest `vYY.M.N` tag. The version is `YY.M.<run number>` (`scripts/version.js`, stamped into `package.json` in the packaging job; never edit `version` by hand, no zero padded month and no prerelease part, electron-updater would take it for a channel), and the published release is what installed apps update from. `EMUSIC_NO_UPDATE=1` turns the updater off (the smoke tests set it).
+Releases come from `release.yml`: Monday and Thursday 06:00 UTC and by hand, from `master` only. A scheduled run skips when only docs or `.github/` changed since the latest `vYY.M.N` tag. The version is `YY.M.<run number>` (`scripts/version.js`, stamped into `package.json` in the packaging job; never edit `version` by hand, no zero padded month and no prerelease part, electron-updater would take it for a channel), the plan job refuses a version that is not greater than the latest tag, and `release.yml` must not be renamed or recreated (its run number would restart), and the published release is what installed apps update from. `EMUSIC_NO_UPDATE=1` turns the updater off (the smoke tests set it).
 
 If `node` is not found, use `~/.nvm/versions/node/<version>/bin` directly.
 

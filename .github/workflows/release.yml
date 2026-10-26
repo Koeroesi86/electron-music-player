@@ -45,7 +45,8 @@ jobs:
             exit 0
           fi
           echo 'release=true' >> "$GITHUB_OUTPUT"
-          echo "version=$(node scripts/version.js)" | tee -a "$GITHUB_OUTPUT"
+          # fails when the run number restarted and the version is not greater than the latest release
+          echo "version=$(node scripts/version.js --after "$latest")" | tee -a "$GITHUB_OUTPUT"
 
   test:
     needs: plan
