@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { createVersion, stampVersion, versionPattern } from './version'
+import { assertNewer, compareVersions, createVersion, stampVersion, versionPattern } from './version'
 
 describe('createVersion', () => {
   it.each([
@@ -15,6 +15,39 @@ describe('createVersion', () => {
 
     expect(version).toBe(expected)
     expect(version).toMatch(versionPattern)
+  })
+})
+
+describe('compareVersions', () => {
+  it.each([
+    ['26.10.14', '26.10.9', 1],
+    ['26.10.9', '26.10.14', -1],
+    ['26.10.14', '26.10.14', 0],
+    ['26.11.1', '26.10.99', 1],
+    ['27.1.1', '26.12.50', 1],
+    ['26.9.50', '26.10.1', -1],
+  ])('orders %s against %s as %s', (a, b, sign) => {
+    expect(Math.sign(compareVersions(a, b))).toBe(sign)
+  })
+})
+
+describe('assertNewer', () => {
+  it.each([
+    ['26.10.15', 'v26.10.14'],
+    ['26.10.100', 'v26.10.99'],
+    ['26.11.1', 'v26.10.14'],
+    ['26.10.1', ''],
+    ['26.10.1', undefined],
+  ])('accepts %s after %j', (version, latest) => {
+    expect(() => assertNewer(version, latest)).not.toThrow()
+  })
+
+  it.each([
+    ['26.10.14', 'v26.10.14'],
+    ['26.10.3', 'v26.10.14'],
+    ['26.9.99', 'v26.10.1'],
+  ])('refuses %s after %s', (version, latest) => {
+    expect(() => assertNewer(version, latest)).toThrow('is not greater than the latest release')
   })
 })
 
@@ -54,6 +87,15 @@ describe('command line', () => {
 
   it('prints the version of a new release from the run number', () => {
     expect(run([], { GITHUB_RUN_NUMBER: '14' })).toMatch(new RegExp(`^\\d{2}\\.[1-9]\\d?\\.14$`))
+  })
+
+  it('refuses a run number that is not greater than the latest release', () => {
+    expect(() => run(['--after', 'v99.12.1'], { GITHUB_RUN_NUMBER: '14' })).toThrow('is not greater than the latest release v99.12.1')
+  })
+
+  it('prints the version when it is greater than the latest release or there is none', () => {
+    expect(run(['--after', 'v20.1.1'], { GITHUB_RUN_NUMBER: '14' })).toMatch(/\.14$/)
+    expect(run(['--after', ''], { GITHUB_RUN_NUMBER: '14' })).toMatch(/\.14$/)
   })
 
   it('refuses to print a version without a run number', () => {
