@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   dist:
-    name: Dist (${{ matrix.platform }})
+    name: Dist (${{ matrix.platform }} ${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -22,13 +22,25 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
+            arch: x64
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
           - os: macos-15-intel
             platform: darwin
+            arch: x64
+          - os: macos-15
+            platform: darwin
+            arch: arm64
           - os: windows-2025
             platform: win32
+            arch: x64
+          - os: windows-11-arm
+            platform: win32
+            arch: arm64
     env:
-      ELECTRON_CACHE: ${{ github.workspace }}/.cache/${{ matrix.platform }}/electron
-      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/${{ matrix.platform }}/electron-builder
+      ELECTRON_CACHE: ${{ github.workspace }}/.cache/${{ matrix.platform }}-${{ matrix.arch }}/electron
+      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/${{ matrix.platform }}-${{ matrix.arch }}/electron-builder
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -40,27 +52,36 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
-            .cache/${{ matrix.platform }}
+            .cache/${{ matrix.platform }}-${{ matrix.arch }}
             ~/.electron-gyp
-          key: build-${{ matrix.platform }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          key: build-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
-            build-${{ matrix.platform }}-${{ hashFiles('package-lock.json') }}-
-            build-${{ matrix.platform }}-
+            build-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('package-lock.json') }}-
+            build-${{ matrix.platform }}-${{ matrix.arch }}-
       # the downloads of apt are kept between runs; the first try skips the update of the package lists, which needs the mirror, and falls back to it when a package is gone from there
       - name: Restore the packaging tools
         if: runner.os == 'Linux'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: apt-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/apt-archives
-          key: apt-flatpak-${{ hashFiles('.github/workflows/dist.yml') }}
+          key: apt-flatpak-${{ matrix.arch }}-${{ github.run_id }}
+          restore-keys: apt-flatpak-${{ matrix.arch }}-
       - name: Install Linux packaging tools
         if: runner.os == 'Linux'
         timeout-minutes: 15
         run: |
           mkdir -p ~/apt-archives/partial
-          install() { sudo timeout 5m apt-get install -y -o Acquire::Retries=3 -o Dir::Cache::archives="$HOME/apt-archives" flatpak flatpak-builder; }
-          install || { sudo timeout 5m apt-get update && install; }
+          install() { sudo timeout 10m apt-get install -y -o Acquire::Retries=3 -o Dir::Cache::archives="$HOME/apt-archives" flatpak flatpak-builder; }
+          install || { sudo timeout 10m apt-get update && install; }
           sudo chown -R "$USER" ~/apt-archives
+      # saved when the install fails too: the mirror of x64 is slow at times, and the next run continues with the packages that were downloaded
+      - name: Keep the packaging tools
+        if: always() && runner.os == 'Linux' && steps.apt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/apt-archives
+          key: apt-flatpak-${{ matrix.arch }}-${{ github.run_id }}
       # electron-builder bundles the flatpak from the runtime, the sdk and the base app, which it does not download itself
       - name: Install the Flatpak runtime
         if: runner.os == 'Linux'
@@ -95,7 +116,7 @@ jobs:
           xvfb-run --auto-servernum dbus-run-session npm run smoke:flatpak
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: dist-${{ matrix.os }}
+          name: dist-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
             dist/eMusic*
             dist/*.yml
