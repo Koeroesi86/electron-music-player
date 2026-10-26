@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import type { Folder } from '../../types/library';
 import { electronAPI } from '../../client/electron-api';
 import { useLatest } from '../../client/hooks/use-latest';
+import { useTranslation } from '../../client/i18n';
 import style from './PlayerHome.scss';
 import AlbumDetails from '../album-details';
 import Confirm from '../confirm';
@@ -36,6 +37,7 @@ const findContainedPath = (files: FileList, folders: Folder[]) =>
     .findLast((filePath) => folders.some((folder) => folder.path.startsWith(filePath) || filePath.startsWith(folder.path)));
 
 const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
+  const { t } = useTranslation();
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const latestOnUnload = useLatest(onUnload);
 
@@ -49,7 +51,7 @@ const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, fol
     if (files.length === 0) return;
 
     const contained = findContainedPath(files, folders);
-    if (contained) setConfirmation({ message: `Are you sure you want to add this folder? ${contained}`, onConfirm: () => addFiles(files) });
+    if (contained) setConfirmation({ message: t('folders.addConfirm', { path: contained }), onConfirm: () => addFiles(files) });
     else addFiles(files);
   };
 

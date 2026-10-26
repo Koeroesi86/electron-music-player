@@ -27,6 +27,8 @@ export interface PersistedSettings {
   equalizer: number[];
   /** The desktop blurs behind the window (Blur my Shell on GNOME), so the panels can be translucent */
   desktopBlur: boolean;
+  /** The language picked in the settings, undefined follows the system language */
+  language: string | undefined;
 }
 
 export interface UiState extends PersistedSettings {
@@ -88,6 +90,7 @@ export type AppAction =
   | PayloadAction<'SET_PLAYING', { isPlaying: boolean }>
   | PayloadAction<'LAUNCHER_STATE', { available: boolean; enabled: boolean; offered: boolean }>
   | PayloadAction<'SET_LAUNCHER', { enabled: boolean }>
+  | PayloadAction<'SET_LANGUAGE', { language: string | undefined }>
   | PayloadAction<'SET_VIEW', { view: LibraryView }>
   | PayloadAction<'SET_ONLINE_VIEW', { view: OnlineView }>
   | PayloadAction<'SET_TAB', { tab: Tab }>

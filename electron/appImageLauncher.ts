@@ -1,6 +1,7 @@
 import { execFile } from 'child_process';
 import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { catalog } from '../locales';
 
 const launcherName = 'emusic';
 const iconSizes = [16, 24, 32, 48, 64, 128, 256, 512];
@@ -23,6 +24,11 @@ const getIconFile = (dataHome: string, size: number) => join(dataHome, 'icons/hi
 // the characters that would need escaping in the Exec key of a desktop entry; such a path is not worth the risk of a broken launcher
 const unsafePath = /["`$\\%\n]/;
 
+// the desktop picks the comment of its own language, a locale is written lang_COUNTRY
+const localizedComments = Object.entries(catalog)
+  .filter(([language]) => language !== 'en')
+  .map(([language, messages]) => `Comment[${language.replace('-', '_')}]=${messages['app.description']}`);
+
 /** The content of the desktop entry that starts the AppImage; the window class is the one the app opens with */
 export const buildDesktopEntry = (appImage: string) => {
   if (unsafePath.test(appImage)) throw new Error(`The AppImage path ${appImage} can not be used in a desktop entry`);
@@ -31,7 +37,8 @@ export const buildDesktopEntry = (appImage: string) => {
     '[Desktop Entry]',
     'Type=Application',
     'Name=eMusic',
-    'Comment=Lossless Audio Player',
+    `Comment=${catalog.en['app.description']}`,
+    ...localizedComments,
     `Exec="${appImage}" %U`,
     `Icon=${launcherName}`,
     'Terminal=false',

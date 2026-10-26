@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { Track } from '../../types/library';
+import { useTranslation } from '../../client/i18n';
 import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
 import { usePageLoader } from '../../client/hooks/use-page-loader';
 import { useWindowedList } from '../../client/hooks/use-windowed-list';
@@ -21,16 +22,19 @@ interface TrackViewProps {
   loadPage: (page: number) => void;
 }
 
-const headerLabels: TrackLabels = {
-  duration: 'Duration',
-  artist: 'Artist',
-  year: 'Year',
-  album: 'Album',
-  track: '#',
-  title: 'Title',
-};
-
 const TrackView = ({ currentSong, playTracks, tracks, port, loadPage }: TrackViewProps) => {
+  const { t } = useTranslation();
+  const headerLabels = useMemo<TrackLabels>(
+    () => ({
+      duration: t('tracks.duration'),
+      artist: t('tracks.artist'),
+      year: t('tracks.year'),
+      album: t('tracks.album'),
+      track: '#',
+      title: t('tracks.title'),
+    }),
+    [t]
+  );
   const [selectedTracks, setSelectedTracks] = useState<Map<string, Track>>(new Map());
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
   const { listing, firstIndex, lastIndex, offsetTop, height } = useWindowedList({ itemCount: tracks.total ?? 0, rowHeight });
@@ -91,9 +95,9 @@ const TrackView = ({ currentSong, playTracks, tracks, port, loadPage }: TrackVie
         </div>
       </div>
       <div className={style.controls}>
-        <button onClick={() => setSelectedTracks(new Map())}>Clear selection</button>
-        <button onClick={selectAll}>Select All</button>
-        <button onClick={() => playTracks([...selectedTracks.values()])}>Play selected</button>
+        <button onClick={() => setSelectedTracks(new Map())}>{t('tracks.clearSelection')}</button>
+        <button onClick={selectAll}>{t('tracks.selectAll')}</button>
+        <button onClick={() => playTracks([...selectedTracks.values()])}>{t('tracks.playSelected')}</button>
       </div>
     </div>
   );

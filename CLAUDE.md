@@ -23,5 +23,6 @@ If `node` is not found, use `~/.nvm/versions/node/<version>/bin` directly.
 
 - A test next to the code (`name.test.ts`) that fails without the change; no fixed sleeps.
 - A new migration goes in `migrations/` as `NNN-name.sql` with the next number; it runs once per library (the number is stored as `PRAGMA user_version`), so it may `ALTER TABLE`. Do not edit one that has shipped. `001` to `003` ran on every start before the number was stored, so they stay safe to run again.
+- User-facing text goes in `locales/en.json` (the complete source of truth) and is shown with `useTranslation()` in the renderer or `getMainTranslator()` in `electron/`, never written into a component; a new language is a `locales/<tag>.json` that is added to `locales/index.ts`, and a key it lacks shows the English text.
 - No `any` or casts; fallow suppressions need a reason.
 - Workflow changes: actions stay on the major versions already used, with minimal `permissions`.

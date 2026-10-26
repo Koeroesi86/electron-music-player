@@ -1,4 +1,6 @@
 import { EventEmitter } from 'events';
+import { getTranslator } from '../locales';
+import type { Translate } from '../locales/translate';
 
 export interface SplashProgress {
   text: string;
@@ -20,6 +22,8 @@ interface UpdateOptions {
   downloadStallTimeout?: number;
   // how long the splash waits for the app to quit after the installer was started
   installTimeout?: number;
+  // the text of the splash, English by default
+  translate?: Translate;
 }
 
 const defaultCheckTimeout = 10000;
@@ -60,23 +64,25 @@ export async function runUpdate(source: UpdateSource, report: (progress: SplashP
     checkTimeout = defaultCheckTimeout,
     downloadStallTimeout = defaultDownloadStallTimeout,
     installTimeout = defaultInstallTimeout,
+    translate = getTranslator(undefined, []).t,
   } = options;
 
   try {
     source.autoDownload = false;
-    report({ text: 'Checking for updates...' });
+    report({ text: translate('update.checking') });
     const result = await withTimeout(source.checkForUpdates(), checkTimeout);
 
     if (!result?.isUpdateAvailable) return;
 
     const { version } = result.updateInfo;
-    report({ text: `Downloading update ${version}...`, percent: 0 });
-    source.on('download-progress', ({ percent }: { percent: number }) => report({ text: `Downloading update ${version}...`, percent: Math.round(percent) }));
+    const downloading = translate('update.downloading', { version });
+    report({ text: downloading, percent: 0 });
+    source.on('download-progress', ({ percent }: { percent: number }) => report({ text: downloading, percent: Math.round(percent) }));
     await downloadWithStallTimeout(source, downloadStallTimeout);
 
     if (!install) return;
 
-    report({ text: 'Restarting to install the update...', percent: 100 });
+    report({ text: translate('update.restarting'), percent: 100 });
     // silent on windows, so the installer shows nothing, and the app is started again afterwards
     source.quitAndInstall(true, true);
     await wait(installTimeout);

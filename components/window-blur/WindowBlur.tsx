@@ -1,3 +1,4 @@
+import { useTranslation } from '../../client/i18n';
 import style from './WindowBlur.scss';
 
 interface WindowBlurProps {
@@ -8,15 +9,17 @@ interface WindowBlurProps {
 
 /** Lets the panels be translucent where the desktop blurs the window (Blur my Shell on GNOME), the app cannot detect that itself */
 const WindowBlur = ({ available, enabled, toggle }: WindowBlurProps) => {
+  const { t } = useTranslation();
+
   if (!available) return null;
 
   return (
     <section className={style.windowBlur}>
-      <div className={style.sectionTitle}>Window blur</div>
+      <div className={style.sectionTitle}>{t('blur.title')}</div>
       <div className={style.toggle} onClick={toggle}>
-        {enabled ? 'Use opaque panels' : 'Use translucent panels'}
+        {enabled ? t('blur.opaque') : t('blur.translucent')}
       </div>
-      <div className={style.hint}>Needs a blur from the desktop, for example the Blur my Shell extension on GNOME.</div>
+      <div className={style.hint}>{t('blur.hint')}</div>
     </section>
   );
 };

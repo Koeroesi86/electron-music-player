@@ -115,7 +115,7 @@ describe('RadioStations', () => {
     expect(screen.getByText('No stations found')).toBeTruthy();
 
     view.rerender(<RadioStations radio={radio({ stations: [], error: 'offline' })} search={vi.fn()} loadTags={vi.fn()} play={vi.fn()} />);
-    expect(screen.getByText('offline')).toBeTruthy();
+    expect(screen.getByText('The station directory is not available: offline')).toBeTruthy();
     expect(screen.queryByText('No stations found')).toBeNull();
   });
 });

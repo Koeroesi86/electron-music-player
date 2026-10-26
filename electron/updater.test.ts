@@ -17,6 +17,16 @@ const createSource = (check: UpdateSource['checkForUpdates'], download: UpdateSo
 const available = () => Promise.resolve({ isUpdateAvailable: true, updateInfo: { version: '2.0.0' } });
 
 describe('runUpdate', () => {
+  it('reports in the language it is given', async () => {
+    const source = createSource(available);
+    const report = vi.fn();
+
+    await runUpdate(source, report, { install: false, translate: (key, values) => `${key} ${values?.version ?? ''}`.trim() });
+
+    expect(report).toHaveBeenCalledWith({ text: 'update.checking' });
+    expect(report).toHaveBeenCalledWith({ text: 'update.downloading 2.0.0', percent: 0 });
+  });
+
   it('continues when there is no update', async () => {
     const source = createSource(() => Promise.resolve({ isUpdateAvailable: false, updateInfo: { version: '1.0.0' } }));
     const report = vi.fn();

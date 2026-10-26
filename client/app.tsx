@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import PlayerHome from '../components/player-home';
+import LanguageProvider from '../components/language-provider';
 import { store } from './redux/store';
 
 if (typeof document !== 'undefined') {
@@ -8,7 +9,9 @@ if (typeof document !== 'undefined') {
 
   createRoot(document.getElementById('root') as HTMLElement).render(
     <Provider store={store}>
-      <PlayerHome />
+      <LanguageProvider>
+        <PlayerHome />
+      </LanguageProvider>
     </Provider>
   );
 }

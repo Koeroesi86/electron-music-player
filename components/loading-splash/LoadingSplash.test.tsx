@@ -7,9 +7,9 @@ describe('LoadingSplash', () => {
   const html = renderToStaticMarkup(<LoadingSplash locals={{ title: 'eMusic' }} />);
   const page = new DOMParser().parseFromString(html, 'text/html');
 
-  it('shows the title while loading', () => {
+  it('has the title and leaves the text to the main process, which sends it in the language of the user', () => {
     expect(page.title).toBe('eMusic');
-    expect(page.getElementById('status')?.textContent).toBe('eMusic is loading...');
+    expect(page.getElementById('status')?.textContent).toBe('');
   });
 
   it('has a progress bar for the download that stays hidden until there is progress', () => {
