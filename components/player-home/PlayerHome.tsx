@@ -17,6 +17,7 @@ import LauncherOffer from '../launcher-offer';
 interface PlayerHomeProps {
   maximized: boolean;
   enableTransparency?: boolean;
+  blurred: boolean;
   loaded: boolean;
   folders: Folder[];
   addFiles: (files: FileList) => void;
@@ -34,7 +35,7 @@ const findContainedPath = (files: FileList, folders: Folder[]) =>
     .map((file) => electronAPI.getPathForFile(file))
     .findLast((filePath) => folders.some((folder) => folder.path.startsWith(filePath) || filePath.startsWith(folder.path)));
 
-const PlayerHome = ({ maximized, enableTransparency = true, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
+const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const latestOnUnload = useLatest(onUnload);
 
@@ -58,8 +59,8 @@ const PlayerHome = ({ maximized, enableTransparency = true, loaded, folders, add
         [style.opaque]: enableTransparency,
         [style.maximized]: maximized,
         [style.loaded]: loaded,
-        [style.blurred]: electronAPI.blurred,
-        [style.noBlur]: !electronAPI.blurred,
+        [style.blurred]: blurred,
+        [style.noBlur]: !blurred,
       })}
     >
       <div className={style.wrapper}>

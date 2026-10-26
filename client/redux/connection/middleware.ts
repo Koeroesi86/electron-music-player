@@ -86,6 +86,7 @@ const persistedKeys = [
   'shuffle',
   'repeat',
   'equalizer',
+  'desktopBlur',
 ] satisfies (keyof PersistedSettings)[];
 
 const saveSettings = (uiState: UiState) => electronAPI.send('SAVE_SETTINGS', Object.fromEntries(persistedKeys.map((key) => [key, uiState[key]])));

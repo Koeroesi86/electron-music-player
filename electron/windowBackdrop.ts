@@ -1,19 +1,13 @@
 import type { BrowserWindow } from 'electron';
 
-/** What shows blurred behind the translucent parts of a window: macOS vibrancy, a blur the desktop adds (EMUSIC_BLUR=1), or nothing */
-export type WindowBackdrop = 'vibrancy' | 'external' | 'none';
+/** What the app blurs behind the translucent parts of a window: macOS vibrancy, nothing elsewhere (a blur from the desktop is the user's setting) */
+export type WindowBackdrop = 'vibrancy' | 'none';
 
 /** The preload script tells the page about it (`electronAPI.blurred`) through this argument */
 export const blurArgument = '--window-blur';
 
-/**
- * Electron can only blur behind a window on macOS. Elsewhere the desktop has to do it (the Blur my Shell extension on GNOME, KDE's
- * blur rule), which the app cannot detect, so EMUSIC_BLUR=1 says it does
- */
-export const getWindowBackdrop = (platform: NodeJS.Platform, env: NodeJS.ProcessEnv): WindowBackdrop => {
-  if (platform === 'darwin') return 'vibrancy';
-  return env.EMUSIC_BLUR === '1' ? 'external' : 'none';
-};
+/** Electron can only blur behind a window on macOS; on Linux and Windows the desktop has to do it, which the app cannot detect */
+export const getWindowBackdrop = (platform: NodeJS.Platform): WindowBackdrop => (platform === 'darwin' ? 'vibrancy' : 'none');
 
 export const getBackdropArguments = (backdrop: WindowBackdrop) => (backdrop === 'none' ? [] : [blurArgument]);
 

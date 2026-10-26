@@ -25,6 +25,8 @@ export interface PersistedSettings {
   shuffle: boolean;
   repeat: boolean;
   equalizer: number[];
+  /** The desktop blurs behind the window (Blur my Shell on GNOME), so the panels can be translucent */
+  desktopBlur: boolean;
 }
 
 export interface UiState extends PersistedSettings {
@@ -59,6 +61,7 @@ export type AppAction =
   | EmptyAction<'PREVIOUS_SONG'>
   | EmptyAction<'TOGGLE_REPEAT'>
   | EmptyAction<'TOGGLE_SHUFFLE'>
+  | EmptyAction<'TOGGLE_DESKTOP_BLUR'>
   | EmptyAction<'CLEAR_PLAYED'>
   | EmptyAction<'POP_PLAYED'>
   | EmptyAction<'LOAD_RADIO_TAGS'>

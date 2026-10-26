@@ -25,6 +25,7 @@ const initialState: UiState = {
   shuffle: false,
   repeat: false,
   equalizer: defaultGains,
+  desktopBlur: false,
 };
 
 // the Shoutcast page and the Spotify page are gone, any other saved view shows the radio
@@ -81,6 +82,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, repeat: !state.repeat };
     case 'TOGGLE_SHUFFLE':
       return { ...state, shuffle: !state.shuffle };
+    case 'TOGGLE_DESKTOP_BLUR':
+      return { ...state, desktopBlur: !state.desktopBlur };
     case 'CLEAR_PLAYED':
       return { ...state, played: [] };
     case 'POP_PLAYED':

@@ -5,7 +5,7 @@ import lockNavigation from './lockNavigation';
 import { applyWindowBackdrop, getBackdropArguments, getWindowBackdrop } from './windowBackdrop';
 
 const createWindow = () => {
-  const backdrop = getWindowBackdrop(process.platform, process.env);
+  const backdrop = getWindowBackdrop(process.platform);
   const mainWindowState = windowStateKeeper({
     defaultWidth: 1200,
     defaultHeight: 800,

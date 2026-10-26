@@ -12,7 +12,7 @@ Download the installer of your system from the [latest release](https://github.c
 
 ### Window blur
 
-The parts of the window that are translucent (the side panel, the title bar and, with a blur, the track list and the controls) show a blurred backdrop where the system provides one:
+The parts of the window that are translucent show a blurred backdrop where the system provides one:
 
 | System | Blur behind the window |
 | :----- | :--------------------- |
@@ -21,7 +21,7 @@ The parts of the window that are translucent (the side panel, the title bar and,
 | GNOME on Linux | Through the [Blur my Shell](https://extensions.gnome.org/extension/3193/blur-my-shell/) extension, see below. |
 | Other Linux desktops | Only if the desktop blurs windows itself (for example a KDE Plasma blur rule); the app cannot ask for it. |
 
-Electron cannot blur behind a window on Linux and the app cannot tell whether the desktop does, so it starts with the darker tint. Start it with `EMUSIC_BLUR=1` (`EMUSIC_BLUR=1 ./eMusic-<version>.AppImage`) once the desktop blurs it, and the translucent look is used.
+Electron cannot blur behind a window on Linux and the app cannot tell whether the desktop does, so it starts with opaque panels and a darker tint. Once the desktop blurs the window, choose **Use translucent panels** under **Window blur** on the Settings tab (**Use opaque panels** goes back). The choice is saved with the other settings.
 
 #### GNOME with Blur my Shell
 
@@ -29,9 +29,9 @@ Electron cannot blur behind a window on Linux and the app cannot tell whether th
 2. In its preferences, open the **Applications** tab and turn on **Blur all windows** (or add `eMusic` to the whitelist; the window class is `eMusic`, `emusic-dev` for a development run).
 3. Turn off **Opaque focused window**. Left on, the extension blurs only windows that are not focused, so eMusic would show no blur while you use it.
 4. Leave **Opacity** at 255: the extension then keeps the window's own transparency and the blur shows through the translucent parts. Lower values make the whole window, panels included, more see-through.
-5. Start eMusic with `EMUSIC_BLUR=1`. To get it from the app menu, add `Exec=env EMUSIC_BLUR=1 ...` to your copy of the desktop entry.
+5. In eMusic, choose **Use translucent panels** on the Settings tab.
 
-Tested with Blur my Shell 76 on GNOME 50 (Wayland). Without the extension, GNOME draws nothing behind the window, so leave `EMUSIC_BLUR` unset there.
+Tested with Blur my Shell 76 on GNOME 50 (Wayland). Without the extension, GNOME draws nothing behind the window, so keep the opaque panels there.
 
 ### Deving and Building
 

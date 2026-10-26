@@ -6,6 +6,7 @@ import OnlineSources from '../online-sources';
 import Equalizer from '../equalizer';
 import FolderManagement from '../folder-management';
 import LauncherIntegration from '../launcher-integration';
+import WindowBlur from '../window-blur';
 import style from './PlayerTabs.scss';
 
 interface PlayerTabsProps {
@@ -51,6 +52,7 @@ function PlayerTabs({ tab = 'local', addFiles = () => {} }: PlayerTabsProps) {
       >
         <FolderManagement addFiles={addFiles} />
         <LauncherIntegration />
+        <WindowBlur />
       </div>
     </div>
   );
