@@ -55,7 +55,12 @@
     "win": {
       "icon": "icons/win/icon.ico",
       "target": [
-        "nsis"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "mac": {
