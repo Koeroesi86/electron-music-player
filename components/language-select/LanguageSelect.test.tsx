@@ -8,7 +8,7 @@ describe('LanguageSelect', () => {
   it('offers the system default and every language by its own name', () => {
     render(<LanguageSelect setLanguage={vi.fn()} />);
 
-    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['System default', 'English', 'magyar']);
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['System default', 'English', 'Magyar']);
   });
 
   it('follows the system until a language is picked', () => {

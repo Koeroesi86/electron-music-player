@@ -35,7 +35,7 @@ describe('locales', () => {
   });
 
   it('names a language in its own language', () => {
-    expect(getLanguageName('hu')).toBe('magyar');
+    expect(getLanguageName('hu')).toBe('Magyar');
     expect(getLanguageName('en')).toBe('English');
   });
 
