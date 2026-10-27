@@ -43,6 +43,48 @@ describe('AudioComponent', () => {
   });
 });
 
+describe('AudioComponent end of a track', () => {
+  const track: Track = { ...station, path: '/music/a.flac' };
+  const other: Track = { ...station, path: '/music/b.flac' };
+  const trackEnded = vi.fn();
+  const element = (view: ReturnType<typeof render>) => view.container.querySelector('audio') as HTMLAudioElement;
+  const renderTrack = (song: Track) =>
+    render(<AudioComponent currentSong={song} isPlaying={false} volume={1} port="3000" trackEnded={trackEnded} connectNode={vi.fn()} />);
+
+  beforeEach(() => trackEnded.mockClear());
+  afterEach(cleanup);
+
+  it('steps to the next track once however often the end is reached', () => {
+    const view = renderTrack(track);
+
+    fireEvent.ended(element(view));
+    fireEvent.ended(element(view));
+    fireEvent.ended(element(view));
+
+    expect(trackEnded).toHaveBeenCalledTimes(1);
+  });
+
+  it('steps again at the end of the next track', () => {
+    const view = renderTrack(track);
+    fireEvent.ended(element(view));
+    view.rerender(<AudioComponent currentSong={other} isPlaying={false} volume={1} port="3000" trackEnded={trackEnded} connectNode={vi.fn()} />);
+
+    fireEvent.ended(element(view));
+
+    expect(trackEnded).toHaveBeenCalledTimes(2);
+  });
+
+  it('steps again when the same track is played again', () => {
+    const view = renderTrack(track);
+    fireEvent.ended(element(view));
+    fireEvent.play(element(view));
+
+    fireEvent.ended(element(view));
+
+    expect(trackEnded).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('AudioComponent radio reconnect', () => {
   const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
 
