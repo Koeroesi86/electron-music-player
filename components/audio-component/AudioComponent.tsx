@@ -16,7 +16,7 @@ const sourceOf = (track: Track, port: string) => {
   const station = radioUuidOf(track.path);
   if (station) return `http://127.0.0.1:${port}/radio/${encodeURIComponent(station)}`;
 
-  return /^http/.test(track.path) ? track.path : `http://127.0.0.1:${port}/local?path=${encodeURIComponent(track.path)}`;
+  return /^http/.test(track.path) ? track.path : `emusic://track?path=${encodeURIComponent(track.path)}`;
 };
 
 /** After this many files in a row that cannot be played, the player stops instead of cycling through the whole queue */
