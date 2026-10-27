@@ -9,9 +9,9 @@ export const splitStreamTitle = (streamTitle: string) => {
 };
 
 /** What the player shows of a track: a station shows the song on air with the station as its album, the others show themselves */
-export const toNowPlaying = (track: Track, streamTitle: string | null, streamArt: string | null, port: string) => {
+export const toNowPlaying = (track: Track, streamTitle: string | null, streamArt: string | null) => {
   const onAir = streamTitle && radioUuidOf(track.path) ? { ...track, ...splitStreamTitle(streamTitle), album: track.title, picture: null } : track;
-  const cover = streamArt ? getRadioArtUrl(port, streamArt) : onAir.picture ? getCoverUrl(port, onAir.picture) : undefined;
+  const cover = streamArt ? getRadioArtUrl(streamArt) : onAir.picture ? getCoverUrl(onAir.picture) : undefined;
 
   return { track: onAir, cover };
 };

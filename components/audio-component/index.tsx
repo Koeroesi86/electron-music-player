@@ -10,7 +10,6 @@ const mapState = (state: RootState) => ({
   currentSong: state.uiState.currentSong,
   isPlaying: state.uiState.isPlaying,
   volume: state.uiState.volume,
-  port: state.uiState.port,
 });
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({

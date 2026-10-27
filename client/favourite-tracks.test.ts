@@ -29,7 +29,7 @@ describe('getFavouriteTracks', () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify([track])));
     vi.stubGlobal('fetch', fetchMock);
 
-    const tracks = await getFavouriteTracks([stored(stationFavourite(station)), stored(albumFavourite(album)), stored(trackFavourite(track))], '3000');
+    const tracks = await getFavouriteTracks([stored(stationFavourite(station)), stored(albumFavourite(album)), stored(trackFavourite(track))]);
 
     expect(tracks.map(({ path }) => path)).toEqual([toRadioTrack(station).path, track.path, track.path]);
     expect(fetchMock.mock.calls[0]).toEqual([expect.stringContaining('/library/album?path=%2Fmusic&title=Album')]);
@@ -39,7 +39,7 @@ describe('getFavouriteTracks', () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 
-    expect(await getFavouriteTracks([stored(albumFavourite(album), false), stored(trackFavourite(track), false)], '3000')).toEqual([]);
+    expect(await getFavouriteTracks([stored(albumFavourite(album), false), stored(trackFavourite(track), false)])).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

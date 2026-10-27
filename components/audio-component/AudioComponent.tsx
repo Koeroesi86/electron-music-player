@@ -2,21 +2,21 @@ import { useEffect, useRef } from 'react';
 import type { Track } from '../../types/library';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { radioUuidOf } from '../../client/radio-track';
+import { localUrl } from '../../client/local-url';
 
 interface AudioComponentProps {
   currentSong: Track | null;
   isPlaying: boolean;
   volume: number;
-  port: string;
   trackEnded: () => void;
   connectNode: (node: HTMLAudioElement | null) => void;
 }
 
-const sourceOf = (track: Track, port: string) => {
+const sourceOf = (track: Track) => {
   const station = radioUuidOf(track.path);
-  if (station) return `http://127.0.0.1:${port}/radio/${encodeURIComponent(station)}`;
+  if (station) return localUrl(`/radio/${encodeURIComponent(station)}`);
 
-  return /^http/.test(track.path) ? track.path : `http://127.0.0.1:${port}/local?path=${encodeURIComponent(track.path)}`;
+  return /^http/.test(track.path) ? track.path : localUrl(`/track?path=${encodeURIComponent(track.path)}`);
 };
 
 /** After this many files in a row that cannot be played, the player stops instead of cycling through the whole queue */
@@ -24,7 +24,7 @@ const maxSkippedFiles = 10;
 const maxReconnectDelay = 30_000;
 const reconnectDelay = (attempt: number) => Math.min(1000 * 2 ** attempt, maxReconnectDelay);
 
-const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, connectNode }: AudioComponentProps) => {
+const AudioComponent = ({ currentSong, isPlaying, volume, trackEnded, connectNode }: AudioComponentProps) => {
   const audio = useRef<HTMLAudioElement>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const attempts = useRef(0);
@@ -67,7 +67,7 @@ const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, conn
       attempts.current += 1;
       if (!audio.current || !currentSong) return;
 
-      audio.current.src = sourceOf(currentSong, port);
+      audio.current.src = sourceOf(currentSong);
       audio.current.play().catch((err) => console.error(err));
     }, reconnectDelay(attempts.current));
   };
@@ -97,7 +97,7 @@ const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, conn
     ended.current = false;
     if (!audio.current) return;
 
-    audio.current.src = currentSong ? sourceOf(currentSong, port) : '';
+    audio.current.src = currentSong ? sourceOf(currentSong) : '';
     if (currentSong && isPlaying) audio.current.play().catch((err) => console.error(err));
   }, [currentSong]);
 

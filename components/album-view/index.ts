@@ -6,7 +6,6 @@ import type { AppAction } from '../../client/redux/types';
 import AlbumView from './AlbumView';
 
 const mapState = (state: RootState) => ({
-  port: state.uiState.port,
   albums: state.library.albums,
   sort: state.uiState.albumSort,
   selected: state.uiState.libraryFolders,

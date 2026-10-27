@@ -12,13 +12,12 @@ import FavouriteButton from '../favourite-button';
 
 interface AlbumViewThumbnailProps {
   album: AlbumSummary;
-  port: string;
   offlineFolders: string[];
   selectAlbum: (album: AlbumSummary) => void;
   playAlbum: (album: AlbumSummary) => void;
 }
 
-const AlbumViewThumbnail = ({ album, port, offlineFolders, selectAlbum, playAlbum }: AlbumViewThumbnailProps) => {
+const AlbumViewThumbnail = ({ album, offlineFolders, selectAlbum, playAlbum }: AlbumViewThumbnailProps) => {
   const { t } = useTranslation();
   const offline = isOffline(`${album.path}/`, offlineFolders);
 
@@ -30,7 +29,7 @@ const AlbumViewThumbnail = ({ album, port, offlineFolders, selectAlbum, playAlbu
       onDoubleClick={() => playAlbum(album)}
       onTouchEnd={() => playAlbum(album)}
     >
-      <div title={album.title} className={style.cover} style={album.cover ? { backgroundImage: `url("${getCoverUrl(port, album.cover)}")` } : undefined}>
+      <div title={album.title} className={style.cover} style={album.cover ? { backgroundImage: `url("${getCoverUrl(album.cover)}")` } : undefined}>
         <FavouriteButton item={albumFavourite(album)} className={style.favourite} />
         <div className={style.overlay}>
           <div

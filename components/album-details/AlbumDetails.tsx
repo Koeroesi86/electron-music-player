@@ -14,18 +14,17 @@ import Time from '../time';
 
 interface AlbumDetailsProps {
   album: Album | null;
-  port: string;
   playTracks: (tracks: Track[]) => void;
   close: () => void;
 }
 
-const AlbumDetails = ({ album, playTracks, close, port }: AlbumDetailsProps) => {
+const AlbumDetails = ({ album, playTracks, close }: AlbumDetailsProps) => {
   const { t } = useTranslation();
   const shown = useLastDefined(album);
   const displayed: Partial<Album> = { ...shown };
   const [failedCover, setFailedCover] = useState<string | undefined>(undefined);
   const [tint, setTint] = useState<{ url: string; color: string } | undefined>(undefined);
-  const coverUrl = displayed.cover ? getCoverUrl(port, displayed.cover) : undefined;
+  const coverUrl = displayed.cover ? getCoverUrl(displayed.cover) : undefined;
   const headerColor = tint?.url === coverUrl ? tint?.color : undefined;
   const readTint = (image: HTMLImageElement) => {
     const color = getImageTint(image);

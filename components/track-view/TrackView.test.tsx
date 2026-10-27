@@ -23,7 +23,6 @@ const track = (index: number): Track => ({
 
 const baseProps = {
   currentSong: null,
-  port: '3000',
   offlineFolders: [],
   sort: undefined,
   selected: [],

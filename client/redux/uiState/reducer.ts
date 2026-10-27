@@ -9,7 +9,6 @@ import { clampGain, defaultGains, restoreGains } from '../../audio/equalizer';
 
 const initialState: UiState = {
   view: 'albums',
-  port: window.location.search.match(/^\?port=([0-9]+)/)?.[1] ?? '3000',
   onlineView: 'radio',
   tab: 'home',
   nowPlaying: [],

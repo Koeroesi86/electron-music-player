@@ -30,7 +30,7 @@ describe('HomeView', () => {
 
   const renderView = (history: HistoryItem[], currentSong: Track | null = null) => {
     const props = { playTracks: vi.fn(), playStation: vi.fn(), clearHistory: vi.fn() };
-    render(<HomeView history={history} port="3000" currentSong={currentSong} {...props} />);
+    render(<HomeView history={history} currentSong={currentSong} {...props} />);
     return props;
   };
 

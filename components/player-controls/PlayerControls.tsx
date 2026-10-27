@@ -27,7 +27,6 @@ interface PlayerControlsProps {
   streamTitle: string | null;
   streamArt: string | null;
   currentTime: number;
-  port: string;
   volume: number;
   shuffle: boolean;
   repeat: boolean;
@@ -67,10 +66,9 @@ const TrackDetails = ({
   streamTitle,
   streamArt,
   currentTime,
-  port,
-}: Pick<PlayerControlsProps, 'currentSong' | 'streamTitle' | 'streamArt' | 'currentTime' | 'port'>) => {
+}: Pick<PlayerControlsProps, 'currentSong' | 'streamTitle' | 'streamArt' | 'currentTime'>) => {
   const { t } = useTranslation();
-  const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt, port) : undefined;
+  const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt) : undefined;
 
   useMediaSession(shown && { title: shown.track.title, artist: shown.track.artist, album: shown.track.album, cover: shown.cover });
 
@@ -185,7 +183,7 @@ const PlayerControls = (props: PlayerControlsProps) => {
   return (
     <div className={style.controls}>
       <div className={style.controlsPanel}>
-        <TrackDetails currentSong={currentSong} streamTitle={props.streamTitle} streamArt={props.streamArt} currentTime={currentTime} port={props.port} />
+        <TrackDetails currentSong={currentSong} streamTitle={props.streamTitle} streamArt={props.streamArt} currentTime={currentTime} />
         <div className={style.controlsContainer}>
           <div className={style.progress}>
             <Slider

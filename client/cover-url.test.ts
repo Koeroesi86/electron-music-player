@@ -8,10 +8,10 @@ describe('getCoverUrl', () => {
     ['C:\\data\\albumart\\cover-abc.jpg', 'cover-abc'],
     ['no-extension', 'no-extension'],
   ])('points %s at its optimized copy', (picture, name) => {
-    expect(getCoverUrl('3000', picture)).toBe(`http://127.0.0.1:3000/albumart/${name}-optimized.png`);
+    expect(getCoverUrl(picture)).toBe(`emusic://app/albumart/${name}-optimized.png`);
   });
 
   it('keeps a name with URL characters inside the path', () => {
-    expect(getCoverUrl('3000', '/data/albumart/a?b#c.jpg')).toBe('http://127.0.0.1:3000/albumart/a%3Fb%23c-optimized.png');
+    expect(getCoverUrl('/data/albumart/a?b#c.jpg')).toBe('emusic://app/albumart/a%3Fb%23c-optimized.png');
   });
 });

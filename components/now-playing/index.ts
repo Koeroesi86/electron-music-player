@@ -6,7 +6,6 @@ import type { AppAction } from '../../client/redux/types';
 import NowPlaying from './NowPlaying';
 
 const mapState = (state: RootState) => ({
-  port: state.uiState.port,
   streamTitle: state.uiState.streamTitle,
   streamArt: state.uiState.streamArt,
   station: state.radio.playing,

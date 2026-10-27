@@ -1,8 +1,10 @@
+import { localUrl } from './local-url';
+
 /** The URL of the optimized cover the local server generates for a stored album picture */
-export const getCoverUrl = (port: string, picture: string) => {
+export const getCoverUrl = (picture: string) => {
   const cover = (picture.split(/[\\/]/).pop() ?? '').replace(/\.[^.]*$/, '');
-  return `http://127.0.0.1:${port}/albumart/${encodeURIComponent(cover)}-optimized.png`;
+  return localUrl(`/albumart/${encodeURIComponent(cover)}-optimized.png`);
 };
 
 /** The art the local server holds for the song a station is playing */
-export const getRadioArtUrl = (port: string, art: string) => `http://127.0.0.1:${port}/radio-art/${art}`;
+export const getRadioArtUrl = (art: string) => localUrl(`/radio-art/${art}`);

@@ -19,23 +19,23 @@ describe('stream title', () => {
 
 describe('now playing', () => {
   it('shows the song on air with the station as its album and the art found', () => {
-    const { track, cover } = toNowPlaying(station, 'Artist - Song', 'abcd', '3000');
+    const { track, cover } = toNowPlaying(station, 'Artist - Song', 'abcd');
 
     expect(track).toMatchObject({ title: 'Song', artist: 'Artist', album: 'Jazz FM', picture: null });
-    expect(cover).toBe('http://127.0.0.1:3000/radio-art/abcd');
+    expect(cover).toBe('emusic://app/radio-art/abcd');
   });
 
   it('shows the station without art while it is looked up', () => {
-    expect(toNowPlaying(station, 'Artist - Song', null, '3000').cover).toBeUndefined();
+    expect(toNowPlaying(station, 'Artist - Song', null).cover).toBeUndefined();
   });
 
   it('shows the station as it is when the stream sends no title', () => {
-    expect(toNowPlaying(station, null, null, '3000')).toEqual({ track: station, cover: undefined });
+    expect(toNowPlaying(station, null, null)).toEqual({ track: station, cover: undefined });
   });
 
   it('shows a library track as it is, whatever title is left', () => {
     const track = { ...station, path: '/music/a.flac', picture: '/art/x.png' };
 
-    expect(toNowPlaying(track, 'Artist - Song', null, '3000')).toEqual({ track, cover: 'http://127.0.0.1:3000/albumart/x-optimized.png' });
+    expect(toNowPlaying(track, 'Artist - Song', null)).toEqual({ track, cover: 'emusic://app/albumart/x-optimized.png' });
   });
 });

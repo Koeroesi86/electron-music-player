@@ -20,6 +20,13 @@ describe('radio-browser client', () => {
     vi.unstubAllGlobals();
   });
 
+  it('asks the directory it was given, and falls back to it when that lists no servers', async () => {
+    fetchMock.mockResolvedValueOnce(json([])).mockResolvedValueOnce(json({ url: 'http://station.example/stream' }));
+
+    expect(await createRadioBrowser('eMusic/1.0.0', 'http://127.0.0.1:9999').resolveStream('abc-1')).toBe('http://station.example/stream');
+    expect(requestedUrls(fetchMock)).toEqual(['http://127.0.0.1:9999/json/servers', 'http://127.0.0.1:9999/json/url/abc-1']);
+  });
+
   describe('searchStations', () => {
     it('lists the stations of a query, the most popular first', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([station]));

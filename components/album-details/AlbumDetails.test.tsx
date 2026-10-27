@@ -19,7 +19,7 @@ const album: Album = {
   tracks: [{ path: '/music/a1/1.flac', artist: 'Artist', album: 'Title', title: 'One', year: 2019, track: 1, disk: 1, genre: '', picture: null, duration: 65 }],
 };
 
-const setup = (shown: Album) => render(<AlbumDetails album={shown} port="1234" playTracks={vi.fn()} close={vi.fn()} />);
+const setup = (shown: Album) => render(<AlbumDetails album={shown} playTracks={vi.fn()} close={vi.fn()} />);
 
 describe('AlbumDetails', () => {
   afterEach(() => {
@@ -30,7 +30,7 @@ describe('AlbumDetails', () => {
   it('shows the same cover as the thumbnail', () => {
     setup(album);
 
-    expect(screen.getByRole('img').getAttribute('src')).toBe(getCoverUrl('1234', '/data/albumart/abc123.jpg'));
+    expect(screen.getByRole('img').getAttribute('src')).toBe(getCoverUrl('/data/albumart/abc123.jpg'));
   });
 
   it('shows no image for an album without a cover', () => {
@@ -49,7 +49,7 @@ describe('AlbumDetails', () => {
 
   it('plays the tracks of the album', () => {
     const playTracks = vi.fn();
-    render(<AlbumDetails album={album} port="1234" playTracks={playTracks} close={vi.fn()} />);
+    render(<AlbumDetails album={album} playTracks={playTracks} close={vi.fn()} />);
 
     fireEvent.click(screen.getByText('Play album'));
 
@@ -77,9 +77,9 @@ describe('AlbumDetails', () => {
   it('keeps showing the album while it closes', () => {
     const { rerender } = setup(album);
 
-    rerender(<AlbumDetails album={null} port="1234" playTracks={vi.fn()} close={vi.fn()} />);
+    rerender(<AlbumDetails album={null} playTracks={vi.fn()} close={vi.fn()} />);
 
     expect(screen.getByText('Title')).toBeTruthy();
-    expect(screen.getByRole('img').getAttribute('src')).toBe(getCoverUrl('1234', '/data/albumart/abc123.jpg'));
+    expect(screen.getByRole('img').getAttribute('src')).toBe(getCoverUrl('/data/albumart/abc123.jpg'));
   });
 });

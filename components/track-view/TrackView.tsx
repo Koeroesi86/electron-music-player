@@ -21,7 +21,6 @@ const rowHeight = 20;
 interface TrackViewProps {
   tracks: PageCache<Track>;
   currentSong: Track | null;
-  port: string;
   offlineFolders: string[];
   /** The sort of the list, undefined is the default order */
   sort: TrackSort | undefined;
@@ -33,7 +32,7 @@ interface TrackViewProps {
   setSort: (sort: TrackSort | undefined) => void;
 }
 
-const TrackView = ({ currentSong, playTracks, tracks, port, offlineFolders, sort, selected, folders, loadPage, setSort }: TrackViewProps) => {
+const TrackView = ({ currentSong, playTracks, tracks, offlineFolders, sort, selected, folders, loadPage, setSort }: TrackViewProps) => {
   const { t } = useTranslation();
   const headerLabels = useMemo<TrackLabels>(
     () => ({
@@ -88,7 +87,7 @@ const TrackView = ({ currentSong, playTracks, tracks, port, offlineFolders, sort
 
   // the pages that are not fetched yet are not in the cache, the whole library is fetched for the selection
   const selectAll = () =>
-    fetchLibrary(port, query)
+    fetchLibrary(query)
       .then((library) => setSelectedTracks(new Map(library.map((track) => [track.path, track]))))
       .catch(console.error);
 
