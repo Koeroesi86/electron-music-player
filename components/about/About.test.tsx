@@ -30,6 +30,12 @@ describe('About', () => {
     expect(screen.getByText('Electron 40.0.0 · Chromium 140.0.0')).toBeTruthy();
   });
 
+  it('shows the icon of the app next to the version', () => {
+    const { container } = render(<About update={base} isPlaying={false} check={vi.fn()} install={vi.fn()} openReleases={vi.fn()} />);
+
+    expect(container.querySelector('img')?.getAttribute('src')).toContain('svg');
+  });
+
   it('offers the check and asks for it', () => {
     const { check } = setup();
 

@@ -12,6 +12,11 @@ describe('LoadingSplash', () => {
     expect(page.getElementById('status')?.textContent).toBe('');
   });
 
+  it('shows the name of the app under the animated logo', () => {
+    expect(page.querySelector('img')).toBeTruthy();
+    expect(page.body.textContent).toContain('eMusic');
+  });
+
   it('has a progress bar for the download that stays hidden until there is progress', () => {
     expect(page.getElementById('progress-track')?.hasAttribute('hidden')).toBe(true);
     expect(page.getElementById('progress-bar')?.style.width).toBe('0%');

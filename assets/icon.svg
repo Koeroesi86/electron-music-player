@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262b36"/><stop offset="1" stop-color="#0e1016"/></linearGradient>
+    <linearGradient id="bars" gradientUnits="userSpaceOnUse" x1="0" y1="86" x2="0" y2="426"><stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#ff5a36"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#night)"/>
+  <g fill="url(#bars)"><rect x="70" y="201" width="36" height="110" rx="18"/><rect x="126" y="156" width="36" height="200" rx="18"/><rect x="182" y="86" width="36" height="340" rx="18"/><rect x="238" y="126" width="36" height="260" rx="18"/><rect x="294" y="171" width="36" height="170" rx="18"/><rect x="350" y="201" width="36" height="110" rx="18"/><rect x="406" y="224" width="36" height="64" rx="18"/></g>
+</svg>
