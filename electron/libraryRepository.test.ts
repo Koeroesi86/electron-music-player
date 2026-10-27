@@ -16,6 +16,9 @@ import {
 import addTrack from './addTrack';
 import { createTestDatabase } from './test-database';
 import type { Track } from '../types/library';
+import type { AlbumSort, LibraryQuery, TrackSort } from '../types/library-query';
+
+const unsorted = { sort: undefined, folders: [] };
 
 const track = (path: string): Track => ({ path, artist: '', album: '', title: '', year: '', track: '', disk: '', genre: '', picture: null, duration: null });
 
@@ -81,11 +84,11 @@ describe('libraryRepository', () => {
     it('pages the tracks in the order of the path, with the total', async () => {
       await Promise.all(['/m/c', '/m/a', '/m/d', '/m/b', '/m/e'].map((file) => addTrack(database, track(file))));
 
-      const page = await getTrackPage(database, 1, 2);
+      const page = await getTrackPage(database, 1, 2, unsorted);
 
       expect(page.items.map((item) => item.path)).toEqual(['/m/b', '/m/c']);
       expect(page.total).toBe(5);
-      expect((await getTrackPage(database, 4, 10)).items.map((item) => item.path)).toEqual(['/m/e']);
+      expect((await getTrackPage(database, 4, 10, unsorted)).items.map((item) => item.path)).toEqual(['/m/e']);
     });
 
     it('groups the albums by folder and title, first track first, with the values of the first track', async () => {
@@ -95,18 +98,18 @@ describe('libraryRepository', () => {
         )
       );
 
-      const page = await getAlbumPage(database, 0, 10);
+      const page = await getAlbumPage(database, 0, 10, unsorted);
 
       expect(page.total).toBe(3);
       expect(page.items.map(({ id }) => id)).toEqual(['/m/x - Same', '/m/x - Other', '/m/y - Same']);
       expect(page.items[0]).toMatchObject({ path: '/m/x', artist: 'artist of /m/x/1.flac', cover: '/m/x/1.flac.jpg', duration: 40, trackCount: 2 });
-      expect((await getAlbumPage(database, 1, 1)).items.map(({ id }) => id)).toEqual(['/m/x - Other']);
+      expect((await getAlbumPage(database, 1, 1, unsorted)).items.map(({ id }) => id)).toEqual(['/m/x - Other']);
     });
 
     it('groups the tracks of a folder with either separator, and tracks without an album under an empty title', async () => {
       await Promise.all([music('C:\\m\\1.flac', 'Win'), music('C:\\m\\2.flac', 'Win'), track('/m/none.flac')].map((item) => addTrack(database, item)));
 
-      const page = await getAlbumPage(database, 0, 10);
+      const page = await getAlbumPage(database, 0, 10, unsorted);
 
       expect(page.total).toBe(2);
       expect(page.items.map(({ title, trackCount }) => [title, trackCount])).toEqual([
@@ -130,6 +133,172 @@ describe('libraryRepository', () => {
 
       expect((await getAlbumTracks(database, '/m/x', 'Same')).map((item) => item.path)).toEqual(['/m/x/1.flac', '/m/x/2.flac']);
       expect(await getAlbumTracks(database, '/m/x', 'None')).toEqual([]);
+    });
+  });
+  describe('sorting and the folder filter', () => {
+    const withValues = (file: string, values: Partial<Track>): Track => ({ ...track(file), ...values });
+    const trackSort = (field: TrackSort['field'], direction: TrackSort['direction'] = 'asc'): LibraryQuery<TrackSort> => ({
+      sort: { field, direction },
+      folders: [],
+    });
+    const albumSort = (field: AlbumSort['field'], direction: AlbumSort['direction'] = 'asc'): LibraryQuery<AlbumSort> => ({
+      sort: { field, direction },
+      folders: [],
+    });
+    const sortedPaths = async (query: LibraryQuery<TrackSort>) => (await getTrackPage(database, 0, 50, query)).items.map((item) => item.path);
+    const save = (tracks: Track[]) => Promise.all(tracks.map((item) => addTrack(database, item)));
+
+    it('sorts the text without case and accents, and puts the empty values last in both directions', async () => {
+      await save([
+        withValues('/m/1', { title: 'zebra' }),
+        withValues('/m/2', { title: 'Ékes' }),
+        withValues('/m/3', { title: '' }),
+        withValues('/m/4', { title: 'apple' }),
+        withValues('/m/5', { title: 'Éva' }),
+        withValues('/m/6', { title: 'Eper' }),
+      ]);
+
+      expect(await sortedPaths(trackSort('title'))).toEqual(['/m/4', '/m/2', '/m/6', '/m/5', '/m/1', '/m/3']);
+      expect(await sortedPaths(trackSort('title', 'desc'))).toEqual(['/m/1', '/m/5', '/m/6', '/m/2', '/m/4', '/m/3']);
+    });
+
+    it('keeps the default order for the tracks that are equal, also when descending', async () => {
+      await save([
+        withValues('/m/c', { artist: 'Same' }),
+        withValues('/m/a', { artist: 'same' }),
+        withValues('/m/b', { artist: 'Other' }),
+        withValues('/m/d', { artist: 'Same' }),
+      ]);
+
+      expect(await sortedPaths(trackSort('artist'))).toEqual(['/m/b', '/m/a', '/m/c', '/m/d']);
+      expect(await sortedPaths(trackSort('artist', 'desc'))).toEqual(['/m/a', '/m/c', '/m/d', '/m/b']);
+    });
+
+    it.each<[TrackSort['field'], Partial<Track>[], string[]]>([
+      ['album', [{ album: 'b' }, { album: 'A' }, { album: '' }], ['/m/2', '/m/1', '/m/3']],
+      ['year', [{ year: '2001-05-03' }, { year: '1999' }, { year: '' }], ['/m/2', '/m/1', '/m/3']],
+      ['track', [{ track: '10' }, { track: '9' }, { track: '2/12' }], ['/m/3', '/m/2', '/m/1']],
+      ['duration', [{ duration: 200 }, { duration: null }, { duration: 30.5 }], ['/m/3', '/m/1', '/m/2']],
+    ])('sorts by %s, the numbers as numbers and the missing value last', async (field, values, expected) => {
+      await save(values.map((value, index) => withValues(`/m/${index + 1}`, value)));
+
+      expect(await sortedPaths(trackSort(field))).toEqual(expected);
+    });
+
+    it('reverses the numbers and keeps the missing value last', async () => {
+      await save([withValues('/m/1', { track: '10' }), withValues('/m/2', { track: '9' }), withValues('/m/3', { track: '' })]);
+
+      expect(await sortedPaths(trackSort('track', 'desc'))).toEqual(['/m/1', '/m/2', '/m/3']);
+    });
+
+    it('sorts across the pages, not within a page', async () => {
+      await save(['d', 'a', 'c', 'b', 'e'].map((title) => withValues(`/m/${title}-file`, { title: title === 'a' ? 'z' : title })));
+
+      expect((await getTrackPage(database, 0, 2, trackSort('title'))).items.map((item) => item.title)).toEqual(['b', 'c']);
+      expect((await getTrackPage(database, 2, 2, trackSort('title'))).items.map((item) => item.title)).toEqual(['d', 'e']);
+    });
+
+    it('uses the default order for a field or a direction that is not known, and never puts it into the query', async () => {
+      await save([withValues('/m/b', { title: 'a' }), withValues('/m/a', { title: 'b' })]);
+      const injected = (field: string, direction: string) => ({ sort: { field, direction } as never, folders: [] });
+
+      expect(await sortedPaths(injected('title; DROP TABLE library', 'asc'))).toEqual(['/m/a', '/m/b']);
+      expect(await sortedPaths(injected('title', 'asc; DROP TABLE library'))).toEqual(['/m/a', '/m/b']);
+      expect(await sortedPaths(injected('toString', 'asc'))).toEqual(['/m/a', '/m/b']);
+      expect(await getLibrary(database)).toHaveLength(2);
+    });
+
+    it('sorts the whole library the same way as the pages', async () => {
+      await save([withValues('/m/1', { title: 'b' }), withValues('/m/2', { title: 'a' })]);
+
+      expect((await getLibrary(database, trackSort('title'))).map((item) => item.path)).toEqual(['/m/2', '/m/1']);
+    });
+
+    it('sorts the albums by the title, the first track artist and year, the track count and the duration', async () => {
+      await save([
+        withValues('/m/a/1.flac', { album: 'Zed', artist: 'Béla', year: '2001', duration: 10 }),
+        withValues('/m/a/2.flac', { album: 'Zed', artist: 'Zoltán', year: '1990', duration: 10 }),
+        withValues('/m/b/1.flac', { album: 'alpha', artist: 'adam', year: '1980', duration: 500 }),
+        withValues('/m/c/1.flac', { album: 'Mid', artist: '', year: '', duration: 30 }),
+      ]);
+      const titles = async (query: LibraryQuery<AlbumSort>) => (await getAlbumPage(database, 0, 10, query)).items.map((item) => item.title);
+
+      expect(await titles(albumSort('title'))).toEqual(['alpha', 'Mid', 'Zed']);
+      expect(await titles(albumSort('title', 'desc'))).toEqual(['Zed', 'Mid', 'alpha']);
+      expect(await titles(albumSort('artist'))).toEqual(['alpha', 'Zed', 'Mid']);
+      expect(await titles(albumSort('artist', 'desc'))).toEqual(['Zed', 'alpha', 'Mid']);
+      expect(await titles(albumSort('year'))).toEqual(['alpha', 'Zed', 'Mid']);
+      expect(await titles(albumSort('year', 'desc'))).toEqual(['Zed', 'alpha', 'Mid']);
+      expect(await titles(albumSort('trackCount', 'desc'))).toEqual(['Zed', 'alpha', 'Mid']);
+      expect(await titles(albumSort('trackCount'))).toEqual(['alpha', 'Mid', 'Zed']);
+      expect(await titles(albumSort('duration', 'desc'))).toEqual(['alpha', 'Mid', 'Zed']);
+      expect(await titles(albumSort('duration'))).toEqual(['Zed', 'Mid', 'alpha']);
+    });
+
+    it('sorts the albums across the pages and keeps the albums that are equal in the default order', async () => {
+      await save([withValues('/m/c/1.flac', { album: 'x' }), withValues('/m/a/1.flac', { album: 'x' }), withValues('/m/b/1.flac', { album: 'x' })]);
+
+      expect((await getAlbumPage(database, 1, 1, albumSort('title', 'desc'))).items.map(({ path: folder }) => folder)).toEqual(['/m/b']);
+      expect((await getAlbumPage(database, 0, 3, albumSort('title', 'desc'))).items.map(({ path: folder }) => folder)).toEqual(['/m/a', '/m/b', '/m/c']);
+    });
+
+    describe('folders', () => {
+      const music = path.resolve('music');
+      const folderA = path.join(music, 'a');
+      const folderB = path.join(music, 'b');
+      const folderAB = path.join(music, 'ab');
+
+      beforeEach(() =>
+        save([
+          withValues(path.join(folderA, '1.flac'), { album: 'One' }),
+          withValues(path.join(folderA, 'deep', '2.flac'), { album: 'One' }),
+          withValues(path.join(folderB, '3.flac'), { album: 'Two' }),
+          withValues(path.join(folderAB, '4.flac'), { album: 'Three' }),
+        ])
+      );
+
+      const pathsIn = async (folders: string[]) =>
+        (await getTrackPage(database, 0, 10, { sort: undefined, folders })).items.map((item) => path.relative(music, item.path));
+
+      it('limits the tracks to the tracks below one folder, and not to a folder that only starts with the same text', async () => {
+        expect(await pathsIn([folderA])).toEqual([path.join('a', '1.flac'), path.join('a', 'deep', '2.flac')]);
+      });
+
+      it('limits the tracks to several folders, with the total of those', async () => {
+        const page = await getTrackPage(database, 0, 1, { sort: undefined, folders: [folderB, folderAB] });
+
+        expect(page.total).toBe(2);
+        expect(await pathsIn([folderB, folderAB])).toEqual([path.join('ab', '4.flac'), path.join('b', '3.flac')]);
+      });
+
+      it('shows everything for no folder, and nothing for a folder without tracks', async () => {
+        expect(await pathsIn([])).toHaveLength(4);
+        expect(await pathsIn([path.join(music, 'none')])).toEqual([]);
+      });
+
+      it('takes a folder with a trailing separator and one with % and _ as they are', async () => {
+        expect(await pathsIn([`${folderB}${path.sep}`])).toEqual([path.join('b', '3.flac')]);
+        expect(await pathsIn([path.join(music, '%')])).toEqual([]);
+        expect(await pathsIn([path.join(music, '_')])).toEqual([]);
+      });
+
+      it('limits the albums and their total, and works together with the sort', async () => {
+        const page = await getAlbumPage(database, 0, 10, { sort: { field: 'title', direction: 'desc' }, folders: [folderA, folderB] });
+
+        // the album of folder a and the one of its sub folder are two albums
+        expect(page.total).toBe(3);
+        expect(page.items.map((item) => item.title)).toEqual(['Two', 'One', 'One']);
+        expect((await getTrackPage(database, 0, 10, { sort: { field: 'title', direction: 'asc' }, folders: [folderA] })).total).toBe(2);
+        expect((await getLibrary(database, { sort: undefined, folders: [folderB] })).map((item) => path.basename(item.path))).toEqual(['3.flac']);
+      });
+
+      it('groups the albums of both separators when it filters', async () => {
+        await save([withValues('C:\\win\\1.flac', { album: 'Win' }), withValues('C:\\win\\2.flac', { album: 'Win' })]);
+
+        const page = await getAlbumPage(database, 0, 10, { sort: undefined, folders: ['C:\\win'] });
+
+        expect(page.items.map(({ title, trackCount }) => [title, trackCount])).toEqual([['Win', 2]]);
+      });
     });
   });
 });

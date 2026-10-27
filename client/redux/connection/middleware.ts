@@ -11,6 +11,7 @@ import { isFavourite, stationFavourite, trackFavourite } from '../../favourites'
 import { isHistoryItem } from '../../history';
 import { radioUuidOf } from '../../radio-track';
 import { fetchAlbumPage, fetchTrackPage } from '../../library-api';
+import { selectAlbumQuery, selectTrackQuery } from '../../library-query';
 import { actionMiddleware, onAction } from '../on-action';
 import type { Store } from '../on-action';
 import type { PersistedSettings, PlaylistItem, UiState } from '../types';
@@ -58,8 +59,16 @@ const appLoaded = debounce(() => {
 }, 500);
 
 const pageFetchers = {
-  tracks: (port: string, page: number) => fetchTrackPage(port, page).then((result) => ({ type: 'STORE_TRACK_PAGE' as const, payload: { page, ...result } })),
-  albums: (port: string, page: number) => fetchAlbumPage(port, page).then((result) => ({ type: 'STORE_ALBUM_PAGE' as const, payload: { page, ...result } })),
+  tracks: ({ uiState, folders }: RootState, page: number) =>
+    fetchTrackPage(uiState.port, page, selectTrackQuery({ uiState, folders })).then((result) => ({
+      type: 'STORE_TRACK_PAGE' as const,
+      payload: { page, ...result },
+    })),
+  albums: ({ uiState, folders }: RootState, page: number) =>
+    fetchAlbumPage(uiState.port, page, selectAlbumQuery({ uiState, folders })).then((result) => ({
+      type: 'STORE_ALBUM_PAGE' as const,
+      payload: { page, ...result },
+    })),
 };
 
 const loading = new Set<string>();
@@ -72,7 +81,7 @@ const loadPage = (store: Store, kind: keyof typeof pageFetchers, page: number): 
 
   loading.add(key);
   const requested = generation;
-  return pageFetchers[kind](store.getState().uiState.port, page)
+  return pageFetchers[kind](store.getState(), page)
     .then((action) => {
       loading.delete(key);
       if (requested === generation) store.dispatch(action);
@@ -104,6 +113,9 @@ const persistedKeys = [
   'desktopBlur',
   'language',
   'theme',
+  'trackSort',
+  'albumSort',
+  'libraryFolders',
 ] satisfies (keyof PersistedSettings)[];
 
 const saveSettings = (uiState: UiState) => electronAPI.send('SAVE_SETTINGS', Object.fromEntries(persistedKeys.map((key) => [key, uiState[key]])));
@@ -220,10 +232,37 @@ const handleActions = actionMiddleware((store) => [
   onAction('SAVE_SETTINGS', () => saveSettings(store.getState().uiState)),
 ]);
 
+const queryKeys = (state: RootState) => ({ tracks: JSON.stringify(selectTrackQuery(state)), albums: JSON.stringify(selectAlbumQuery(state)) });
+
+/**
+ * A list whose sort or folders changed (picked, restored, or a selected folder left the library) is another list: its pages are dropped,
+ * the ones still on their way are not stored, and the first page is fetched again by the view
+ */
+const createQueryWatcher = (store: Store) => {
+  let keys = queryKeys(store.getState());
+
+  return () => {
+    const next = queryKeys(store.getState());
+    const changed = (['tracks', 'albums'] as const).filter((kind) => next[kind] !== keys[kind]);
+    keys = next;
+    changed.forEach((kind) => {
+      generation += 1;
+      store.dispatch({ type: 'RESET_LIBRARY', payload: { kind } });
+    });
+  };
+};
+
 const middleware: Middleware<object, RootState> = (store) => {
   if (window) start(store);
 
-  return handleActions(store);
+  const handle = handleActions(store);
+  const watchQueries = createQueryWatcher(store);
+
+  return (next) => (action) => {
+    const result = handle(next)(action);
+    watchQueries();
+    return result;
+  };
 };
 
 export default middleware;

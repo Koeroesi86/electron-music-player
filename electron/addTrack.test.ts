@@ -47,6 +47,16 @@ describe('addTrack', () => {
     expect(`${stored.year}`).toBe('2020');
   });
 
+  it('stores the keys the title, the artist and the album are sorted by', async () => {
+    await addTrack(database, { ...track, title: 'Ékes', artist: 'Őrs', album: '' });
+
+    const [stored] = await executeQuery<{ title_key: string; artist_key: string; album_key: string }>(database, {
+      query: 'SELECT title_key, artist_key, album_key FROM library',
+      variables: [],
+    });
+    expect(stored).toEqual({ title_key: 'ekes', artist_key: 'ors', album_key: '' });
+  });
+
   it('replaces an existing track with the same path', async () => {
     await addTrack(database, track);
     await addTrack(database, { ...track, title: 'Renamed' });

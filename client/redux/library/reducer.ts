@@ -29,6 +29,9 @@ const reducer: Reducer<LibraryState> = (state = initialState, action) => {
       const { page, items, total } = action.payload;
       return { ...state, albums: storePage(state.albums, page, items, total) };
     }
+    // the sort or the folders changed: the pages are of another list, the first one is fetched again
+    case 'RESET_LIBRARY':
+      return { ...state, [action.payload.kind]: createPageCache() };
     case 'INVALIDATE_LIBRARY':
       return { ...state, tracks: markStale(state.tracks), albums: markStale(state.albums) };
     default:

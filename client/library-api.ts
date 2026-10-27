@@ -1,4 +1,5 @@
 import type { Album, AlbumSummary, LibraryPage, Track } from '../types/library';
+import type { AlbumSort, LibraryQuery, TrackSort } from '../types/library-query';
 import { pageSize } from './redux/library/pages';
 
 const toLocalUrl = (port: string, route: string) => {
@@ -20,17 +21,27 @@ const toTrack = (track: Track): Track => ({ ...track, picture: withoutFileProtoc
 
 const toWindowQuery = (page: number) => `offset=${page * pageSize}&limit=${pageSize}`;
 
-export const fetchTrackPage = (port: string, page: number) =>
-  getJson<LibraryPage<Track>>(port, `/library/tracks?${toWindowQuery(page)}`).then(({ items, total }) => ({ items: items.map(toTrack), total }));
+/** The sort and the folders as the parameters of a request, the folders once each */
+const toQuery = ({ sort, folders }: LibraryQuery<TrackSort | AlbumSort>) =>
+  [...(sort ? [`sort=${sort.field}`, `dir=${sort.direction}`] : []), ...folders.map((folder) => `folder=${encodeURIComponent(folder)}`)].join('&');
 
-export const fetchAlbumPage = (port: string, page: number) =>
-  getJson<LibraryPage<AlbumSummary>>(port, `/library/albums?${toWindowQuery(page)}`).then(({ items, total }) => ({
+const withQuery = (route: string, query: LibraryQuery<TrackSort | AlbumSort>) => [route, toQuery(query)].filter(Boolean).join(route.includes('?') ? '&' : '?');
+
+export const fetchTrackPage = (port: string, page: number, query: LibraryQuery<TrackSort>) =>
+  getJson<LibraryPage<Track>>(port, withQuery(`/library/tracks?${toWindowQuery(page)}`, query)).then(({ items, total }) => ({
+    items: items.map(toTrack),
+    total,
+  }));
+
+export const fetchAlbumPage = (port: string, page: number, query: LibraryQuery<AlbumSort>) =>
+  getJson<LibraryPage<AlbumSummary>>(port, withQuery(`/library/albums?${toWindowQuery(page)}`, query)).then(({ items, total }) => ({
     items: items.map((album) => ({ ...album, cover: withoutFileProtocol(album.cover) })),
     total,
   }));
 
-/** The whole library at once, for what needs every track */
-export const fetchLibrary = (port: string) => getJson<Track[]>(port, '/library').then((library) => library.map(toTrack));
+/** The tracks of the query at once, for what needs every track */
+export const fetchLibrary = (port: string, query: LibraryQuery<TrackSort>) =>
+  getJson<Track[]>(port, withQuery('/library', query)).then((library) => library.map(toTrack));
 
 /** The album of a summary with its tracks */
 export const fetchAlbum = ({ trackCount: _trackCount, ...album }: AlbumSummary, port: string): Promise<Album> =>

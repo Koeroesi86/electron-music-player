@@ -6,6 +6,7 @@ import AlbumView from '../album-view';
 import TrackView from '../track-view';
 import style from './LocalCollection.scss';
 import FolderManagement from '../folder-management';
+import FolderFilter from '../folder-filter';
 import ViewSwitcher from '../view-switcher/ViewSwitcher';
 import type { ViewItem } from '../view-switcher/ViewSwitcher';
 import { useTranslation } from '../../client/i18n';
@@ -41,6 +42,7 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFile
         setView={setView}
         controls={
           <div className={style.libraryControls}>
+            {view !== 'folders' && <FolderFilter />}
             <button onClick={rescanLibrary} disabled={!!scanningFolder} className={classNames({ [style.spinning]: scanningFolder })}>
               <FaSyncAlt />
               {t('library.rescan')}

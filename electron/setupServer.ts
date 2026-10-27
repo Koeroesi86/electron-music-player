@@ -8,6 +8,8 @@ import type { Database } from 'sqlite3';
 import { createRadioStreamHandler } from './radioProxy';
 import type { RadioStreamDeps } from './radioProxy';
 import { findTrackPath, getAlbumPage, getAlbumTracks, getLibrary, getTrackPage } from './libraryRepository';
+import { parseAlbumSort, parseFolders, parseTrackSort } from '../types/library-query';
+import type { LibraryQuery } from '../types/library-query';
 import type { RadioArtImage } from './radioArt';
 import { allowLoopbackOrigin, sendFile } from './sendFile';
 
@@ -81,16 +83,29 @@ const toWindow = (request: Request) => ({
   limit: Math.min(Math.max(toInteger(request.query.limit, 100), 1), maxPageSize),
 });
 
-const serveLibrary = serveFromLibrary((database) => getLibrary(database));
+/** The sort and the folders of a request; a sort that is not a known field with a known direction is no query at all */
+const toLibraryQuery = <S>(request: Request, parse: (field: unknown, direction: unknown) => S | undefined): LibraryQuery<S> | undefined => {
+  const { sort, dir, folder } = request.query;
+  const parsed = sort === undefined ? undefined : parse(sort, dir);
+
+  return sort !== undefined && !parsed ? undefined : { sort: parsed, folders: parseFolders(folder === undefined ? [] : [folder].flat()) };
+};
+
+const serveLibrary = serveFromLibrary((database, request) => {
+  const query = toLibraryQuery(request, parseTrackSort);
+  return query && getLibrary(database, query);
+});
 
 const serveTrackPage = serveFromLibrary((database, request) => {
   const { offset, limit } = toWindow(request);
-  return getTrackPage(database, offset, limit);
+  const query = toLibraryQuery(request, parseTrackSort);
+  return query && getTrackPage(database, offset, limit, query);
 });
 
 const serveAlbumPage = serveFromLibrary((database, request) => {
   const { offset, limit } = toWindow(request);
-  return getAlbumPage(database, offset, limit);
+  const query = toLibraryQuery(request, parseAlbumSort);
+  return query && getAlbumPage(database, offset, limit, query);
 });
 
 const serveAlbumTracks = serveFromLibrary((database, { query }) =>
