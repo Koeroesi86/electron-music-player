@@ -126,20 +126,24 @@ const radioArt = createRadioArt();
 
 registerTrackScheme();
 
-const getPort = () => {
-  handleTrackProtocol(() => global._database);
+// the smoke test plays a station of its own, a real one would need the network
+const smokeStream = process.env.EMUSIC_SMOKE_RADIO;
 
-  return setupServer({
-    resolveStream: radio.resolveStream,
-    getArt: radioArt.get,
-    onTitle: (uuid, title, streamUrl) => {
-      windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title });
-      radioArt
-        .lookup(title, streamUrl)
-        .then((art) => art && windows.main?.webContents.send('RADIO_STREAM_ART', { uuid, title, art }))
-        .catch((error) => console.error(error));
-    },
-  }).then((port) => {
+const radioDeps = {
+  resolveStream: (uuid: string) => (smokeStream ? Promise.resolve(smokeStream) : radio.resolveStream(uuid)),
+  onTitle: (uuid: string, title: string, streamUrl?: string) => {
+    windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title });
+    radioArt
+      .lookup(title, streamUrl)
+      .then((art) => art && windows.main?.webContents.send('RADIO_STREAM_ART', { uuid, title, art }))
+      .catch((error) => console.error(error));
+  },
+};
+
+const getPort = () => {
+  handleTrackProtocol(() => global._database, radioDeps);
+
+  return setupServer({ ...radioDeps, getArt: radioArt.get }).then((port) => {
     if (!windowLocation || !loadingLocation) {
       windowLocation = `http://127.0.0.1:${port}/app/index.html?port=${port}`;
       loadingLocation = `http://127.0.0.1:${port}/app/loading.html`;

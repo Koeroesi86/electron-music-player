@@ -14,7 +14,7 @@ interface AudioComponentProps {
 
 const sourceOf = (track: Track, port: string) => {
   const station = radioUuidOf(track.path);
-  if (station) return `http://127.0.0.1:${port}/radio/${encodeURIComponent(station)}`;
+  if (station) return `emusic://radio/${encodeURIComponent(station)}`;
 
   return /^http/.test(track.path) ? track.path : `emusic://track?path=${encodeURIComponent(track.path)}`;
 };

@@ -1,5 +1,6 @@
 const { spawn, spawnSync } = require('child_process')
 const { createServer } = require('net')
+const { createServer: createHttpServer } = require('http')
 const { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require('fs')
 const { tmpdir } = require('os')
 const { dirname, join, resolve } = require('path')
@@ -84,6 +85,93 @@ const writeWav = (file, seconds) => {
   header.write('data', 36)
   header.writeUInt32LE(data.length, 40)
   writeFileSync(file, Buffer.concat([header, data]))
+}
+
+// the byte of a stream of silent mpeg frames (128 kbit/s, 44.1 kHz, 417 bytes of a header and zeros) at a position
+const frameLength = 417
+const silentByte = position => [0xff, 0xfb, 0x90, 0x00][position % frameLength] ?? 0
+
+// a station that never ends: silent mp3 frames, a second of them before every ICY metadata block, the first seconds at once so playback starts promptly
+const startStation = () => {
+  const audioPerBlock = 16000
+  const connections = { open: 0, total: 0 }
+  const text = Buffer.from("StreamTitle='Smoke - Song';")
+  const metadata = Buffer.concat([Buffer.from([Math.ceil(text.length / 16)]), text, Buffer.alloc(Math.ceil(text.length / 16) * 16 - text.length)])
+
+  const server = createHttpServer((request, response) => {
+    connections.open += 1
+    connections.total += 1
+    const asksForMetadata = request.headers['icy-metadata'] === '1'
+    response.writeHead(200, asksForMetadata ? { 'content-type': 'audio/mpeg', 'icy-metaint': String(audioPerBlock) } : { 'content-type': 'audio/mpeg' })
+    let block = 0
+    const send = () => {
+      const audio = Buffer.from(Array.from({ length: audioPerBlock }, (_, index) => silentByte(block * audioPerBlock + index)))
+      response.write(Buffer.concat([audio, ...(asksForMetadata ? [metadata] : [])]))
+      block += 1
+    }
+    const timer = setInterval(() => (block < 3 ? send() : undefined), 0)
+    const pace = setInterval(() => (block >= 3 ? send() : undefined), 1000)
+    response.on('close', () => {
+      clearInterval(timer)
+      clearInterval(pace)
+      connections.open -= 1
+    })
+  })
+
+  return new Promise(done => server.listen(0, '127.0.0.1', () => done({ url: `http://127.0.0.1:${server.address().port}/`, connections, close: () => server.close() })))
+}
+
+// a station is served over the emusic protocol as it arrives: the audio without the ICY metadata, the title reported, a connection to the station that ends with the player
+const checkRadioProtocol = async (socketUrl, station, port) => {
+  const result = await evaluateIn(
+    socketUrl,
+    `(async () => {
+      const titles = []
+      window.electronAPI.on('RADIO_STREAM_TITLE', payload => titles.push(payload.title))
+      const response = await fetch('emusic://radio/smoke-station')
+      const reader = response.body.getReader()
+      const received = []
+      let length = 0
+      // the stream has no end: that bytes arrive at all means they are not held until it ends
+      while (length < 20000) {
+        const { done, value } = await reader.read()
+        if (done) throw new Error('the stream ended after ' + length + ' bytes')
+        received.push(value)
+        length += value.length
+      }
+      await reader.cancel()
+      const bytes = new Uint8Array(length)
+      received.reduce((offset, chunk) => (bytes.set(chunk, offset), offset + chunk.length), 0)
+      const frameLength = ${frameLength}
+      const silentByte = ${silentByte.toString()}
+      const metadataLeft = bytes.filter((byte, position) => byte !== silentByte(position)).length
+      for (let waited = 0; titles.length === 0 && waited < 10000; waited += 100) await new Promise(done => setTimeout(done, 100))
+      const play = source => new Promise(done => {
+        const audio = new Audio()
+        audio.crossOrigin = 'anonymous'
+        audio.src = source
+        const stop = result => {
+          audio.pause()
+          audio.removeAttribute('src')
+          audio.load()
+          done(result)
+        }
+        const timer = setTimeout(() => stop('not playing: readyState ' + audio.readyState + ', networkState ' + audio.networkState + ', error ' + audio.error?.code), 20000)
+        audio.addEventListener('timeupdate', () => audio.currentTime > 0.5 && (clearTimeout(timer), stop('playing')))
+        audio.play().catch(error => (clearTimeout(timer), stop('play rejected: ' + error.name)))
+      })
+      const played = await play('emusic://radio/smoke-station')
+      const playedOverHttp = await play('http://127.0.0.1:${port}/radio/smoke-station')
+      return { status: response.status, type: response.headers.get('content-type'), metadataLeft, titles: [...new Set(titles)], played, playedOverHttp }
+    })()`
+  )
+  const expected = { status: 200, type: 'audio/mpeg', metadataLeft: 0, titles: ['Smoke - Song'], played: 'playing', playedOverHttp: 'playing' }
+  if (JSON.stringify(result) !== JSON.stringify(expected)) throw new Error(`The radio over emusic answered ${JSON.stringify(result)}, expected ${JSON.stringify(expected)}`)
+
+  // the player gave up both connections: the cancelled fetch and the paused element
+  for (let waited = 0; station.connections.open > 0 && waited < 10000; waited += 100) await new Promise(done => setTimeout(done, 100))
+  if (station.connections.open > 0) throw new Error(`${station.connections.open} of ${station.connections.total} connections to the station are still open after the player stopped`)
+  console.log(`radio over emusic passed: ${JSON.stringify(result)}, ${station.connections.total} connections, all closed`)
 }
 
 // runs an expression in the window through the debugging endpoint and answers its value
@@ -192,7 +280,8 @@ for (const name of Object.keys(dependencies)) {
 
 const run = async () => {
   const port = await freePort()
-  const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`, '--enable-logging', `--log-file=${logFile}`, `--user-data-dir=${join(home, 'user-data')}`], { env, stdio: 'inherit' })
+  const station = await startStation()
+  const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`, '--enable-logging', `--log-file=${logFile}`, `--user-data-dir=${join(home, 'user-data')}`], { env: { ...env, EMUSIC_SMOKE_RADIO: station.url }, stdio: 'inherit' })
   try {
     const target = await findWindowUrl(port, child)
     const { url } = target
@@ -202,8 +291,10 @@ const run = async () => {
     if (!Array.isArray(library)) throw new Error('/library did not answer a list')
     // the flatpak sandbox does not see the folder of the run
     if (!flatpak) await checkTrackProtocol(target.webSocketDebuggerUrl, new URL(url).port)
+    if (!flatpak) await checkRadioProtocol(target.webSocketDebuggerUrl, station, new URL(url).port)
     console.log(`Smoke test passed: ${url}, ${library.length} tracks`)
   } finally {
+    station.close()
     await stop(child)
   }
 }

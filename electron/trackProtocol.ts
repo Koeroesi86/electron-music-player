@@ -4,6 +4,8 @@ import { pathToFileURL } from 'url';
 import type { Database } from 'sqlite3';
 import { findTrackPath } from './libraryRepository';
 import { parseRange } from './sendFile';
+import { handleRadioRequest } from './radioProtocol';
+import type { RadioStreamDeps } from './radioProxy';
 
 const trackScheme = 'emusic';
 
@@ -50,4 +52,9 @@ export const handleTrackRequest = (getDatabase: () => Database | undefined) => a
     : new Response(file.body, { status: file.status, headers });
 };
 
-export const handleTrackProtocol = (getDatabase: () => Database | undefined) => protocol.handle(trackScheme, handleTrackRequest(getDatabase));
+export const handleTrackProtocol = (getDatabase: () => Database | undefined, radio: RadioStreamDeps) => {
+  const track = handleTrackRequest(getDatabase);
+  const station = handleRadioRequest(radio);
+
+  return protocol.handle(trackScheme, (request) => (new URL(request.url).hostname === 'radio' ? station(request) : track(request)));
+};

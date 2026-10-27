@@ -39,7 +39,7 @@ describe('AudioComponent', () => {
     const view = renderAudio(null);
     view.rerender(<AudioComponent currentSong={station} isPlaying={false} volume={1} port="3000" trackEnded={vi.fn()} connectNode={vi.fn()} />);
 
-    expect(view.container.querySelector('audio')?.src).toBe('http://127.0.0.1:3000/radio/abc-1');
+    expect(view.container.querySelector('audio')?.src).toBe('emusic://radio/abc-1');
   });
 });
 
