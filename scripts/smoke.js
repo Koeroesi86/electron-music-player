@@ -298,7 +298,16 @@ const run = async () => {
     const { url, webSocketDebuggerUrl } = await findWindowUrl(port, child)
     const library = await evaluateIn(webSocketDebuggerUrl, `fetch('emusic://app/library').then(response => (response.ok ? response.json() : Promise.reject(new Error('/library answered ' + response.status))))`)
     if (!Array.isArray(library)) throw new Error('/library did not answer a list')
-    if (!(await evaluateIn(webSocketDebuggerUrl, `document.getElementById('root')?.childElementCount ?? 0`))) throw new Error('The page did not render')
+    // the window exists before the script of the page has rendered, which a slow runner shows
+    const rendered = await evaluateIn(
+      webSocketDebuggerUrl,
+      `new Promise(done => {
+        const deadline = Date.now() + 15000
+        const check = () => (document.getElementById('root')?.childElementCount ? done(true) : Date.now() > deadline ? done(false) : setTimeout(check, 100))
+        check()
+      })`
+    )
+    if (!rendered) throw new Error('The page did not render')
     // the flatpak sandbox does not see the folder of the run
     if (!flatpak) await checkTracks(webSocketDebuggerUrl)
     if (!flatpak) await checkRadio(webSocketDebuggerUrl, station)
