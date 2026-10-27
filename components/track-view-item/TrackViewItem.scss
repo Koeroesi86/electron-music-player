@@ -70,8 +70,14 @@
       }
     }
 
+    // the heart and the playlist button side by side, centred on the line
     &.favourite {
-      width: 52px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-sizing: border-box;
+      width: 56px;
+      height: 20px;
       padding-right: 0;
       padding-left: 6px;
       vertical-align: top;

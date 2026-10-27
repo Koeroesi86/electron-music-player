@@ -52,8 +52,12 @@ const AlbumDetails = ({ album, playTracks, close }: AlbumDetailsProps) => {
         <div className={style.info}>
           <div className={style.artist}>{displayed.artist}</div>
           <div className={style.title}>{displayed.title}</div>
-          {shown && <FavouriteButton item={albumFavourite(shown)} className={style.favourite} />}
-          {shown && <AddToPlaylist source={shown} className={style.favourite} />}
+          {shown && (
+            <div className={style.actions}>
+              <FavouriteButton item={albumFavourite(shown)} className={style.favourite} />
+              <AddToPlaylist source={shown} className={style.addToPlaylist} />
+            </div>
+          )}
           <div className={style.meta}>
             {displayed.year && <span>{displayed.year}</span>}
             <Time seconds={displayed.duration} />
