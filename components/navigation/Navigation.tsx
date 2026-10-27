@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import type { FormEvent } from 'react';
 import classNames from 'classnames';
 import {
   MdAdd as AddIcon,
@@ -16,6 +15,7 @@ import type { Tab } from '../../client/redux/types';
 import type { Playlist } from '../../types/playlists';
 import { useDragReorder } from '../../client/hooks/use-drag-reorder';
 import style from './Navigation.scss';
+import NameField from '../name-field';
 import { useTranslation } from '../../client/i18n';
 
 interface NavigationProps {
@@ -41,8 +41,7 @@ function Navigation({
   const [name, setName] = useState<string | undefined>(undefined);
   const { itemProps, overIndex } = useDragReorder(movePlaylist);
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
+  const submit = () => {
     if (name?.trim()) createPlaylist(name.trim());
     setName(undefined);
   };
@@ -116,18 +115,16 @@ function Navigation({
           <span className={style.label}>{t('nav.newPlaylist')}</span>
         </div>
       ) : (
-        <form className={style.newPlaylist} onSubmit={submit}>
-          <input
-            autoFocus
-            value={name}
-            maxLength={200}
-            placeholder={t('playlists.newName')}
-            aria-label={t('playlists.newName')}
-            onChange={(event) => setName(event.target.value)}
-            onKeyDown={(event) => event.key === 'Escape' && setName(undefined)}
-            onBlur={() => setName(undefined)}
-          />
-        </form>
+        <NameField
+          autoFocus
+          className={style.newPlaylist}
+          value={name}
+          label={t('playlists.newName')}
+          onChange={setName}
+          onSubmit={submit}
+          onCancel={() => setName(undefined)}
+          onBlur={() => setName(undefined)}
+        />
       )}
       <div
         onClick={() => setTab('equalizer')}

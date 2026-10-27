@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import classNames from 'classnames';
 import { MdPlaylistAdd as AddIcon } from 'react-icons/md';
@@ -7,6 +7,7 @@ import type { Playlist } from '../../types/playlists';
 import type { PlaylistSource } from '../../client/playlists';
 import { useTranslation } from '../../client/i18n';
 import style from './AddToPlaylist.scss';
+import NameField from '../name-field';
 
 interface AddToPlaylistProps {
   /** The track or album the menu adds */
@@ -26,9 +27,10 @@ const AddToPlaylist = ({ source, playlists, add, create, className }: AddToPlayl
   const menu = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ top: number; left: number } | undefined>(undefined);
   const [name, setName] = useState('');
-  const close = () => {
+  const close = (returnFocus = false) => {
     setPosition(undefined);
     setName('');
+    if (returnFocus) button.current?.focus();
   };
 
   useEffect(() => {
@@ -38,15 +40,17 @@ const AddToPlaylist = ({ source, playlists, add, create, className }: AddToPlayl
       if (event.target instanceof Node && (menu.current?.contains(event.target) || button.current?.contains(event.target))) return;
       close();
     };
-    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && close();
+    const closeOnBlur = () => close();
     document.addEventListener('mousedown', closeOutside);
-    document.addEventListener('keydown', closeOnEscape);
     // the menu is placed once, so it does not follow a list that scrolls under it
-    window.addEventListener('blur', close);
+    window.addEventListener('blur', closeOnBlur);
+    window.addEventListener('resize', closeOnBlur);
+    // a playlist to pick is what most come for, the name field has the focus when there is none
+    (menu.current?.querySelector<HTMLElement>('[role="menuitem"]') ?? menu.current?.querySelector<HTMLElement>('input'))?.focus();
     return () => {
       document.removeEventListener('mousedown', closeOutside);
-      document.removeEventListener('keydown', closeOnEscape);
-      window.removeEventListener('blur', close);
+      window.removeEventListener('blur', closeOnBlur);
+      window.removeEventListener('resize', closeOnBlur);
     };
   }, [position]);
 
@@ -57,12 +61,26 @@ const AddToPlaylist = ({ source, playlists, add, create, className }: AddToPlayl
     setPosition({ top: rect.bottom + 4, left: Math.max(4, Math.min(rect.left, window.innerWidth - menuWidth - 4)) });
   };
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
+  const submit = () => {
     if (!name.trim()) return;
 
     create(name.trim(), source);
-    close();
+    close(true);
+  };
+
+  /** Escape closes the menu, the arrows go through the playlists and the field */
+  const navigate = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      close(true);
+      return;
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+
+    const stops = Array.from(menu.current?.querySelectorAll<HTMLElement>('input, [role="menuitem"]') ?? []);
+    const next = stops.indexOf(document.activeElement as HTMLElement) + (event.key === 'ArrowDown' ? 1 : -1);
+    event.preventDefault();
+    stops.at(next % stops.length)?.focus();
   };
 
   return (
@@ -95,34 +113,36 @@ const AddToPlaylist = ({ source, playlists, add, create, className }: AddToPlayl
             style={{ ...position, width: menuWidth }}
             onClick={(event) => event.stopPropagation()}
             onDoubleClick={(event) => event.stopPropagation()}
+            onKeyDown={navigate}
           >
             <div className={style.title}>{t('playlists.addTo')}</div>
-            {playlists.map(({ id, name: playlistName }) => (
-              <button
-                key={id}
-                type="button"
-                role="menuitem"
-                className={style.item}
-                onClick={() => {
-                  add(id, source);
-                  close();
-                }}
-              >
-                {playlistName}
-              </button>
-            ))}
-            <form className={style.create} onSubmit={submit}>
-              <input
-                value={name}
-                placeholder={t('playlists.newName')}
-                aria-label={t('playlists.newName')}
-                maxLength={200}
-                onChange={(event) => setName(event.target.value)}
-              />
-              <button type="submit" disabled={!name.trim()}>
-                {t('playlists.create')}
-              </button>
-            </form>
+            <NameField
+              className={style.create}
+              value={name}
+              label={t('playlists.newName')}
+              submitLabel={t('playlists.create')}
+              onChange={setName}
+              onSubmit={submit}
+            />
+            {playlists.length > 0 && (
+              <div className={style.list}>
+                {playlists.map(({ id, name: playlistName, entries }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="menuitem"
+                    className={style.item}
+                    onClick={() => {
+                      add(id, source);
+                      close(true);
+                    }}
+                  >
+                    <span className={style.itemName}>{playlistName}</span>
+                    <span className={style.itemCount}>{entries.length}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>,
           document.body
         )}

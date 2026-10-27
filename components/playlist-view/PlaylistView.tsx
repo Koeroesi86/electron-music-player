@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import type { FormEvent } from 'react';
 import classNames from 'classnames';
 import { MdClose as RemoveIcon, MdPlayArrow as PlayIcon } from 'react-icons/md';
 import type { Track } from '../../types/library';
@@ -8,6 +7,7 @@ import { getPlaylistTracks } from '../../client/playlists';
 import { useDragReorder } from '../../client/hooks/use-drag-reorder';
 import { useTranslation } from '../../client/i18n';
 import style from './PlaylistView.scss';
+import NameField from '../name-field';
 
 interface PlaylistViewProps {
   playlist?: Playlist;
@@ -28,8 +28,7 @@ const Title = ({ playlist, rename }: TitleProps) => {
   const { t } = useTranslation();
   const [name, setName] = useState<string | undefined>(undefined);
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
+  const submit = () => {
     if (name?.trim() && name.trim() !== playlist.name) rename(playlist.id, name.trim());
     setName(undefined);
   };
@@ -39,17 +38,16 @@ const Title = ({ playlist, rename }: TitleProps) => {
       {playlist.name}
     </button>
   ) : (
-    <form onSubmit={submit}>
-      <input
-        autoFocus
-        value={name}
-        maxLength={200}
-        aria-label={t('playlists.rename')}
-        onChange={(event) => setName(event.target.value)}
-        onKeyDown={(event) => event.key === 'Escape' && setName(undefined)}
-        onBlur={submit}
-      />
-    </form>
+    <NameField
+      autoFocus
+      className={style.rename}
+      value={name}
+      label={t('playlists.rename')}
+      onChange={setName}
+      onSubmit={submit}
+      onCancel={() => setName(undefined)}
+      onBlur={submit}
+    />
   );
 };
 

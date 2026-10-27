@@ -28,14 +28,66 @@ describe('AddToPlaylist', () => {
 
     open();
 
-    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Road', 'Night']);
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Road0', 'Night0']);
+  });
+
+  it('shows how many tracks a playlist has', () => {
+    render(<AddToPlaylist source={track} playlists={[{ ...playlists[0], entries: [{ id: 1, track, available: true }] }]} add={vi.fn()} create={vi.fn()} />);
+    open();
+
+    expect(screen.getByRole('menuitem').textContent).toBe('Road1');
+  });
+
+  it('puts the focus on the first playlist, or on the name field when there is none', () => {
+    const { unmount } = render(<AddToPlaylist source={track} playlists={playlists} add={vi.fn()} create={vi.fn()} />);
+    open();
+    expect(document.activeElement).toBe(screen.getAllByRole('menuitem')[0]);
+    unmount();
+
+    render(<AddToPlaylist source={track} playlists={[]} add={vi.fn()} create={vi.fn()} />);
+    open();
+    expect(document.activeElement).toBe(screen.getByLabelText('Playlist name'));
+  });
+
+  it('goes through the field and the playlists with the arrow keys, around the ends', () => {
+    renderButton();
+    open();
+    const menu = screen.getByRole('menu');
+    const focused = () => document.activeElement?.textContent || document.activeElement?.getAttribute('aria-label');
+
+    expect(focused()).toBe('Road0');
+    fireEvent.keyDown(menu, { key: 'ArrowDown' });
+    expect(focused()).toBe('Night0');
+    fireEvent.keyDown(menu, { key: 'ArrowDown' });
+    expect(focused()).toBe('Playlist name');
+    fireEvent.keyDown(menu, { key: 'ArrowUp' });
+    expect(focused()).toBe('Night0');
+  });
+
+  it('gives the focus back to the button when it closes with the keyboard', () => {
+    renderButton();
+    open();
+
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Add to a playlist' }));
+  });
+
+  it('creates the playlist with Enter in the name field', () => {
+    const { create } = renderButton();
+    open();
+
+    fireEvent.change(screen.getByLabelText('Playlist name'), { target: { value: 'Gym' } });
+    fireEvent.submit(screen.getByLabelText('Playlist name'));
+
+    expect(create).toHaveBeenCalledWith('Gym', track);
   });
 
   it('adds the track to the picked playlist and closes', () => {
     const { add } = renderButton();
     open();
 
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Night' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Night/ }));
 
     expect(add).toHaveBeenCalledWith(2, track);
     expect(screen.queryByRole('menu')).toBeNull();
@@ -57,7 +109,7 @@ describe('AddToPlaylist', () => {
     renderButton();
 
     open();
-    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
     expect(screen.queryByRole('menu')).toBeNull();
 
     open();
@@ -69,7 +121,7 @@ describe('AddToPlaylist', () => {
     const { onRowClick } = renderButton();
 
     open();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Road' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Road/ }));
 
     expect(onRowClick).not.toHaveBeenCalled();
   });
