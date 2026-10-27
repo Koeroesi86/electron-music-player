@@ -30,7 +30,7 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFile
   const views: ViewItem<LibraryView>[] = [
     { view: 'albums', label: t('library.albums'), panel: <AlbumView /> },
     { view: 'tracks', label: t('library.songs'), panel: <TrackView /> },
-    { view: 'folders', label: t('library.folders'), panel: <FolderManagement addFiles={addFiles} /> },
+    { view: 'folders', label: t('library.folders'), panel: <FolderManagement /> },
   ];
 
   return (

@@ -71,7 +71,7 @@ function PlayerTabs({ tab = 'home', addFiles = () => {} }: PlayerTabsProps) {
       >
         <LanguageSelect />
         <ThemeSelect />
-        <FolderManagement addFiles={addFiles} />
+        <FolderManagement />
         <LauncherIntegration />
         <WindowBlur />
         <About />

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import type { ChangeEvent } from 'react';
+import { useState } from 'react';
+import classNames from 'classnames';
 import type { Folder } from '../../types/library';
 import Confirm from '../confirm';
 import style from './FolderManagement.scss';
@@ -7,45 +7,38 @@ import { useTranslation } from '../../client/i18n';
 
 interface FolderManagementProps {
   folders: Folder[];
-  addFiles: (files: FileList) => void;
+  offlineFolders: string[];
+  addFolders: () => void;
   removeFolder: (path: string) => void;
 }
 
-const FolderManagement = ({ folders, addFiles, removeFolder }: FolderManagementProps) => {
+const FolderManagement = ({ folders, offlineFolders, addFolders, removeFolder }: FolderManagementProps) => {
   const { t } = useTranslation();
   const [removing, setRemoving] = useState<string>();
-  const upload = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (upload.current) Object.assign(upload.current, { allowdirs: true, webkitdirectory: true });
-  }, []);
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    event.stopPropagation();
-    event.preventDefault();
-    const { files } = event.target;
-
-    if (files) addFiles(files);
-  };
 
   return (
     <section className={style.folderManagement}>
       <div className={style.sectionTitle}>{t('folders.title')}</div>
       <div className={style.folders}>
         {folders.map((folder) => (
-          <div key={`folder-${folder.path}`} className={style.folder}>
+          <div key={`folder-${folder.path}`} className={classNames(style.folder, { [style.offline]: offlineFolders.includes(folder.path) })}>
             <span className={style.path} title={folder.path}>
               {folder.path}
             </span>
+            {offlineFolders.includes(folder.path) && (
+              <span className={style.offlineLabel} title={t('folders.offlineHint')}>
+                {t('folders.offline')}
+              </span>
+            )}
             <button className={style.remove} onClick={() => setRemoving(folder.path)}>
               {t('folders.remove')}
             </button>
           </div>
         ))}
-        <div className={style.addItems} onClick={() => upload.current?.click()}>
-          {t('folders.drop')}
-          <input type="file" ref={upload} className={style.fileInput} multiple onChange={handleFileChange} />
-        </div>
+        <button className={style.addItems} onClick={addFolders}>
+          {t('folders.add')}
+        </button>
+        <div className={style.dropHint}>{t('folders.drop')}</div>
       </div>
       <Confirm
         message={removing ? t('folders.removeConfirm', { path: removing }) : null}

@@ -3,6 +3,7 @@ import type { MouseEventHandler, ReactNode } from 'react';
 import classNames from 'classnames';
 import type { Track } from '../../types/library';
 import { trackFavourite } from '../../client/favourites';
+import { useTranslation } from '../../client/i18n';
 import style from './TrackViewItem.scss';
 import Time from '../time';
 import FavouriteButton from '../favourite-button';
@@ -27,6 +28,8 @@ interface TrackViewItemProps {
   isHeader?: boolean;
   isSelected?: boolean;
   isCurrent?: boolean;
+  /** The track is in a library folder that cannot be reached right now */
+  isOffline?: boolean;
   clickTrack?: (track: Track) => void;
   doubleClickTrack?: (track: Track) => void;
 }
@@ -35,29 +38,36 @@ const TrackViewItem = ({
   track,
   isSelected = false,
   isCurrent = false,
+  isOffline = false,
   isHeader = false,
   clickTrack = () => {},
   doubleClickTrack = () => {},
-}: TrackViewItemProps) => (
-  <div
-    className={classNames(style.trackViewItem, {
-      [style.header]: isHeader,
-      [style.selected]: isSelected,
-      [style.current]: isCurrent,
-    })}
-    onClick={() => 'path' in track && clickTrack(track)}
-    onDoubleClick={() => 'path' in track && doubleClickTrack(track)}
-  >
-    <TrackViewItemField className={style.favourite}>{'path' in track && <FavouriteButton item={trackFavourite(track)} />}</TrackViewItemField>
-    <TrackViewItemField className={style.duration}>
-      {typeof track.duration === 'string' ? track.duration : <Time seconds={track.duration} />}
-    </TrackViewItemField>
-    <TrackViewItemField className={style.artist}>{track.artist || '-'}</TrackViewItemField>
-    <TrackViewItemField className={style.year}>{track.year || '-'}</TrackViewItemField>
-    <TrackViewItemField className={style.album}>{track.album || '-'}</TrackViewItemField>
-    <TrackViewItemField className={style.trackNo}>{track.track || '-'}</TrackViewItemField>
-    <TrackViewItemField className={style.title}>{track.title || '-'}</TrackViewItemField>
-  </div>
-);
+}: TrackViewItemProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <div
+      title={isOffline ? t('folders.offlineHint') : undefined}
+      className={classNames(style.trackViewItem, {
+        [style.offline]: isOffline,
+        [style.header]: isHeader,
+        [style.selected]: isSelected,
+        [style.current]: isCurrent,
+      })}
+      onClick={() => 'path' in track && clickTrack(track)}
+      onDoubleClick={() => 'path' in track && doubleClickTrack(track)}
+    >
+      <TrackViewItemField className={style.favourite}>{'path' in track && <FavouriteButton item={trackFavourite(track)} />}</TrackViewItemField>
+      <TrackViewItemField className={style.duration}>
+        {typeof track.duration === 'string' ? track.duration : <Time seconds={track.duration} />}
+      </TrackViewItemField>
+      <TrackViewItemField className={style.artist}>{track.artist || '-'}</TrackViewItemField>
+      <TrackViewItemField className={style.year}>{track.year || '-'}</TrackViewItemField>
+      <TrackViewItemField className={style.album}>{track.album || '-'}</TrackViewItemField>
+      <TrackViewItemField className={style.trackNo}>{track.track || '-'}</TrackViewItemField>
+      <TrackViewItemField className={style.title}>{track.title || '-'}</TrackViewItemField>
+    </div>
+  );
+};
 
 export default memo(TrackViewItem);

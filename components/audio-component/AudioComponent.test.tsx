@@ -108,4 +108,34 @@ describe('AudioComponent radio reconnect', () => {
 
     expect(trackEnded).toHaveBeenCalledTimes(1);
   });
+
+  it('moves on to the next track when a file cannot be played', () => {
+    const trackEnded = vi.fn();
+    const file = { ...station, path: '/mnt/usb/a.flac' };
+    const view = render(<AudioComponent currentSong={file} isPlaying volume={1} port="3000" trackEnded={trackEnded} connectNode={vi.fn()} />);
+
+    fireEvent.error(view.container.querySelector('audio') as HTMLAudioElement);
+
+    expect(trackEnded).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not move on from a restored track that is paused', () => {
+    const trackEnded = vi.fn();
+    const file = { ...station, path: '/mnt/usb/a.flac' };
+    const view = render(<AudioComponent currentSong={file} isPlaying={false} volume={1} port="3000" trackEnded={trackEnded} connectNode={vi.fn()} />);
+
+    fireEvent.error(view.container.querySelector('audio') as HTMLAudioElement);
+
+    expect(trackEnded).not.toHaveBeenCalled();
+  });
+
+  it('stops moving on after a run of files that cannot be played', () => {
+    const trackEnded = vi.fn();
+    const file = { ...station, path: '/mnt/usb/a.flac' };
+    const view = render(<AudioComponent currentSong={file} isPlaying volume={1} port="3000" trackEnded={trackEnded} connectNode={vi.fn()} />);
+
+    Array.from({ length: 30 }).forEach(() => fireEvent.error(view.container.querySelector('audio') as HTMLAudioElement));
+
+    expect(trackEnded).toHaveBeenCalledTimes(10);
+  });
 });

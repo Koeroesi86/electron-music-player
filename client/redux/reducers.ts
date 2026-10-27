@@ -1,4 +1,5 @@
 import { combineReducers } from 'redux';
+import offlineFolders from './offline-folders/reducer';
 import library from './library/reducer';
 import favourites from './favourites/reducer';
 import history from './history/reducer';
@@ -12,6 +13,7 @@ const reducers = combineReducers({
   history,
   folders,
   library,
+  offlineFolders,
   radio,
   uiState,
   update,

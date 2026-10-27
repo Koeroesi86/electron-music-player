@@ -19,6 +19,8 @@ const sourceOf = (track: Track, port: string) => {
   return /^http/.test(track.path) ? track.path : `http://127.0.0.1:${port}/local?path=${encodeURIComponent(track.path)}`;
 };
 
+/** After this many files in a row that cannot be played, the player stops instead of cycling through the whole queue */
+const maxSkippedFiles = 10;
 const maxReconnectDelay = 30_000;
 const reconnectDelay = (attempt: number) => Math.min(1000 * 2 ** attempt, maxReconnectDelay);
 
@@ -26,8 +28,20 @@ const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, conn
   const audio = useRef<HTMLAudioElement>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const attempts = useRef(0);
+  const skipped = useRef(0);
   const isRadio = currentSong !== null && radioUuidOf(currentSong.path) !== undefined;
   const shouldReconnect = isRadio && isPlaying;
+
+  // a file that cannot be played, such as one on a drive that is not there, is passed over for the next one
+  const skipUnplayable = () => {
+    skipped.current += 1;
+    if (skipped.current <= maxSkippedFiles) trackEnded();
+  };
+
+  const handleError = () => {
+    if (isRadio) reconnect();
+    else if (currentSong && isPlaying) skipUnplayable();
+  };
 
   const stopReconnecting = () => {
     clearTimeout(reconnectTimer.current);
@@ -51,6 +65,7 @@ const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, conn
   useEffect(() => stopReconnecting, []);
 
   useEffect(() => {
+    skipped.current = 0;
     if (!isPlaying) stopReconnecting();
   }, [isPlaying]);
 
@@ -81,8 +96,11 @@ const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, conn
       ref={audio}
       crossOrigin="anonymous"
       onEnded={isRadio ? reconnect : trackEnded}
-      onError={reconnect}
-      onPlaying={() => (attempts.current = 0)}
+      onError={handleError}
+      onPlaying={() => {
+        attempts.current = 0;
+        skipped.current = 0;
+      }}
     />
   );
 };

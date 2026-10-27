@@ -95,6 +95,8 @@ export type AppAction =
   | PayloadAction<'RADIO_STREAM_ART', { uuid: string; title: string; art: string }>
   | PayloadAction<'FOLDERS_ADDED_TO_LIBRARY', { folders: Folder[] }>
   | PayloadAction<'STORE_FOLDERS', { folders: Folder[] }>
+  | PayloadAction<'OFFLINE_FOLDERS', { folders: string[] }>
+  | EmptyAction<'PICK_FOLDERS'>
   | EmptyAction<'INVALIDATE_LIBRARY'>
   | PayloadAction<'LOAD_LIBRARY_PAGE', { kind: 'tracks' | 'albums'; page: number }>
   | PayloadAction<'STORE_TRACK_PAGE', { page: number; items: Track[]; total: number }>

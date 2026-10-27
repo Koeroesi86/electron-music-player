@@ -7,6 +7,7 @@ import { useWindowedList } from '../../client/hooks/use-windowed-list';
 import { fetchLibrary } from '../../client/library-api';
 import { getCachedItem } from '../../client/redux/library/pages';
 import type { PageCache } from '../../client/redux/library/pages';
+import { isOffline } from '../../client/offline-folders';
 import style from './TrackView.scss';
 import TrackViewItem from '../track-view-item';
 import type { TrackLabels } from '../track-view-item/TrackViewItem';
@@ -18,11 +19,12 @@ interface TrackViewProps {
   tracks: PageCache<Track>;
   currentSong: Track | null;
   port: string;
+  offlineFolders: string[];
   playTracks: (tracks: Track[]) => void;
   loadPage: (page: number) => void;
 }
 
-const TrackView = ({ currentSong, playTracks, tracks, port, loadPage }: TrackViewProps) => {
+const TrackView = ({ currentSong, playTracks, tracks, port, offlineFolders, loadPage }: TrackViewProps) => {
   const { t } = useTranslation();
   const headerLabels = useMemo<TrackLabels>(
     () => ({
@@ -85,6 +87,7 @@ const TrackView = ({ currentSong, playTracks, tracks, port, loadPage }: TrackVie
                 track={track}
                 isSelected={selectedTracks.has(track.path)}
                 isCurrent={currentSong?.path === track.path}
+                isOffline={isOffline(track.path, offlineFolders)}
                 clickTrack={toggleTrack}
                 doubleClickTrack={doubleClickTrack}
               />
