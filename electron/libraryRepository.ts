@@ -35,6 +35,13 @@ export const deleteTracksInside = (database: Database, folderPath: string) =>
     variables: [`${escapeLike(folderPath.replace(/[\\/]+$/, '') + path.sep)}%`],
   });
 
+/** Whether the library has a track below a folder */
+export const hasTracksInside = (database: Database, folderPath: string) =>
+  executeQuery<{ found: number }>(database, {
+    query: `SELECT 1 AS found FROM library WHERE path LIKE ? ESCAPE '!' LIMIT 1`,
+    variables: [`${escapeLike(folderPath.replace(/[\\/]+$/, '') + path.sep)}%`],
+  }).then((rows) => rows.length > 0);
+
 export const getLibrary = (database: Database) => executeQuery<Track>(database, { query: `SELECT * FROM library ORDER BY path ASC`, variables: [] });
 
 // the folder of a track including the trailing separator, for both separators: rtrim drops the characters after the last one

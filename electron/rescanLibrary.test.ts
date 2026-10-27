@@ -5,7 +5,9 @@ import path from 'path';
 import type { WebContents } from 'electron';
 import type { Database } from 'sqlite3';
 import type { Folder } from '../types/library';
+import addTrack from './addTrack';
 import executeQuery from './executeQuery';
+import { getLibrary } from './libraryRepository';
 import rescanLibrary from './rescanLibrary';
 import scanFolders from './scanFolders';
 import { createTestDatabase } from './test-database';
@@ -76,5 +78,47 @@ describe('rescanLibrary', () => {
     await rescan();
 
     expect(scanFolders).toHaveBeenCalledWith([], sender);
+  });
+
+  const track = (trackPath: string) => ({
+    path: trackPath,
+    artist: '',
+    album: '',
+    title: '',
+    year: '',
+    track: '',
+    disk: '',
+    genre: '',
+    picture: null,
+    duration: null,
+  });
+
+  it('keeps the tracks of a folder that cannot be read, and scans nothing in it', async () => {
+    const gone = path.join(root, 'usb');
+    await addFolder(gone, 0);
+    await addTrack(database, track(path.join(gone, 'a.flac')));
+    await rescan(true);
+
+    expect((await getLibrary(database)).map((item) => item.path)).toEqual([path.join(gone, 'a.flac')]);
+    expect(scanFolders).toHaveBeenCalledWith([], sender);
+    expect(sender.send).toHaveBeenCalledWith('OFFLINE_FOLDERS', { folders: [gone] });
+  });
+
+  it('keeps the tracks of an empty folder that the library has tracks in, like a mount point that is not mounted', async () => {
+    await addFolder(root, 0);
+    await addTrack(database, track(path.join(root, 'a.flac')));
+    await rescan();
+
+    expect(await getLibrary(database)).toHaveLength(1);
+  });
+
+  it('still removes the track that is missing from a folder that can be read', async () => {
+    fs.writeFileSync(path.join(root, 'kept.flac'), '');
+    await addFolder(root, 0);
+    await addTrack(database, track(path.join(root, 'kept.flac')));
+    await addTrack(database, track(path.join(root, 'deleted.flac')));
+    await rescan();
+
+    expect((await getLibrary(database)).map((item) => item.path)).toEqual([path.join(root, 'kept.flac')]);
   });
 });

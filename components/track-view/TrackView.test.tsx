@@ -31,7 +31,9 @@ describe('TrackView', () => {
   );
 
   it('renders the rows of the window only, in a box as high as the whole list', () => {
-    const { container, queryByText } = render(<TrackView tracks={firstPage} currentSong={null} port="3000" playTracks={vi.fn()} loadPage={vi.fn()} />);
+    const { container, queryByText } = render(
+      <TrackView tracks={firstPage} currentSong={null} port="3000" offlineFolders={[]} playTracks={vi.fn()} loadPage={vi.fn()} />
+    );
 
     expect(queryByText('Title 0')).not.toBeNull();
     expect(queryByText('Title 99')).toBeNull();
@@ -41,15 +43,23 @@ describe('TrackView', () => {
 
   it('requests the pages missing for the window', () => {
     const loadPage = vi.fn();
-    render(<TrackView tracks={firstPage} currentSong={null} port="3000" playTracks={vi.fn()} loadPage={loadPage} />);
+    render(<TrackView tracks={firstPage} currentSong={null} port="3000" offlineFolders={[]} playTracks={vi.fn()} loadPage={loadPage} />);
 
     expect(loadPage).not.toHaveBeenCalled();
   });
 
   it('requests the first page of an empty cache', () => {
     const loadPage = vi.fn();
-    render(<TrackView tracks={createPageCache<Track>()} currentSong={null} port="3000" playTracks={vi.fn()} loadPage={loadPage} />);
+    render(<TrackView tracks={createPageCache<Track>()} currentSong={null} port="3000" offlineFolders={[]} playTracks={vi.fn()} loadPage={loadPage} />);
 
     expect(loadPage).toHaveBeenCalledWith(0);
+  });
+
+  it('dims the tracks in an offline folder', () => {
+    const { getByText } = render(
+      <TrackView tracks={firstPage} currentSong={null} port="3000" offlineFolders={['/music']} playTracks={vi.fn()} loadPage={vi.fn()} />
+    );
+
+    expect(getByText('Title 0').closest('[title]')?.getAttribute('title')).toMatch(/cannot be reached/);
   });
 });

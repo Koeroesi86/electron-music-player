@@ -19,6 +19,7 @@ type EmptyPayload = Record<string, never>;
 
 function addListeners(store: Store) {
   electronAPI.on<{ folders: Folder[] }>('STORE_FOLDERS', (payload) => store.dispatch({ type: 'STORE_FOLDERS', payload }));
+  electronAPI.on<{ folders: string[] }>('OFFLINE_FOLDERS', (payload) => store.dispatch({ type: 'OFFLINE_FOLDERS', payload }));
   electronAPI.on<EmptyPayload>('RESCAN_COMPLETE', (payload) => store.dispatch({ type: 'RESCAN_COMPLETE', payload }));
   electronAPI.on<{ folders: Folder[] }>('FOLDERS_ADDED_TO_LIBRARY', (payload) => store.dispatch({ type: 'FOLDERS_ADDED_TO_LIBRARY', payload }));
   electronAPI.on<EmptyPayload>('FOLDER_REMOVED_FROM_LIBRARY', (payload) => store.dispatch({ type: 'FOLDER_REMOVED_FROM_LIBRARY', payload }));
@@ -84,6 +85,8 @@ const loadPage = (store: Store, kind: keyof typeof pageFetchers, page: number): 
 };
 
 const rescanInterval = 1000 * 60 * 60;
+// a drive that is not there is looked for again at this pace, besides every time the window gets the focus
+const offlineRecheckInterval = 1000 * 30;
 
 const persistedKeys = [
   'view',
@@ -144,6 +147,12 @@ const start = (store: Store) => {
     if (store.getState().uiState.totalCount === 0) rescanLibrary(false);
   }, rescanInterval);
 
+  electronAPI.send('CHECK_FOLDERS');
+  window.addEventListener('focus', () => electronAPI.send('CHECK_FOLDERS'));
+  setInterval(() => {
+    if (store.getState().offlineFolders.length > 0) electronAPI.send('CHECK_FOLDERS');
+  }, offlineRecheckInterval);
+
   loadPage(store, 'tracks', 0).then(appLoaded);
 };
 
@@ -155,6 +164,7 @@ const notifyTrack = (store: Store, track: Track) =>
 
 const handleActions = actionMiddleware((store) => [
   onAction('FILES_ADDED', ({ payload }) => electronAPI.send('ADD_FOLDERS_TO_LIBRARY', toAddedFiles(Array.from(payload.fileList), electronAPI.getPathForFile))),
+  onAction('PICK_FOLDERS', () => electronAPI.send('PICK_FOLDERS')),
   onAction('REMOVE_FOLDER', ({ payload }) => electronAPI.send('REMOVE_FOLDER_FROM_LIBRARY', payload.path)),
   onAction('RESCAN_LIBRARY', () => rescanLibrary(true)),
   onAction('LOAD_LIBRARY_PAGE', ({ payload }) => void loadPage(store, payload.kind, payload.page)),

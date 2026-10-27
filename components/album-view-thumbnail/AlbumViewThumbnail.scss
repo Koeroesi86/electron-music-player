@@ -7,6 +7,14 @@
   margin-bottom: 16px;
   cursor: pointer;
 
+  &.offline {
+    opacity: 0.45;
+  }
+
+  &.offline {
+    opacity: 0.45;
+  }
+
   .cover {
     display: flex;
     flex-direction: column;

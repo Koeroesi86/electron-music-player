@@ -9,6 +9,7 @@ const mapState = (state: RootState) => ({
   port: state.uiState.port,
   tracks: state.library.tracks,
   currentSong: state.uiState.currentSong,
+  offlineFolders: state.offlineFolders,
 });
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
