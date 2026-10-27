@@ -42,7 +42,8 @@ const seek = (to: number) => {
 };
 
 const listenToPlayStatus = (node: HTMLAudioElement) => {
-  node.addEventListener('pause', () => playStatus.notify(false));
+  // a track that reaches its end is paused before it ends: that is not a pause of the listener, the next track follows
+  node.addEventListener('pause', () => !node.ended && playStatus.notify(false));
   node.addEventListener('play', () => playStatus.notify(true));
   node.addEventListener('error', () => {
     console.warn('error playing', node.src);

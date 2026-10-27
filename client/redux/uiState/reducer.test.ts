@@ -66,6 +66,10 @@ describe('uiState reducer', () => {
     expect(run({ type: 'PLAY_TRACK', payload: { track: null } }).currentSong).toBeNull();
   });
 
+  it('starts the next song from its beginning, not from the position of the previous one', () => {
+    expect(run({ type: 'PLAY_TRACK', payload: { track: track('b') } }, { ...initial, currentSong: track('a'), currentTime: 245 }).currentTime).toBe(0);
+  });
+
   it('parses the volume and defaults invalid values to 0', () => {
     expect(run({ type: 'SET_VOLUME', payload: { volume: '0.8' } }).volume).toBe(0.8);
     expect(run({ type: 'SET_VOLUME', payload: { volume: 0 } }).volume).toBe(0);

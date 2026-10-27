@@ -66,7 +66,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
     case 'PLAY_TRACKS':
       return { ...state, nowPlaying: action.payload.tracks, played: [] };
     case 'PLAY_TRACK':
-      return { ...state, currentSong: action.payload.track || null, isPlaying: true, streamTitle: null, streamArt: null };
+      // the position of the previous song would seek the new one to its end
+      return { ...state, currentSong: action.payload.track || null, currentTime: 0, isPlaying: true, streamTitle: null, streamArt: null };
     case 'SET_VOLUME':
       return { ...state, volume: toNumber(action.payload.volume) };
     case 'SET_CURRENT_TIME': {

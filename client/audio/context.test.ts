@@ -53,6 +53,22 @@ describe('audio context', () => {
     expect(analysers[0].connect).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { ended: false, notified: [false] },
+    { ended: true, notified: [] },
+  ])('reports a pause as a stop of playing only when the track has not ended ($ended)', async ({ ended, notified }) => {
+    const { audio } = await setup();
+    const node = document.createElement('audio');
+    Object.defineProperty(node, 'ended', { value: ended });
+    const listener = vi.fn();
+    audio.addPlayStatusListener(listener);
+    audio.connectNode(node);
+
+    node.dispatchEvent(new Event('pause'));
+
+    expect(listener.mock.calls.map(([playing]) => playing)).toEqual(notified);
+  });
+
   it('shares one analyser however often it is asked for', async () => {
     const { audio, analysers } = await setup();
     audio.connectNode(document.createElement('audio'));
