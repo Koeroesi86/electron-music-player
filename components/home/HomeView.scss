@@ -10,7 +10,7 @@
     font-weight: 400;
     line-height: 56px;
     padding: 0 12px;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 3px var(--shadow-soft);
   }
 
   .contents {
@@ -46,18 +46,18 @@
     font-size: 12px;
     line-height: 40px;
     padding: 0 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--overlay);
+    background-color: var(--overlay-faint);
     transition: background-color 0.1s ease-in-out;
     will-change: background-color;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: var(--overlay);
     }
 
     &.current {
-      color: #ff8686;
-      background-color: rgba(255, 134, 134, 0.12);
+      color: var(--accent);
+      background-color: var(--overlay-strong);
     }
 
     &.unavailable .name,
@@ -76,7 +76,7 @@
       height: 28px;
       margin-right: 12px;
       border-radius: 3px;
-      background: rgba(255, 255, 255, 0.1) url('../../assets/album-placeholder.svg') center / cover no-repeat;
+      background: var(--overlay) url('../../assets/album-placeholder.svg') center / cover no-repeat;
     }
 
     .name,
