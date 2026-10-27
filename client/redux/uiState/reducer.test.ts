@@ -163,7 +163,7 @@ describe('uiState reducer', () => {
   });
 
   describe('radio', () => {
-    const playing = { ...initial, currentSong: track('radio:abc'), streamTitle: null };
+    const playing = { ...initial, currentSong: track('radio:abc'), streamTitle: null, streamArt: null };
 
     it('shows the radio first', () => {
       expect(initial.onlineView).toBe('radio');
@@ -183,9 +183,32 @@ describe('uiState reducer', () => {
       expect(run({ type: 'RADIO_STREAM_TITLE', payload: { uuid: 'abc', title: 'Artist - Song' } })).toBe(initial);
     });
 
-    it('forgets the title when another track starts', () => {
+    it('forgets the title and the art when another track starts', () => {
+      const titled = { ...playing, streamTitle: 'Artist - Song', streamArt: 'abcd' };
+      expect(run({ type: 'PLAY_TRACK', payload: { track: track('/music/a.flac') } }, titled)).toMatchObject({ streamTitle: null, streamArt: null });
+    });
+
+    it('drops the art of the previous song when the title changes', () => {
+      const titled = { ...playing, streamTitle: 'Artist - Song', streamArt: 'abcd' };
+      expect(run({ type: 'RADIO_STREAM_TITLE', payload: { uuid: 'abc', title: 'Artist - Next' } }, titled)).toMatchObject({
+        streamTitle: 'Artist - Next',
+        streamArt: null,
+      });
+    });
+
+    it('keeps the art when the station repeats the title', () => {
+      const titled = { ...playing, streamTitle: 'Artist - Song', streamArt: 'abcd' };
+      expect(run({ type: 'RADIO_STREAM_TITLE', payload: { uuid: 'abc', title: 'Artist - Song' } }, titled)).toBe(titled);
+    });
+
+    it('keeps the art found for the title on air', () => {
       const titled = { ...playing, streamTitle: 'Artist - Song' };
-      expect(run({ type: 'PLAY_TRACK', payload: { track: track('/music/a.flac') } }, titled).streamTitle).toBeNull();
+      expect(run({ type: 'RADIO_STREAM_ART', payload: { uuid: 'abc', title: 'Artist - Song', art: 'abcd' } }, titled).streamArt).toBe('abcd');
+    });
+
+    it('ignores art that arrives after the song changed', () => {
+      const titled = { ...playing, streamTitle: 'Artist - Next' };
+      expect(run({ type: 'RADIO_STREAM_ART', payload: { uuid: 'abc', title: 'Artist - Song', art: 'abcd' } }, titled)).toBe(titled);
     });
   });
 });

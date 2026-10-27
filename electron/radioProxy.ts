@@ -7,7 +7,7 @@ import { allowLoopbackOrigin } from './sendFile';
 export interface RadioStreamDeps {
   /** The address of the stream of a station */
   resolveStream: (uuid: string) => Promise<string>;
-  onTitle: (uuid: string, title: string) => void;
+  onTitle: (uuid: string, title: string, streamUrl?: string) => void;
 }
 
 const stationUuid = /^[0-9a-zA-Z-]{1,64}$/;
@@ -20,7 +20,7 @@ const streamTo = async (uuid: string, response: Response, signal: AbortSignal, {
   response.setHeader('Cache-Control', 'no-store');
 
   const metaint = Number(upstream.headers.get('icy-metaint'));
-  const strippers = metaint > 0 ? [new IcyMetadataStripper(metaint, (title) => onTitle(uuid, title))] : [];
+  const strippers = metaint > 0 ? [new IcyMetadataStripper(metaint, (title, streamUrl) => onTitle(uuid, title, streamUrl))] : [];
 
   await pipeline([Readable.from(upstream.body), ...strippers, response]);
 };

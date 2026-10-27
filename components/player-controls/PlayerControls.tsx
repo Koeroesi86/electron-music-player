@@ -13,7 +13,8 @@ import {
 import { MdPlayCircleOutline as PlayIcon, MdPauseCircleOutline as PauseIcon } from 'react-icons/md';
 import Slider from '../slider/Slider';
 import type { Track } from '../../types/library';
-import { getCoverUrl } from '../../client/cover-url';
+import { toNowPlaying } from '../../client/now-playing';
+import { useMediaSession } from '../../client/hooks/use-media-session';
 import { useAudioListener } from '../../client/hooks/use-audio-listener';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { useTranslation } from '../../client/i18n';
@@ -23,6 +24,8 @@ import Time from '../time';
 
 interface PlayerControlsProps {
   currentSong: Track | null;
+  streamTitle: string | null;
+  streamArt: string | null;
   currentTime: number;
   port: string;
   volume: number;
@@ -59,17 +62,26 @@ const IconButton = ({ label, className = style.icon, onClick, children }: IconBu
   </button>
 );
 
-const TrackDetails = ({ currentSong, currentTime, port }: Pick<PlayerControlsProps, 'currentSong' | 'currentTime' | 'port'>) => {
+const TrackDetails = ({
+  currentSong,
+  streamTitle,
+  streamArt,
+  currentTime,
+  port,
+}: Pick<PlayerControlsProps, 'currentSong' | 'streamTitle' | 'streamArt' | 'currentTime' | 'port'>) => {
   const { t } = useTranslation();
+  const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt, port) : undefined;
+
+  useMediaSession(shown && { title: shown.track.title, artist: shown.track.artist, album: shown.track.album, cover: shown.cover });
 
   return (
     <div className={style.meta}>
       <div className={style.contents}>
-        <div className={style.picture} style={currentSong?.picture ? { backgroundImage: `url("${getCoverUrl(port, currentSong.picture)}")` } : {}} />
+        <div className={style.picture} style={shown?.cover ? { backgroundImage: `url("${shown.cover}")` } : {}} />
         <div className={style.details}>
-          <div className={style.title}>{currentSong ? currentSong.title : t('player.none')}</div>
-          <div className={style.album}>{currentSong ? currentSong.album : t('player.none')}</div>
-          <div className={style.artist}>{currentSong ? currentSong.artist : t('player.none')}</div>
+          <div className={style.title}>{shown ? shown.track.title : t('player.none')}</div>
+          <div className={style.album}>{shown ? shown.track.album : t('player.none')}</div>
+          <div className={style.artist}>{shown ? shown.track.artist : t('player.none')}</div>
           <div className={style.time}>
             <Time seconds={currentTime} /> / <Time seconds={currentSong ? currentSong.duration : 0} />
           </div>
@@ -173,7 +185,7 @@ const PlayerControls = (props: PlayerControlsProps) => {
   return (
     <div className={style.controls}>
       <div className={style.controlsPanel}>
-        <TrackDetails currentSong={currentSong} currentTime={currentTime} port={props.port} />
+        <TrackDetails currentSong={currentSong} streamTitle={props.streamTitle} streamArt={props.streamArt} currentTime={currentTime} port={props.port} />
         <div className={style.controlsContainer}>
           <div className={style.progress}>
             <Slider

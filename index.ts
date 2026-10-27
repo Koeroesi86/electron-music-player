@@ -12,6 +12,7 @@ import createDatabase from './electron/createDatabase';
 import setupListeners from './electron/setupListeners';
 import setupServer from './electron/setupServer';
 import { createRadioBrowser } from './electron/radioBrowser';
+import { createRadioArt } from './electron/radioArt';
 import { getAppUserModelId } from './electron/appUserModelId';
 import { registerDevDesktopEntry, removeDevDesktopEntry } from './electron/devDesktopEntry';
 import closeDatabase from './electron/closeDatabase';
@@ -119,10 +120,19 @@ const libraryLocation = resolve(appDataPath, './library.sqlite');
 
 const radio = createRadioBrowser(`eMusic/${app.getVersion()}`);
 
+const radioArt = createRadioArt();
+
 const getPort = () =>
   setupServer({
     resolveStream: radio.resolveStream,
-    onTitle: (uuid, title) => windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title }),
+    getArt: radioArt.get,
+    onTitle: (uuid, title, streamUrl) => {
+      windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title });
+      radioArt
+        .lookup(title, streamUrl)
+        .then((art) => art && windows.main?.webContents.send('RADIO_STREAM_ART', { uuid, title, art }))
+        .catch((error) => console.error(error));
+    },
   }).then((port) => {
     if (!windowLocation || !loadingLocation) {
       windowLocation = `http://127.0.0.1:${port}/app/index.html?port=${port}`;

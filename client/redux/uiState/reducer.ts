@@ -21,6 +21,7 @@ const initialState: UiState = {
   maximized: false,
   isPlaying: false,
   streamTitle: null,
+  streamArt: null,
   launcher: { available: false, enabled: false, offered: false },
   shuffle: false,
   repeat: false,
@@ -45,7 +46,7 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
     case 'PLAY_TRACKS':
       return { ...state, nowPlaying: action.payload.tracks, played: [] };
     case 'PLAY_TRACK':
-      return { ...state, currentSong: action.payload.track || null, isPlaying: true, streamTitle: null };
+      return { ...state, currentSong: action.payload.track || null, isPlaying: true, streamTitle: null, streamArt: null };
     case 'SET_VOLUME':
       return { ...state, volume: toNumber(action.payload.volume) };
     case 'SET_CURRENT_TIME': {
@@ -60,7 +61,14 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
     }
     case 'RADIO_STREAM_TITLE': {
       const { uuid, title } = action.payload;
-      return state.currentSong && radioUuidOf(state.currentSong.path) === uuid ? { ...state, streamTitle: title } : state;
+      const isCurrent = state.currentSong && radioUuidOf(state.currentSong.path) === uuid;
+      // a station can repeat its title, which keeps the art it has
+      return isCurrent && title !== state.streamTitle ? { ...state, streamTitle: title, streamArt: null } : state;
+    }
+    case 'RADIO_STREAM_ART': {
+      const { uuid, title, art } = action.payload;
+      // the art of a song the station has moved on from is dropped
+      return state.currentSong && radioUuidOf(state.currentSong.path) === uuid && title === state.streamTitle ? { ...state, streamArt: art } : state;
     }
     case 'SCANNING_FOLDER':
       return { ...state, scanningFolder: action.payload.folder };

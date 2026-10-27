@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IcyMetadataStripper, parseStreamTitle } from './icyMetadata';
+import { IcyMetadataStripper, parseStreamTitle, parseStreamUrl } from './icyMetadata';
 
 const metadataBlock = (text: string) => {
   const body = Buffer.from(text);
@@ -17,6 +17,16 @@ const strip = async (metaint: number, chunks: Buffer[]) => {
   await new Promise((resolve) => stripper.end(resolve));
   return { audio: Buffer.concat(audio).toString(), titles };
 };
+
+describe('parseStreamUrl', () => {
+  it('reads the address next to the title', () => {
+    expect(parseStreamUrl("StreamTitle='A - B';StreamUrl='https://x.example/c.jpg';")).toBe('https://x.example/c.jpg');
+  });
+
+  it.each(['', "StreamUrl='';", "StreamTitle='A - B';"])('has no address in %j', (metadata) => {
+    expect(parseStreamUrl(metadata)).toBeUndefined();
+  });
+});
 
 describe('parseStreamTitle', () => {
   it('reads the title of a metadata block', () => {

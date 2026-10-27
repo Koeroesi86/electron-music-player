@@ -8,6 +8,7 @@ import type { Database } from 'sqlite3';
 import { createRadioStreamHandler } from './radioProxy';
 import type { RadioStreamDeps } from './radioProxy';
 import { findTrackPath, getAlbumPage, getAlbumTracks, getLibrary, getTrackPage } from './libraryRepository';
+import type { RadioArtImage } from './radioArt';
 import { allowLoopbackOrigin, sendFile } from './sendFile';
 
 // audio streaming issues many range requests, so the limit only guards against runaway loops
@@ -24,6 +25,20 @@ const serveAlbumArt = (request: Request, response: Response) => {
             ${err}
           `)
     );
+};
+
+const artKey = /^[0-9a-f]{16}$/;
+
+const serveRadioArt = (getArt: RadioServerDeps['getArt']) => (request: Request, response: Response) => {
+  const key = String(request.params.key);
+  const art = artKey.test(key) ? getArt?.(key) : undefined;
+  if (!art) {
+    response.sendStatus(404);
+    return;
+  }
+
+  response.type(art.type).setHeader('Cache-Control', 'max-age=3600');
+  response.send(art.data);
 };
 
 const serveLocalFile = (request: Request, response: Response) => {
@@ -82,6 +97,9 @@ const serveAlbumTracks = serveFromLibrary((database, { query }) =>
   typeof query.path === 'string' && typeof query.title === 'string' ? getAlbumTracks(database, query.path, query.title) : undefined
 );
 
+/** The radio stream handler's dependencies, and the art the stations' songs were found with */
+export type RadioServerDeps = RadioStreamDeps & { getArt?: (key: string) => RadioArtImage | undefined };
+
 const defaultPort = 3000;
 const maxPortAttempts = 100;
 
@@ -99,7 +117,7 @@ const listenOnFreePort = (server: Express, port: number, attempt = 1): Promise<n
     listener.listen(port, '127.0.0.1');
   });
 
-function setupServer(radio: RadioStreamDeps, startPort = defaultPort) {
+function setupServer(radio: RadioServerDeps, startPort = defaultPort) {
   const server = express();
 
   server.use(limiter);
@@ -107,6 +125,7 @@ function setupServer(radio: RadioStreamDeps, startPort = defaultPort) {
   server.use('/albumart/:albumArt', serveAlbumArt);
   server.get('/local', serveLocalFile);
   server.get('/library', serveLibrary);
+  server.get('/radio-art/:key', serveRadioArt(radio.getArt));
   server.get('/radio/:uuid', createRadioStreamHandler(radio));
   server.get('/library/tracks', serveTrackPage);
   server.get('/library/albums', serveAlbumPage);

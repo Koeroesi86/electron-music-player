@@ -6,6 +6,9 @@ const metadataBlock = 16;
 /** The title of the metadata block of a stream, undefined when it carries none */
 export const parseStreamTitle = (metadata: string) => metadata.match(/StreamTitle='(.*?)';/)?.[1]?.trim() || undefined;
 
+/** The address the station names next to the title, undefined when it names none */
+export const parseStreamUrl = (metadata: string) => metadata.match(/StreamUrl='(.*?)';/)?.[1]?.trim() || undefined;
+
 /**
  * Takes the ICY metadata out of an audio stream: every `metaint` bytes of audio are followed by a length byte
  * (in blocks of 16 bytes) and that much metadata. Only the audio passes through, the titles go to `onTitle`.
@@ -19,7 +22,7 @@ export class IcyMetadataStripper extends Transform {
 
   constructor(
     private readonly metaint: number,
-    private readonly onTitle: (title: string) => void
+    private readonly onTitle: (title: string, streamUrl?: string) => void
   ) {
     super();
     this.audioLeft = metaint;
@@ -56,8 +59,9 @@ export class IcyMetadataStripper extends Transform {
   }
 
   private finishMetadata() {
-    const title = parseStreamTitle(Buffer.concat(this.metadata).toString('utf8'));
-    if (title) this.onTitle(title);
+    const metadata = Buffer.concat(this.metadata).toString('utf8');
+    const title = parseStreamTitle(metadata);
+    if (title) this.onTitle(title, parseStreamUrl(metadata));
 
     this.metadata = [];
     this.metadataLeft = undefined;

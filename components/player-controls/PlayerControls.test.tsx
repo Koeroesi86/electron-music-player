@@ -7,6 +7,8 @@ vi.mock('../scan-progress', () => ({ default: () => null }));
 const renderControls = (volume: number) => {
   const props = {
     currentSong: null,
+    streamTitle: null,
+    streamArt: null,
     currentTime: 0,
     port: '3000',
     volume,

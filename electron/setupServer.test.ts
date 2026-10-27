@@ -179,3 +179,18 @@ describe('setupServer port', () => {
     expect(global._port).toBe(port);
   });
 });
+
+describe('setupServer /radio-art', () => {
+  it('serves the art by its key and answers 404 to anything else', async () => {
+    const getArt = (key: string) => (key === 'abcdef0123456789' ? { type: 'image/png', data: Buffer.from('cover') } : undefined);
+    const port = await setupServer({ resolveStream: () => Promise.reject(new Error('no radio')), onTitle: () => {}, getArt }, await getFreePort());
+    const get = (key: string) => fetch(`http://127.0.0.1:${port}/radio-art/${key}`);
+
+    const found = await get('abcdef0123456789');
+    expect(found.status).toBe(200);
+    expect(found.headers.get('content-type')).toContain('image/png');
+    expect(Buffer.from(await found.arrayBuffer()).toString()).toBe('cover');
+    expect((await get('0000000000000000')).status).toBe(404);
+    expect((await get('..%2Fsecret')).status).toBe(404);
+  });
+});
