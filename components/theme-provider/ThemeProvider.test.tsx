@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { accentTokens, defaultAccent, panelSurfaces } from '../../client/theme';
 import ThemeProvider from './ThemeProvider';
+
+const coverAccent = vi.hoisted(() => vi.fn());
+
+vi.mock('../../client/cover-accent', () => ({ coverAccent }));
 
 type Listener = () => void;
 
@@ -91,6 +95,31 @@ describe('ThemeProvider', () => {
 
     rerender(<ThemeProvider theme={{ mode: 'dark', accent: undefined }}>content</ThemeProvider>);
     expect(root.style.getPropertyValue('--accent')).toBe(defaultAccent);
+  });
+
+  it('takes the accent from the cover in the automatic setting, and the default without one', async () => {
+    coverAccent.mockResolvedValue('#0000ff');
+    const { rerender } = render(
+      <ThemeProvider theme={{ mode: 'dark', accent: 'auto' }} cover="emusic://app/albumart/a-optimized.png">
+        content
+      </ThemeProvider>
+    );
+    await waitFor(() => expect(root.style.getPropertyValue('--accent')).toBe(accentTokens('#0000ff', 'dark')['--accent']));
+    expect(coverAccent).toHaveBeenCalledWith('emusic://app/albumart/a-optimized.png');
+
+    rerender(<ThemeProvider theme={{ mode: 'dark', accent: 'auto' }}>content</ThemeProvider>);
+    await waitFor(() => expect(root.style.getPropertyValue('--accent')).toBe(defaultAccent));
+  });
+
+  it('does not read the cover with a picked accent', () => {
+    coverAccent.mockClear();
+    render(
+      <ThemeProvider theme={{ mode: 'dark', accent: '#0000ff' }} cover="emusic://app/albumart/a-optimized.png">
+        content
+      </ThemeProvider>
+    );
+
+    expect(coverAccent).not.toHaveBeenCalled();
   });
 
   it('stops listening to the system once it is gone', () => {

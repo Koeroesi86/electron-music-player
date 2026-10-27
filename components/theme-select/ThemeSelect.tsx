@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import type { ThemeMode, ThemeSettings } from '../../types/theme';
 import { useTranslation } from '../../client/i18n';
-import { accentPresets, defaultAccent } from '../../client/theme';
+import { accentPresets, autoAccent, defaultAccent } from '../../client/theme';
 import style from './ThemeSelect.scss';
 
 interface ThemeSelectProps {
@@ -15,7 +15,8 @@ const modes: ThemeMode[] = ['system', 'light', 'dark'];
 /** The mode (system, light or dark) and the accent colour of the app */
 const ThemeSelect = ({ theme: { mode, accent }, setMode, setAccent }: ThemeSelectProps) => {
   const { t } = useTranslation();
-  const current = accent ?? defaultAccent;
+  const automatic = accent === autoAccent;
+  const current = automatic ? undefined : (accent ?? defaultAccent);
 
   return (
     <section className={style.themeSelect}>
@@ -47,7 +48,21 @@ const ThemeSelect = ({ theme: { mode, accent }, setMode, setAccent }: ThemeSelec
             onClick={() => setAccent(preset === defaultAccent ? undefined : preset)}
           />
         ))}
-        <input type="color" className={style.custom} aria-label={t('theme.custom')} value={current} onChange={(event) => setAccent(event.target.value)} />
+        <button
+          type="button"
+          aria-pressed={automatic}
+          className={classNames(style.auto, { [style.selected]: automatic })}
+          onClick={() => setAccent(autoAccent)}
+        >
+          {t('theme.auto')}
+        </button>
+        <input
+          type="color"
+          className={style.custom}
+          aria-label={t('theme.custom')}
+          value={current ?? defaultAccent}
+          onChange={(event) => setAccent(event.target.value)}
+        />
         <button type="button" className={style.reset} disabled={accent === undefined} onClick={() => setAccent(undefined)}>
           {t('theme.reset')}
         </button>

@@ -47,6 +47,7 @@
   "theme.accent": "Kiemelőszín",
   "theme.preset": "Kiemelőszín: {color}",
   "theme.custom": "Egyéni kiemelőszín",
+  "theme.auto": "Automatikus (albumborítóból)",
   "theme.reset": "Alaphelyzet",
   "player.none": "Nincs",
   "player.previous": "Előző",
