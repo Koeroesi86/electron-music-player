@@ -29,6 +29,7 @@ const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, conn
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const attempts = useRef(0);
   const skipped = useRef(0);
+  const ended = useRef(false);
   const isRadio = currentSong !== null && radioUuidOf(currentSong.path) !== undefined;
   const shouldReconnect = isRadio && isPlaying;
 
@@ -41,6 +42,15 @@ const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, conn
   const handleError = () => {
     if (isRadio) reconnect();
     else if (currentSong && isPlaying) skipUnplayable();
+  };
+
+  // seeking to the end again and again, as dragging the slider does, ends the track again and again, and each end is a step in the queue
+  const handleEnded = () => {
+    if (isRadio) return reconnect();
+    if (ended.current) return;
+
+    ended.current = true;
+    trackEnded();
   };
 
   const stopReconnecting = () => {
@@ -84,6 +94,7 @@ const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, conn
   useUpdateEffect(() => {
     stopReconnecting();
     attempts.current = 0;
+    ended.current = false;
     if (!audio.current) return;
 
     audio.current.src = currentSong ? sourceOf(currentSong, port) : '';
@@ -95,7 +106,10 @@ const AudioComponent = ({ currentSong, isPlaying, volume, port, trackEnded, conn
       style={{ display: 'none' }}
       ref={audio}
       crossOrigin="anonymous"
-      onEnded={isRadio ? reconnect : trackEnded}
+      onEnded={handleEnded}
+      onPlay={() => {
+        ended.current = false;
+      }}
       onError={handleError}
       onPlaying={() => {
         attempts.current = 0;
