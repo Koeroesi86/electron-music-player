@@ -69,6 +69,54 @@ describe('audio context', () => {
     expect(listener.mock.calls.map(([playing]) => playing)).toEqual(notified);
   });
 
+  describe('play', () => {
+    const connectPlayable = async (play: () => Promise<void>, paused = true) => {
+      const { audio } = await setup();
+      const node = document.createElement('audio');
+      Object.defineProperty(node, 'paused', { value: paused });
+      node.play = vi.fn(play);
+      audio.connectNode(node);
+      return { audio, node };
+    };
+
+    it('starts a paused element', async () => {
+      const { audio, node } = await connectPlayable(() => Promise.resolve());
+
+      audio.play();
+
+      expect(node.play).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not ask an element that plays or starts again', async () => {
+      const { audio, node } = await connectPlayable(() => Promise.resolve(), false);
+
+      audio.play();
+
+      expect(node.play).not.toHaveBeenCalled();
+    });
+
+    it('does not report a play that was interrupted as an error', async () => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { audio } = await connectPlayable(() => Promise.reject(new DOMException('interrupted by a new load request', 'AbortError')));
+
+      audio.play();
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(error).not.toHaveBeenCalled();
+    });
+
+    it('reports a play that failed', async () => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const failure = new DOMException('not allowed', 'NotAllowedError');
+      const { audio } = await connectPlayable(() => Promise.reject(failure));
+
+      audio.play();
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(error).toHaveBeenCalledWith(failure);
+    });
+  });
+
   it('shares one analyser however often it is asked for', async () => {
     const { audio, analysers } = await setup();
     audio.connectNode(document.createElement('audio'));
