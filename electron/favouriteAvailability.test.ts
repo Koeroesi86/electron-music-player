@@ -1,3 +1,4 @@
+import path from 'path';
 import { describe, expect, it } from 'vitest';
 import type { StoredFavourite } from '../types/favourites';
 import addTrack from './addTrack';
@@ -6,7 +7,21 @@ import { deleteTracksInside } from './libraryRepository';
 import { withAvailability } from './favouriteAvailability';
 import { createTestDatabase } from './test-database';
 
-const track = { path: '/music/album/a.flac', artist: 'A', album: 'Album', title: 'One', year: '', track: '1', disk: '', genre: '', picture: null, duration: 1 };
+// the paths of the library use the separator of the platform
+const musicFolder = path.join('/music');
+const albumFolder = path.join(musicFolder, 'album');
+const track = {
+  path: path.join(albumFolder, 'a.flac'),
+  artist: 'A',
+  album: 'Album',
+  title: 'One',
+  year: '',
+  track: '1',
+  disk: '',
+  genre: '',
+  picture: null,
+  duration: 1,
+};
 
 const favourite = (source: string, kind: string, id: string, snapshot: unknown = {}): StoredFavourite => ({ source, kind, id, snapshot, addedAt: 1 });
 
@@ -27,11 +42,11 @@ describe('withAvailability', () => {
   });
 
   it('marks a local album available while the library has tracks of it', async () => {
-    const album = { path: '/music/album', title: 'Album' };
+    const album = { path: albumFolder, title: 'Album' };
 
     expect(
       await availabilityOf([
-        favourite('local', 'album', '/music/album - Album', album),
+        favourite('local', 'album', `${albumFolder} - Album`, album),
         favourite('local', 'album', '/gone - Album', { path: '/gone', title: 'Album' }),
         favourite('local', 'album', 'broken', { path: 1 }),
       ])
@@ -70,7 +85,7 @@ describe('withAvailability', () => {
     await addTrack(database, track);
     await addFavourite(database, { source: 'local', kind: 'track', id: track.path }, track);
 
-    await deleteTracksInside(database, '/music');
+    await deleteTracksInside(database, musicFolder);
     const favourites = await withAvailability(await getFavourites(database), { database, radio: { findStations: async () => [] } });
 
     expect(favourites.map(({ id, available }) => ({ id, available }))).toEqual([{ id: track.path, available: false }]);
