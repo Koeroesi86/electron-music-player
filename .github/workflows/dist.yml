@@ -41,7 +41,6 @@ jobs:
     env:
       ELECTRON_CACHE: ${{ github.workspace }}/.cache/${{ matrix.platform }}-${{ matrix.arch }}/electron
       ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/${{ matrix.platform }}-${{ matrix.arch }}/electron-builder
-      SPLIT_INSTALL: ${{ matrix.platform == 'win32' && matrix.arch == 'arm64' && inputs.version == '' && 'true' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -84,9 +83,9 @@ jobs:
           path: ~/apt-archives
           key: apt-flatpak-${{ matrix.arch }}-${{ github.run_id }}
       # electron-builder bundles the flatpak from the runtime, the sdk and the base app, which it does not download itself
-      # arm64 only: the download there takes the longest; the key names the runtime, so a new one downloads once and is kept
+      # the download takes 40 to 50 seconds; the key names the runtime, so a new one downloads once and is kept
       - name: Restore the Flatpak runtime
-        if: runner.os == 'Linux' && matrix.arch == 'arm64'
+        if: runner.os == 'Linux'
         id: flatpak-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -99,46 +98,14 @@ jobs:
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user --noninteractive flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08 org.electronjs.Electron2.BaseApp//25.08
       - name: Keep the Flatpak runtime
-        if: runner.os == 'Linux' && matrix.arch == 'arm64' && steps.flatpak-cache.outputs.cache-hit != 'true'
+        if: runner.os == 'Linux' && steps.flatpak-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.local/share/flatpak
           key: flatpak-runtime-${{ matrix.arch }}-25.08
-      # no prebuilt sqlite3 exists for Windows on arm64, so npm ci compiles it with node-gyp (6 minutes) and the rebuild for electron follows (1 minute)
-      # there the compiled folder is kept outside of node_modules (npm ci empties it) and the scripts run after it is restored; a release compiles it afresh
-      - name: Restore the compiled sqlite3
-        if: env.SPLIT_INSTALL == 'true'
-        id: sqlite3-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - uses: ./.github/actions/install-dependencies
         with:
-          path: ~/sqlite3-build
-          key: sqlite3-${{ matrix.platform }}-${{ matrix.arch }}-node24-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
-        if: env.SPLIT_INSTALL != 'true'
-      # the scripts of npm ci in the same order: the ones of the dependencies (sqlite3 only without a cache), then the postinstall of the project
-      - name: Install the dependencies (compiled sqlite3 from the cache)
-        if: env.SPLIT_INSTALL == 'true'
-        shell: bash
-        env:
-          CACHE_HIT: ${{ steps.sqlite3-cache.outputs.cache-hit }}
-        run: |
-          npm ci --ignore-scripts
-          if [ "$CACHE_HIT" = "true" ]; then
-            cp -R ~/sqlite3-build node_modules/sqlite3/build
-          else
-            npm rebuild sqlite3
-          fi
-          npm rebuild $(node -e "console.log(Object.entries(require('./package-lock.json').packages).filter(([name, entry]) => name.startsWith('node_modules/') && entry.hasInstallScript && name !== 'node_modules/sqlite3').map(([name]) => name.slice('node_modules/'.length)).join(' '))")
-          npm run postinstall
-          if [ "$CACHE_HIT" != "true" ]; then
-            cp -R node_modules/sqlite3/build ~/sqlite3-build
-          fi
-      - name: Keep the compiled sqlite3
-        if: env.SPLIT_INSTALL == 'true' && steps.sqlite3-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/sqlite3-build
-          key: sqlite3-${{ matrix.platform }}-${{ matrix.arch }}-node24-${{ hashFiles('package-lock.json') }}
+          fresh: ${{ inputs.version != '' }}
       - name: Set the version of the release
         if: inputs.version != ''
         env:

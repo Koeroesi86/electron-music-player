@@ -1,0 +1,48 @@
+name: Install the dependencies
+description: npm ci, with the compiled sqlite3 of Windows on arm64 kept between runs
+
+inputs:
+  fresh:
+    description: 'true compiles everything afresh (a release), whatever the cache holds'
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    # no prebuilt sqlite3 exists for Windows on arm64, so npm ci compiles it with node-gyp (6 minutes) and the rebuild for electron follows (1 minute)
+    # there the compiled folder is kept outside of node_modules (npm ci empties it) and the scripts run after it is restored
+    - name: Restore the compiled sqlite3
+      if: runner.os == 'Windows' && runner.arch == 'ARM64' && inputs.fresh != 'true'
+      id: sqlite3-cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/sqlite3-build
+        key: sqlite3-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}
+    - name: Install the dependencies
+      if: runner.os != 'Windows' || runner.arch != 'ARM64' || inputs.fresh == 'true'
+      shell: bash
+      run: npm ci
+    # the scripts of npm ci in the same order: the ones of the dependencies (sqlite3 only without a cache), then the postinstall of the project
+    - name: Install the dependencies (compiled sqlite3 from the cache)
+      if: runner.os == 'Windows' && runner.arch == 'ARM64' && inputs.fresh != 'true'
+      shell: bash
+      env:
+        CACHE_HIT: ${{ steps.sqlite3-cache.outputs.cache-hit }}
+      run: |
+        npm ci --ignore-scripts
+        if [ "$CACHE_HIT" = "true" ]; then
+          cp -R ~/sqlite3-build node_modules/sqlite3/build
+        else
+          npm rebuild sqlite3
+        fi
+        npm rebuild $(node -e "console.log(Object.entries(require('./package-lock.json').packages).filter(([name, entry]) => name.startsWith('node_modules/') && entry.hasInstallScript && name !== 'node_modules/sqlite3').map(([name]) => name.slice('node_modules/'.length)).join(' '))")
+        npm run postinstall
+        if [ "$CACHE_HIT" != "true" ]; then
+          cp -R node_modules/sqlite3/build ~/sqlite3-build
+        fi
+    - name: Keep the compiled sqlite3
+      if: runner.os == 'Windows' && runner.arch == 'ARM64' && inputs.fresh != 'true' && steps.sqlite3-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/sqlite3-build
+        key: sqlite3-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}
