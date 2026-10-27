@@ -1,6 +1,6 @@
 const { spawn, spawnSync } = require('child_process')
 const { createServer } = require('net')
-const { existsSync, mkdtempSync, readFileSync, rmSync } = require('fs')
+const { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require('fs')
 const { tmpdir } = require('os')
 const { dirname, join, resolve } = require('path')
 const { packagedExecutable } = require('./dist-layout')
@@ -60,11 +60,91 @@ const findWindowUrl = async (port, child) => {
       }
     )
     const target = targets.find(candidate => candidate.url.includes('/app/index.html'))
-    if (target) return target.url
+    if (target) return target
     open = targets.map(candidate => candidate.url).join(', ') || open
     await new Promise(done => setTimeout(done, 500))
   }
   throw new Error(`No main window, open: ${open}, debugging endpoint error: ${endpointError}`)
+}
+
+// a mono 8 bit wav of one second per 8000 bytes, the smallest file the library scan takes for a track
+const writeWav = (file, seconds) => {
+  const data = Buffer.alloc(8000 * seconds, 128)
+  const header = Buffer.alloc(44)
+  header.write('RIFF', 0)
+  header.writeUInt32LE(36 + data.length, 4)
+  header.write('WAVEfmt ', 8)
+  header.writeUInt32LE(16, 16)
+  header.writeUInt16LE(1, 20)
+  header.writeUInt16LE(1, 22)
+  header.writeUInt32LE(8000, 24)
+  header.writeUInt32LE(8000, 28)
+  header.writeUInt16LE(1, 32)
+  header.writeUInt16LE(8, 34)
+  header.write('data', 36)
+  header.writeUInt32LE(data.length, 40)
+  writeFileSync(file, Buffer.concat([header, data]))
+}
+
+// runs an expression in the window through the debugging endpoint and answers its value
+const evaluateIn = (socketUrl, expression) =>
+  new Promise((done, fail) => {
+    const socket = new WebSocket(socketUrl)
+    socket.onerror = () => fail(new Error('The debugging socket failed'))
+    socket.onopen = () => socket.send(JSON.stringify({ id: 1, method: 'Runtime.evaluate', params: { expression, awaitPromise: true, returnByValue: true } }))
+    socket.onmessage = ({ data }) => {
+      const { result, error } = JSON.parse(data)
+      socket.close()
+      if (error || result.exceptionDetails) return fail(new Error(JSON.stringify(error ?? result.exceptionDetails)))
+      done(result.result.value)
+    }
+  })
+
+// the tracks are served over the emusic protocol: the whole file, a range of it, and a seek of an audio element that needs ranges
+const checkTrackProtocol = async (socketUrl, port) => {
+  const folder = join(home, 'music')
+  const file = join(folder, 'smoke.wav')
+  mkdirSync(folder)
+  writeWav(file, 10)
+
+  const deadline = Date.now() + timeout
+  while (Date.now() < deadline) {
+    await evaluateIn(socketUrl, `window.electronAPI.send('ADD_FOLDERS_TO_LIBRARY', [{ path: ${JSON.stringify(folder)}, lastModified: 0 }])`)
+    const tracks = await fetch(`http://127.0.0.1:${port}/library`).then(response => response.json())
+    if (tracks.some(track => track.path === file)) break
+    await new Promise(done => setTimeout(done, 1000))
+  }
+
+  const result = await evaluateIn(
+    socketUrl,
+    `(async () => {
+      const url = 'emusic://track?path=' + encodeURIComponent(${JSON.stringify(file)})
+      const whole = await fetch(url)
+      const part = await fetch(url, { headers: { range: 'bytes=100-199' } })
+      const suffix = await fetch(url, { headers: { range: 'bytes=-50' } })
+      const outside = await fetch('emusic://track?path=' + encodeURIComponent(${JSON.stringify(join(home, 'other.wav'))}))
+      const seek = async source => {
+        const audio = new Audio()
+        audio.crossOrigin = 'anonymous'
+        audio.src = source
+        await new Promise((done, fail) => { audio.onloadedmetadata = done; audio.onerror = () => fail(new Error('audio error ' + audio.error?.code)) })
+        audio.currentTime = 6
+        await new Promise(done => { audio.onseeked = done })
+        return [Math.round(audio.duration), Math.round(audio.currentTime)]
+      }
+      return {
+        whole: [whole.status, (await whole.arrayBuffer()).byteLength],
+        part: [part.status, part.headers.get('content-range'), (await part.arrayBuffer()).byteLength],
+        suffix: [suffix.status, suffix.headers.get('content-range'), (await suffix.arrayBuffer()).byteLength],
+        outside: outside.status,
+        emusicSeek: await seek(url),
+        httpSeek: await seek('http://127.0.0.1:${port}/local?path=' + encodeURIComponent(${JSON.stringify(file)}))
+      }
+    })()`
+  )
+  const expected = { whole: [200, 80044], part: [206, 'bytes 100-199/80044', 100], suffix: [206, 'bytes 79994-80043/80044', 50], outside: 404, emusicSeek: [10, 6], httpSeek: [10, 6] }
+  if (JSON.stringify(result) !== JSON.stringify(expected)) throw new Error(`The emusic protocol answered ${JSON.stringify(result)}, expected ${JSON.stringify(expected)}`)
+  console.log(`emusic protocol passed: ${JSON.stringify(result)}`)
 }
 
 // taskkill also takes the helper processes down on windows
@@ -95,11 +175,14 @@ const run = async () => {
   const port = await freePort()
   const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`, '--enable-logging', `--log-file=${logFile}`, `--user-data-dir=${join(home, 'user-data')}`], { env, stdio: 'inherit' })
   try {
-    const url = await findWindowUrl(port, child)
+    const target = await findWindowUrl(port, child)
+    const { url } = target
     const response = await fetch(`${new URL(url).origin}/library`)
     if (!response.ok) throw new Error(`/library answered ${response.status}`)
     const library = await response.json()
     if (!Array.isArray(library)) throw new Error('/library did not answer a list')
+    // the flatpak sandbox does not see the folder of the run
+    if (!flatpak) await checkTrackProtocol(target.webSocketDebuggerUrl, new URL(url).port)
     console.log(`Smoke test passed: ${url}, ${library.length} tracks`)
   } finally {
     await stop(child)

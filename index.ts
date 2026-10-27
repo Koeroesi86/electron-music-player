@@ -11,6 +11,7 @@ import getLoadingWindow from './electron/getLoadingWindow';
 import createDatabase from './electron/createDatabase';
 import setupListeners from './electron/setupListeners';
 import setupServer from './electron/setupServer';
+import { handleTrackProtocol, registerTrackScheme } from './electron/trackProtocol';
 import { createRadioBrowser } from './electron/radioBrowser';
 import { createRadioArt } from './electron/radioArt';
 import { getAppUserModelId } from './electron/appUserModelId';
@@ -123,8 +124,12 @@ const radio = createRadioBrowser(`eMusic/${app.getVersion()}`);
 
 const radioArt = createRadioArt();
 
-const getPort = () =>
-  setupServer({
+registerTrackScheme();
+
+const getPort = () => {
+  handleTrackProtocol(() => global._database);
+
+  return setupServer({
     resolveStream: radio.resolveStream,
     getArt: radioArt.get,
     onTitle: (uuid, title, streamUrl) => {
@@ -142,6 +147,7 @@ const getPort = () =>
       windowLocation += `?port=${port}`;
     }
   });
+};
 
 // a development run updates from the mock source only when asked to
 const unavailable = isMockUpdate ? undefined : getUpdateUnavailableReason(app.isPackaged, process.platform, process.env);

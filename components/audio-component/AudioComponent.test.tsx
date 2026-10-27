@@ -43,6 +43,18 @@ describe('AudioComponent', () => {
   });
 });
 
+describe('AudioComponent local tracks', () => {
+  afterEach(cleanup);
+
+  it('plays a track of the library through the emusic protocol', () => {
+    const track: Track = { ...toRadioTrack({ uuid: 'abc-1', name: 'x', country: '', tags: [], codec: '', bitrate: 0 }), path: '/music/a b.flac' };
+    const view = renderAudio(null);
+    view.rerender(<AudioComponent currentSong={track} isPlaying={false} volume={1} port="3000" trackEnded={vi.fn()} connectNode={vi.fn()} />);
+
+    expect(view.container.querySelector('audio')?.src).toBe('emusic://track?path=%2Fmusic%2Fa%20b.flac');
+  });
+});
+
 describe('AudioComponent radio reconnect', () => {
   const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
 
