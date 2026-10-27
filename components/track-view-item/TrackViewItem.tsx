@@ -2,8 +2,10 @@ import { memo } from 'react';
 import type { MouseEventHandler, ReactNode } from 'react';
 import classNames from 'classnames';
 import type { Track } from '../../types/library';
+import { trackFavourite } from '../../client/favourites';
 import style from './TrackViewItem.scss';
 import Time from '../time';
+import FavouriteButton from '../favourite-button';
 
 /** The header row displays labels in place of the track values */
 export type TrackLabels = Record<'duration' | 'artist' | 'year' | 'album' | 'track' | 'title', string>;
@@ -46,6 +48,7 @@ const TrackViewItem = ({
     onClick={() => 'path' in track && clickTrack(track)}
     onDoubleClick={() => 'path' in track && doubleClickTrack(track)}
   >
+    <TrackViewItemField className={style.favourite}>{'path' in track && <FavouriteButton item={trackFavourite(track)} />}</TrackViewItemField>
     <TrackViewItemField className={style.duration}>
       {typeof track.duration === 'string' ? track.duration : <Time seconds={track.duration} />}
     </TrackViewItemField>

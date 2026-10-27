@@ -7,6 +7,7 @@ import { debounce } from '../../utils/debounce';
 import type { RootState } from '../reducers';
 import toAddedFiles from '../../added-files';
 import { getCoverUrl } from '../../cover-url';
+import { isFavourite } from '../../favourites';
 import { fetchAlbumPage, fetchTrackPage } from '../../library-api';
 import { actionMiddleware, onAction } from '../on-action';
 import type { Store } from '../on-action';
@@ -35,6 +36,10 @@ function addListeners(store: Store) {
   electronAPI.on<{ tags: RadioTag[] }>('RADIO_TAGS_LOADED', (payload) => store.dispatch({ type: 'RADIO_TAGS_LOADED', payload }));
   electronAPI.on<{ uuid: string; title: string }>('RADIO_STREAM_TITLE', (payload) => store.dispatch({ type: 'RADIO_STREAM_TITLE', payload }));
   electronAPI.on<{ uuid: string; title: string; art: string }>('RADIO_STREAM_ART', (payload) => store.dispatch({ type: 'RADIO_STREAM_ART', payload }));
+  // a favourite of a source this version does not know is left out
+  electronAPI.on<{ favourites: unknown[] }>('FAVOURITES', ({ favourites }) =>
+    store.dispatch({ type: 'FAVOURITES_LOADED', payload: { favourites: favourites.filter(isFavourite) } })
+  );
   electronAPI.on<{ folder: string }>('SCANNING_FOLDER', (payload) => store.dispatch({ type: 'SCANNING_FOLDER', payload }));
 }
 
@@ -125,6 +130,7 @@ const start = (store: Store) => {
   addListeners(store);
   electronAPI.send('APP_READY', 'Ready to receive');
   electronAPI.send('GET_APP_VERSION');
+  electronAPI.send('FAVOURITES_LOAD');
 
   setInterval(() => {
     if (store.getState().uiState.totalCount === 0) rescanLibrary(false);
@@ -149,6 +155,8 @@ const handleActions = actionMiddleware((store) => [
     onAction(type, () => {
       generation += 1;
       store.dispatch({ type: 'INVALIDATE_LIBRARY' });
+      // what the library has decides which local favourites are available
+      store.dispatch({ type: 'LOAD_FAVOURITES' });
     })
   ),
   onAction('CLOSE_APP', () => {
@@ -160,6 +168,9 @@ const handleActions = actionMiddleware((store) => [
   onAction('PLAY_TRACK', ({ payload }) => {
     if (payload.track) notifyTrack(store, payload.track);
   }),
+  onAction('LOAD_FAVOURITES', () => electronAPI.send('FAVOURITES_LOAD')),
+  onAction('ADD_FAVOURITE', ({ payload }) => electronAPI.send('FAVOURITE_ADD', payload.favourite)),
+  onAction('REMOVE_FAVOURITE', ({ payload }) => electronAPI.send('FAVOURITE_REMOVE', payload.key)),
   onAction('SEARCH_RADIO', ({ payload }) => electronAPI.send('RADIO_SEARCH', payload.query)),
   onAction('LOAD_RADIO_TAGS', () => electronAPI.send('RADIO_TAGS')),
   onAction('CHECK_FOR_UPDATES', () => electronAPI.send('CHECK_FOR_UPDATES')),

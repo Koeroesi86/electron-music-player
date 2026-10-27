@@ -3,6 +3,7 @@ import {
   MdEqualizer as EQIcon,
   MdSettings as SettingsIcon,
   MdCloudQueue as OnlineIcon,
+  MdFavorite as FavouritesIcon,
   MdMusicNote as NowPlayingIcon,
   MdQueueMusic as LocalLibraryIcon,
 } from 'react-icons/md';
@@ -46,6 +47,15 @@ function Navigation({ setTab = () => {}, tab = 'local' }: NavigationProps) {
       >
         <OnlineIcon size={'12px'} />
         <span className={style.label}>{t('nav.online')}</span>
+      </div>
+      <div
+        onClick={() => setTab('favourites')}
+        className={classNames(style.item, {
+          [style.active]: tab === 'favourites',
+        })}
+      >
+        <FavouritesIcon size={'12px'} />
+        <span className={style.label}>{t('nav.favourites')}</span>
       </div>
       <div
         onClick={() => setTab('equalizer')}

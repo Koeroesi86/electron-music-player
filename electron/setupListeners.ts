@@ -8,6 +8,7 @@ import registerStateListeners from './registerStateListeners';
 import registerLibraryListeners from './registerLibraryListeners';
 import registerPlaylistDownload from './registerPlaylistDownload';
 import registerRadioListeners from './registerRadioListeners';
+import registerFavouriteListeners from './registerFavouriteListeners';
 import registerLauncherListeners from './registerLauncherListeners';
 import registerUpdateListeners from './registerUpdateListeners';
 
@@ -17,6 +18,7 @@ const registrars: ((context: ListenerContext) => void)[] = [
   registerLibraryListeners,
   registerPlaylistDownload,
   registerRadioListeners,
+  registerFavouriteListeners,
   registerLauncherListeners,
   registerUpdateListeners,
 ];

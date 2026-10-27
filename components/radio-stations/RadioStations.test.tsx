@@ -4,6 +4,9 @@ import type { RadioStation } from '../../types/radio';
 import type { RadioState } from '../../client/redux/radio/reducer';
 import RadioStations from './RadioStations';
 
+// the heart is tested with its own component, it needs the store
+vi.mock('../favourite-button', () => ({ default: () => null }));
+
 const jazz: RadioStation = { uuid: 'a', name: 'Jazz FM', country: 'Hungary', tags: ['jazz'], codec: 'MP3', bitrate: 128 };
 const rock: RadioStation = { uuid: 'b', name: 'Rock Radio', country: '', tags: [], codec: 'AAC', bitrate: 0 };
 

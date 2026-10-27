@@ -3,8 +3,11 @@ import slugify from 'slugify';
 import { MdPlayArrow as PlayIcon } from 'react-icons/md';
 import type { Track } from '../../types/library';
 import { toNowPlaying } from '../../client/now-playing';
+import type { RadioStation } from '../../types/radio';
 import { useTranslation } from '../../client/i18n';
+import { trackFavourite } from '../../client/favourites';
 import style from './NowPlaying.scss';
+import FavouriteButton from '../favourite-button';
 
 interface NowPlayingProps {
   nowPlaying: Track[];
@@ -12,10 +15,12 @@ interface NowPlayingProps {
   port: string;
   streamTitle: string | null;
   streamArt: string | null;
+  /** The station that was played last */
+  station?: RadioStation;
   playTrack: (track: Track) => void;
 }
 
-const NowPlaying = ({ nowPlaying, currentSong, port, streamTitle, streamArt, playTrack }: NowPlayingProps) => {
+const NowPlaying = ({ nowPlaying, currentSong, port, streamTitle, streamArt, station, playTrack }: NowPlayingProps) => {
   const { t } = useTranslation();
   const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt, port) : undefined;
 
@@ -23,7 +28,7 @@ const NowPlaying = ({ nowPlaying, currentSong, port, streamTitle, streamArt, pla
     <div className={style.nowPlaying}>
       <div className={style.header}>{t('nowPlaying.title')}</div>
       <div className={style.contents}>
-        {shown && (
+        {currentSong && shown && (
           <div className={style.currentSong}>
             <div className={style.cover} style={shown.cover ? { backgroundImage: `url("${shown.cover}")` } : undefined} />
             <div className={style.meta}>
@@ -33,6 +38,7 @@ const NowPlaying = ({ nowPlaying, currentSong, port, streamTitle, streamArt, pla
               </div>
               <div className={style.album}>{shown.track.album}</div>
               <div className={style.artist}>{shown.track.artist}</div>
+              <FavouriteButton item={trackFavourite(currentSong, station)} className={style.favourite} />
             </div>
           </div>
         )}

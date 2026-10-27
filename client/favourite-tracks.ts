@@ -1,0 +1,22 @@
+import type { Favourite } from '../types/favourites';
+import type { Track } from '../types/library';
+import { fetchAlbum } from './library-api';
+import { toRadioTrack } from './radio-track';
+
+/** The tracks to play for a favourite: the track itself, the tracks of an album or the stream of a station; none when the source no longer has it */
+const tracksOf = (favourite: Favourite, port: string): Promise<Track[]> => {
+  if (!favourite.available) return Promise.resolve([]);
+
+  switch (favourite.kind) {
+    case 'track':
+      return Promise.resolve([favourite.snapshot]);
+    case 'album':
+      return fetchAlbum(favourite.snapshot, port).then(({ tracks }) => tracks);
+    default:
+      return Promise.resolve([toRadioTrack(favourite.snapshot)]);
+  }
+};
+
+/** The tracks of the favourites in their order, the ones that are not available are left out */
+export const getFavouriteTracks = (favourites: Favourite[], port: string): Promise<Track[]> =>
+  Promise.all(favourites.map((favourite) => tracksOf(favourite, port))).then((tracks) => tracks.flat());

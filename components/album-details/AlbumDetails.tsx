@@ -4,7 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { Album, Track } from '../../types/library';
 import { useTranslation } from '../../client/i18n';
 import { useDelayedValue } from '../../client/hooks/use-delayed-value';
+import { albumFavourite } from '../../client/favourites';
 import style from './AlbumDetails.scss';
+import FavouriteButton from '../favourite-button';
 import Time from '../time';
 
 interface AlbumDetailsProps {
@@ -29,6 +31,7 @@ const AlbumDetails = ({ album, playTracks, close, port }: AlbumDetailsProps) => 
       />
       <div className={style.artist}>{displayed.artist}</div>
       <div className={style.title}>{displayed.title}</div>
+      {album && <FavouriteButton item={albumFavourite(album)} className={style.favourite} />}
       <div className={style.meta}>
         <div className={style.year}>{displayed.year}</div>
         <div className={style.duration}>

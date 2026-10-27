@@ -5,6 +5,8 @@ import type { AlbumSummary } from '../../types/library';
 import style from './AlbumViewThumbnail.scss';
 import Time from '../time';
 import { getCoverUrl } from '../../client/cover-url';
+import { albumFavourite } from '../../client/favourites';
+import FavouriteButton from '../favourite-button';
 
 interface AlbumViewThumbnailProps {
   album: AlbumSummary;
@@ -16,6 +18,7 @@ interface AlbumViewThumbnailProps {
 const AlbumViewThumbnail = ({ album, port, selectAlbum, playAlbum }: AlbumViewThumbnailProps) => (
   <div className={style.albumViewThumbnail} onClick={() => selectAlbum(album)} onDoubleClick={() => playAlbum(album)} onTouchEnd={() => playAlbum(album)}>
     <div title={album.title} className={style.cover} style={album.cover ? { backgroundImage: `url("${getCoverUrl(port, album.cover)}")` } : undefined}>
+      <FavouriteButton item={albumFavourite(album)} className={style.favourite} />
       <div className={style.overlay}>
         <div
           className={classNames(style.metaData, style.icon)}

@@ -22,6 +22,10 @@ describe('radio reducer', () => {
     expect(found).toMatchObject({ stations: [station], loading: false, error: undefined });
   });
 
+  it('remembers the station that was played last', () => {
+    expect(run({ type: 'PLAY_RADIO_STATION', payload: { station } }).playing).toEqual(station);
+  });
+
   it('drops the stations of a search that was replaced', () => {
     const searching = run({ type: 'SEARCH_RADIO', payload: { query: { name: 'rock' } } });
 

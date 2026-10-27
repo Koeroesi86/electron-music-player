@@ -1,10 +1,11 @@
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
+import type { Favourite, FavouriteKey, NewFavourite } from '../../types/favourites';
 import type { RadioQuery, RadioStation, RadioTag } from '../../types/radio';
 import type { UpdateState } from '../../types/update';
 
 export type LibraryView = 'albums' | 'tracks' | 'folders';
 export type OnlineView = 'radio';
-export type Tab = 'now-playing' | 'local' | 'online-sources' | 'equalizer' | 'settings';
+export type Tab = 'now-playing' | 'local' | 'online-sources' | 'favourites' | 'equalizer' | 'settings';
 
 export interface PlaylistItem {
   file: string;
@@ -70,6 +71,7 @@ export type AppAction =
   | EmptyAction<'CLEAR_PLAYED'>
   | EmptyAction<'POP_PLAYED'>
   | EmptyAction<'LOAD_RADIO_TAGS'>
+  | EmptyAction<'LOAD_FAVOURITES'>
   | EmptyAction<'CLICK_NOTIFICATION'>
   | EmptyAction<'CHECK_FOR_UPDATES'>
   | EmptyAction<'INSTALL_UPDATE'>
@@ -78,6 +80,9 @@ export type AppAction =
   | PayloadAction<'SEARCH_RADIO', { query: RadioQuery }>
   | PayloadAction<'RADIO_STATIONS', { query: RadioQuery; stations: RadioStation[]; error?: string }>
   | PayloadAction<'RADIO_TAGS_LOADED', { tags: RadioTag[] }>
+  | PayloadAction<'FAVOURITES_LOADED', { favourites: Favourite[] }>
+  | PayloadAction<'ADD_FAVOURITE', { favourite: NewFavourite }>
+  | PayloadAction<'REMOVE_FAVOURITE', { key: FavouriteKey }>
   | PayloadAction<'PLAY_RADIO_STATION', { station: RadioStation }>
   | PayloadAction<'RADIO_STREAM_TITLE', { uuid: string; title: string }>
   | PayloadAction<'RADIO_STREAM_ART', { uuid: string; title: string; art: string }>

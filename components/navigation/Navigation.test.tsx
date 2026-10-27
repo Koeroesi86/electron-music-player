@@ -9,6 +9,7 @@ describe('Navigation', () => {
     ['Now playing', 'now-playing'],
     ['Local collection', 'local'],
     ['Online', 'online-sources'],
+    ['Favourites', 'favourites'],
     ['Equalizer', 'equalizer'],
     ['Settings', 'settings'],
   ])('selects the %s tab on click', (label, tab) => {
