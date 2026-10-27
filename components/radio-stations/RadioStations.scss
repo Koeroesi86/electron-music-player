@@ -36,8 +36,21 @@
       flex: 0 1 200px;
       min-width: 0;
 
+      // the open list takes the background of the select, which is translucent: it gets a solid one of the theme
       option {
         color: var(--text);
+        background-color: var(--panel-solid);
+      }
+    }
+
+    .select,
+    .clear {
+      &:hover:not(:disabled) {
+        background-color: var(--overlay-strong);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--accent);
       }
     }
 
@@ -75,6 +88,14 @@
       border: 0;
       border-radius: 3px;
       background-color: var(--overlay);
+
+      &:hover {
+        background-color: var(--overlay-strong);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--accent);
+      }
     }
 
     .station {
