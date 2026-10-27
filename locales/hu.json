@@ -65,6 +65,8 @@
   "tracks.selectAll": "Összes kijelölése",
   "tracks.playSelected": "Kijelöltek lejátszása",
   "album.play": "Album lejátszása",
+  "album.close": "Bezárás",
+  "album.cover": "Album borítója",
   "radio.search": "Állomások keresése",
   "radio.allGenres": "Minden műfaj",
   "radio.loading": "Állomások betöltése…",
