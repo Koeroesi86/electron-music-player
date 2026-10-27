@@ -79,4 +79,18 @@ describe('ThemeSelect', () => {
 
     expect(setAccent).toHaveBeenCalledWith(undefined);
   });
+
+  it('offers the colour of the album art, marked while it is set and with no preset marked', () => {
+    const setAccent = vi.fn();
+    const { rerender } = render(<ThemeSelect theme={system} setMode={vi.fn()} setAccent={setAccent} />);
+    const auto = screen.getByRole('button', { name: 'Automatic (from album art)' });
+    expect(auto.getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.click(auto);
+    expect(setAccent).toHaveBeenCalledWith('auto');
+
+    rerender(<ThemeSelect theme={{ mode: 'system', accent: 'auto' }} setMode={vi.fn()} setAccent={setAccent} />);
+    expect(auto.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getAllByRole('button', { pressed: true })).toEqual([auto]);
+  });
 });

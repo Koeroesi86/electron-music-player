@@ -1,11 +1,14 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { ThemeSettings } from '../../types/theme';
-import { accentTokens, resolveTheme } from '../../client/theme';
+import { accentTokens, autoAccent, resolveTheme } from '../../client/theme';
+import { useCoverAccent } from '../../client/hooks/use-cover-accent';
 import './ThemeProvider.scss';
 
 interface ThemeProviderProps {
   theme: ThemeSettings;
+  /** The cover of what plays, the accent follows it in the automatic setting */
+  cover?: string;
   children: ReactNode;
 }
 
@@ -28,8 +31,10 @@ const useSystemDark = () => {
 };
 
 /** Puts the theme on the root element for the stylesheets (data-theme and the accent properties) and the canvases (the computed style), before the page is painted */
-const ThemeProvider = ({ theme: { mode, accent }, children }: ThemeProviderProps) => {
+const ThemeProvider = ({ theme: { mode, accent: picked }, cover, children }: ThemeProviderProps) => {
   const resolved = resolveTheme(mode, useSystemDark());
+  const fromCover = useCoverAccent(cover, picked === autoAccent);
+  const accent = picked === autoAccent ? fromCover : picked;
 
   useLayoutEffect(() => {
     const root = document.documentElement;

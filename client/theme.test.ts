@@ -34,6 +34,11 @@ describe('parseAccent', () => {
     expect(parseAccent('#0a1b2c')).toBe('#0a1b2c');
   });
 
+  it('keeps the automatic setting', () => {
+    expect(parseAccent('auto')).toBe('auto');
+    expect(restoreTheme({ mode: 'dark', accent: 'auto' })).toEqual({ mode: 'dark', accent: 'auto' });
+  });
+
   it.each([undefined, null, 1, '', 'red', '#fff', '#ff868', '#ff86866', 'ff8686', '#gg8686', 'rgb(1,2,3)'])('falls back to the default for %j', (value) => {
     expect(parseAccent(value)).toBeUndefined();
   });

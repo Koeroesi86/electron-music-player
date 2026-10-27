@@ -47,6 +47,7 @@
   "theme.accent": "Accent colour",
   "theme.preset": "Accent colour {color}",
   "theme.custom": "Custom accent colour",
+  "theme.auto": "Automatic (from album art)",
   "theme.reset": "Reset",
   "player.none": "None",
   "player.previous": "Previous",

@@ -7,6 +7,9 @@ export const defaultAccent = '#ff8686';
 /** Colours picked to read on both themes, the settings offer them next to a custom one */
 export const accentPresets = [defaultAccent, '#5aa9ff', '#4cc38a', '#f5b942', '#b48cff', '#2ec4b6'];
 
+/** The accent setting that follows the cover of the playing track, in place of a colour */
+export const autoAccent = 'auto';
+
 export const defaultTheme: ThemeSettings = { mode: 'system', accent: undefined };
 
 /** The panel colours of components/theme-provider/ThemeProvider.scss, which text in the accent has to stand out from */
@@ -19,9 +22,12 @@ const modes: ThemeMode[] = ['system', 'light', 'dark'];
 
 const parseMode = (value: unknown): ThemeMode => modes.find((mode) => mode === value) ?? defaultTheme.mode;
 
-/** The accent as lower case `#rrggbb`, undefined for anything else so it falls back to the default */
-export const parseAccent = (value: unknown): string | undefined =>
-  typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value.toLowerCase() : undefined;
+/** The accent as lower case `#rrggbb` or `auto`, undefined for anything else so it falls back to the default */
+export const parseAccent = (value: unknown): string | undefined => {
+  if (value === autoAccent) return autoAccent;
+
+  return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value.toLowerCase() : undefined;
+};
 
 /** The saved theme, with every part that is not valid replaced by its default */
 export const restoreTheme = (value: unknown): ThemeSettings =>
@@ -34,7 +40,7 @@ export const resolveTheme = (mode: ThemeMode, systemDark: boolean): ResolvedThem
 
 const channels = (hex: string) => [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16));
 
-const toHex = (values: number[]) => `#${values.map((value) => Math.round(value).toString(16).padStart(2, '0')).join('')}`;
+export const toHex = (values: number[]) => `#${values.map((value) => Math.round(value).toString(16).padStart(2, '0')).join('')}`;
 
 /** The colour `amount` (0 to 1) of the way from one colour to the other */
 const mix = (from: string, to: string, amount: number) => {

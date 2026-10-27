@@ -64,6 +64,23 @@
     }
   }
 
+  .auto {
+    -webkit-app-region: no-drag;
+    height: 24px;
+    padding: 0 8px;
+    color: inherit;
+    font-size: 12px;
+    border: 0;
+    border-radius: 3px;
+    background-color: var(--overlay);
+    cursor: pointer;
+
+    &.selected {
+      color: var(--accent-contrast);
+      background-color: var(--accent);
+    }
+  }
+
   .custom {
     -webkit-app-region: no-drag;
     width: 32px;
