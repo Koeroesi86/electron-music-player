@@ -2,49 +2,64 @@ import type { CSSProperties } from 'react';
 import type { PageLocals } from '../index-page/Index';
 import loading from './assets/loading.svg';
 
-const style: Record<'body' | 'container' | 'wrapper' | 'text' | 'track' | 'bar', CSSProperties> = {
+const style: Record<'body' | 'container' | 'wrapper' | 'logo' | 'name' | 'text' | 'track' | 'bar', CSSProperties> = {
   body: {
     backgroundColor: 'transparent',
+    margin: '0',
   },
   container: {
     WebkitAppRegion: 'drag',
     WebkitUserSelect: 'none',
+    boxSizing: 'border-box',
     position: 'absolute',
     top: '0',
     left: '0',
     width: '100%',
     height: '100%',
     display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    fontFamily: 'sans-serif',
+    background: 'radial-gradient(circle at 50% 38%, rgba(255, 122, 60, 0.18), transparent 55%), linear-gradient(180deg, #262b36, #0e1016)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: '20px',
+    fontFamily: 'system-ui, sans-serif',
     color: '#ffffff',
-    borderRadius: '6px',
   },
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: {
+    width: '112px',
+    height: '112px',
+  },
+  name: {
+    marginTop: '8px',
+    fontSize: '22px',
+    fontWeight: '600',
+    letterSpacing: '0.04em',
   },
   text: {
-    marginTop: '20px',
+    marginTop: '10px',
+    minHeight: '16px',
+    fontSize: '12px',
+    letterSpacing: '0.02em',
     textAlign: 'center',
-    fontWeight: '100',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   track: {
-    marginTop: '12px',
-    width: '200px',
-    height: '4px',
+    marginTop: '14px',
+    width: '180px',
+    height: '3px',
     borderRadius: '2px',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     overflow: 'hidden',
   },
   bar: {
     width: '0%',
     height: '100%',
-    backgroundColor: '#ffffff',
+    background: 'linear-gradient(90deg, #ffb347, #ff5a36)',
     transition: 'width 0.2s ease',
   },
 };
@@ -59,9 +74,10 @@ function LoadingSplash(props: { locals: Pick<PageLocals, 'title'> }) {
       <body style={style.body}>
         <div style={style.container}>
           <div style={style.wrapper}>
-            <img src={loading} />
+            <img src={loading} style={style.logo} />
+            <div style={style.name}>{props.locals.title}</div>
             <div id="status" style={style.text} />
-            <div id="progress-track" style={{ ...style.track, alignSelf: 'center' }} hidden>
+            <div id="progress-track" style={style.track} hidden>
               <div id="progress-bar" style={style.bar} />
             </div>
           </div>

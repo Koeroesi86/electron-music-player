@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { UpdateState } from '../../types/update';
 import Confirm from '../confirm';
 import { useTranslation } from '../../client/i18n';
+import appIcon from '../../assets/icon.svg';
 import style from './About.scss';
 
 interface AboutProps {
@@ -29,8 +30,13 @@ const About = ({ update, isPlaying, check, install, openReleases }: AboutProps) 
   return (
     <section className={style.about}>
       <div className={style.sectionTitle}>{t('about.title')}</div>
-      <div className={style.version}>{t('about.version', { version: update.version })}</div>
-      <div className={style.details}>{t('about.details', { electron: update.electron, chrome: update.chrome })}</div>
+      <div className={style.identity}>
+        <img className={style.icon} src={appIcon} alt="" />
+        <div>
+          <div className={style.version}>{t('about.version', { version: update.version })}</div>
+          <div className={style.details}>{t('about.details', { electron: update.electron, chrome: update.chrome })}</div>
+        </div>
+      </div>
       {unavailable && <div className={style.status}>{t(`about.unavailable.${unavailable}`)}</div>}
       {unavailable && unavailable !== 'development' && action(t('about.releases'), openReleases)}
       {!unavailable && status.kind === 'checking' && <div className={style.status}>{t('about.checking')}</div>}

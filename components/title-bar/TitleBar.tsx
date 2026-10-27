@@ -1,4 +1,5 @@
 import type { MouseEventHandler, ReactNode } from 'react';
+import appIcon from '../../assets/icon.svg';
 import style from './TitleBar.scss';
 import { FiMaximize as MaximizeIcon, FiMinimize2 as MinimizeIcon, FiX as CloseIcon } from 'react-icons/fi';
 
@@ -32,7 +33,10 @@ function TitleBar({ close = () => {}, minimize = () => {}, maximize = () => {}, 
           <MaximizeIcon size={iconSize} />
         </TitleBarButton>
       </div>
-      <div className={style.title}>{title}</div>
+      <div className={style.title}>
+        <img className={style.icon} src={appIcon} alt="" />
+        {title}
+      </div>
     </div>
   );
 }
