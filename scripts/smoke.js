@@ -90,10 +90,16 @@ const writeWav = (file, seconds) => {
 const evaluateIn = (socketUrl, expression) =>
   new Promise((done, fail) => {
     const socket = new WebSocket(socketUrl)
+    // a page that waits for an event that never comes would hold the run until the limit of the job
+    const timer = setTimeout(() => {
+      socket.close()
+      fail(new Error(`The window did not answer in ${timeout} ms`))
+    }, timeout)
     socket.onerror = () => fail(new Error('The debugging socket failed'))
     socket.onopen = () => socket.send(JSON.stringify({ id: 1, method: 'Runtime.evaluate', params: { expression, awaitPromise: true, returnByValue: true } }))
     socket.onmessage = ({ data }) => {
       const { result, error } = JSON.parse(data)
+      clearTimeout(timer)
       socket.close()
       if (error || result.exceptionDetails) return fail(new Error(JSON.stringify(error ?? result.exceptionDetails)))
       done(result.result.value)
@@ -107,29 +113,42 @@ const checkTrackProtocol = async (socketUrl, port) => {
   mkdirSync(folder)
   writeWav(file, 10)
 
+  // the library keeps the path as the scan made it, which is not always the spelling of the one that was added (short names, separators, the case of a drive)
   const deadline = Date.now() + timeout
-  while (Date.now() < deadline) {
+  let tracks = []
+  let stored
+  while (!stored && Date.now() < deadline) {
     await evaluateIn(socketUrl, `window.electronAPI.send('ADD_FOLDERS_TO_LIBRARY', [{ path: ${JSON.stringify(folder)}, lastModified: 0 }])`)
-    const tracks = await fetch(`http://127.0.0.1:${port}/library`).then(response => response.json())
-    if (tracks.some(track => track.path === file)) break
-    await new Promise(done => setTimeout(done, 1000))
+    tracks = await fetch(`http://127.0.0.1:${port}/library`).then(response => response.json())
+    stored = tracks.find(track => /(^|[\\/])smoke\.wav$/.test(track.path))
+    if (!stored) await new Promise(done => setTimeout(done, 1000))
   }
+  if (!stored) throw new Error(`${file} did not get into the library in ${timeout} ms, it has: ${JSON.stringify(tracks.map(track => track.path))}`)
+  const trackPath = stored.path
 
   const result = await evaluateIn(
     socketUrl,
     `(async () => {
-      const url = 'emusic://track?path=' + encodeURIComponent(${JSON.stringify(file)})
+      const url = 'emusic://track?path=' + encodeURIComponent(${JSON.stringify(trackPath)})
       const whole = await fetch(url)
       const part = await fetch(url, { headers: { range: 'bytes=100-199' } })
       const suffix = await fetch(url, { headers: { range: 'bytes=-50' } })
       const outside = await fetch('emusic://track?path=' + encodeURIComponent(${JSON.stringify(join(home, 'other.wav'))}))
+      const describe = audio => 'readyState ' + audio.readyState + ', networkState ' + audio.networkState + ', error ' + audio.error?.code + ', currentTime ' + audio.currentTime
+      const waitFor = (audio, event, source) =>
+        new Promise((done, fail) => {
+          const timer = setTimeout(() => fail(new Error('no ' + event + ' of ' + source + ' (' + describe(audio) + ')')), 15000)
+          audio.addEventListener(event, () => { clearTimeout(timer); done() }, { once: true })
+          audio.addEventListener('error', () => { clearTimeout(timer); fail(new Error('audio error of ' + source + ' (' + describe(audio) + ')')) }, { once: true })
+        })
       const seek = async source => {
         const audio = new Audio()
         audio.crossOrigin = 'anonymous'
         audio.src = source
-        await new Promise((done, fail) => { audio.onloadedmetadata = done; audio.onerror = () => fail(new Error('audio error ' + audio.error?.code)) })
+        await waitFor(audio, 'loadedmetadata', source)
+        const seeked = waitFor(audio, 'seeked', source)
         audio.currentTime = 6
-        await new Promise(done => { audio.onseeked = done })
+        await seeked
         return [Math.round(audio.duration), Math.round(audio.currentTime)]
       }
       return {
@@ -138,7 +157,7 @@ const checkTrackProtocol = async (socketUrl, port) => {
         suffix: [suffix.status, suffix.headers.get('content-range'), (await suffix.arrayBuffer()).byteLength],
         outside: outside.status,
         emusicSeek: await seek(url),
-        httpSeek: await seek('http://127.0.0.1:${port}/local?path=' + encodeURIComponent(${JSON.stringify(file)}))
+        httpSeek: await seek('http://127.0.0.1:${port}/local?path=' + encodeURIComponent(${JSON.stringify(trackPath)}))
       }
     })()`
   )
