@@ -1,10 +1,10 @@
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 import sqlite3 from 'sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import executeQuery from './executeQuery';
-import { migrate } from './migrate';
+import { migrate, NewerLibraryError } from './migrate';
 
 const openDatabase = () =>
   new Promise<sqlite3.Database>((done, fail) => {
@@ -32,13 +32,13 @@ describe('migrate', () => {
   });
 
   it('applies the migrations in the order of their number and stores the last one', async () => {
-    await add('010-add-note.sql', 'ALTER TABLE items ADD COLUMN note TEXT');
-    await add('002-create-items.sql', 'CREATE TABLE items (id INTEGER PRIMARY KEY)');
+    await add('002-add-note.sql', 'ALTER TABLE items ADD COLUMN note TEXT');
+    await add('001-create-items.sql', 'CREATE TABLE items (id INTEGER PRIMARY KEY)');
 
     await migrate(database, folder);
 
     await expect(getColumns(database, 'items')).resolves.toEqual(['id', 'note']);
-    await expect(getVersion(database)).resolves.toBe(10);
+    await expect(getVersion(database)).resolves.toBe(2);
   });
 
   it('applies a migration once, so a statement that is not safe to repeat is fine', async () => {
@@ -83,6 +83,69 @@ describe('migrate', () => {
     await add('001-create-notes.sql', 'CREATE TABLE notes (id INTEGER PRIMARY KEY)');
 
     await expect(migrate(database, folder)).rejects.toThrow('is not named like');
+  });
+
+  it('refuses a number that is skipped', async () => {
+    await add('001-create-items.sql', 'CREATE TABLE items (id INTEGER PRIMARY KEY)');
+    await add('003-add-note.sql', 'ALTER TABLE items ADD COLUMN note TEXT');
+
+    await expect(migrate(database, folder)).rejects.toThrow('003-add-note.sql is not named like');
+  });
+
+  it('ignores a file that is not SQL', async () => {
+    await add('001-create-items.sql', 'CREATE TABLE items (id INTEGER PRIMARY KEY)');
+    await add('README.md', 'notes');
+
+    await expect(migrate(database, folder)).resolves.toBeUndefined();
+  });
+
+  it('does not open the SQL of a migration the library has seen', async () => {
+    await add('001-create-items.sql', 'CREATE TABLE items (id INTEGER PRIMARY KEY)');
+    await migrate(database, folder);
+    await rm(join(folder, '001-create-items.sql'));
+    // a folder cannot be read as a file, so the test fails if the SQL is opened
+    await mkdir(join(folder, '001-create-items.sql'));
+
+    await expect(migrate(database, folder)).resolves.toBeUndefined();
+  });
+
+  it('leaves a library alone that is ahead of the migrations of the app', async () => {
+    await add('001-create-items.sql', 'CREATE TABLE items (id INTEGER PRIMARY KEY)');
+    await query(database, 'PRAGMA user_version = 5');
+
+    await expect(migrate(database, folder)).rejects.toThrow(NewerLibraryError);
+    await expect(getVersion(database)).resolves.toBe(5);
+  });
+
+  describe('before applying', () => {
+    it('calls back with the version of the library when migrations are pending', async () => {
+      await add('001-create-items.sql', 'CREATE TABLE items (id INTEGER PRIMARY KEY)');
+      await migrate(database, folder);
+      await add('002-add-note.sql', 'ALTER TABLE items ADD COLUMN note TEXT');
+      const seen: number[] = [];
+
+      await migrate(database, folder, { beforeApply: async (version) => void seen.push(version) });
+
+      expect(seen).toEqual([1]);
+    });
+
+    it('does not call back when there is nothing to apply', async () => {
+      await add('001-create-items.sql', 'CREATE TABLE items (id INTEGER PRIMARY KEY)');
+      await migrate(database, folder);
+      const seen: number[] = [];
+
+      await migrate(database, folder, { beforeApply: async (version) => void seen.push(version) });
+
+      expect(seen).toEqual([]);
+    });
+
+    it('applies nothing when the callback fails', async () => {
+      await add('001-create-items.sql', 'CREATE TABLE items (id INTEGER PRIMARY KEY)');
+
+      await expect(migrate(database, folder, { beforeApply: () => Promise.reject(new Error('disk full')) })).rejects.toThrow('disk full');
+
+      await expect(getVersion(database)).resolves.toBe(0);
+    });
   });
 
   describe('migrations of the app', () => {

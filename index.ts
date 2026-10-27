@@ -1,4 +1,4 @@
-import { app } from 'electron';
+import { app, dialog } from 'electron';
 import type { BrowserWindow } from 'electron';
 import { join, resolve } from 'path';
 import fs from 'fs';
@@ -9,6 +9,7 @@ import getAppDataPath from './electron/appDataPath';
 import createWindow from './electron/createWindow';
 import getLoadingWindow from './electron/getLoadingWindow';
 import createDatabase from './electron/createDatabase';
+import { libraryErrorMessage } from './electron/libraryErrorMessage';
 import setupListeners from './electron/setupListeners';
 import { emusicOrigin, handleEmusicProtocol, registerEmusicScheme } from './electron/emusicProtocol';
 import { createRadioBrowser } from './electron/radioBrowser';
@@ -186,7 +187,13 @@ app
 
     return updateOnSplash(loading);
   })
-  .then(() => createDatabase(libraryLocation))
+  .then(() =>
+    createDatabase(libraryLocation).catch((error) => {
+      const translator = getMainTranslator();
+      dialog.showErrorBox(translator.t('library.error.title'), libraryErrorMessage(translator, error));
+      throw error;
+    })
+  )
   .then((d) => {
     console.log(`Connected to library ${libraryLocation}`);
     global._database = d;

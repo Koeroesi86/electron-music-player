@@ -5,25 +5,47 @@ import executeQuery from './executeQuery';
 
 const migrationName = /^(\d+)-.+\.sql$/;
 
+/** The library was last opened by a newer version of the app than this one, so its schema is not one this version knows */
+export class NewerLibraryError extends Error {
+  constructor(
+    readonly libraryVersion: number,
+    readonly appVersion: number
+  ) {
+    super(`The library is at version ${libraryVersion}, this app only knows version ${appVersion}`);
+  }
+}
+
+type Migration = { file: string; version: number };
+
+type MigrateOptions = {
+  /** Called with the version of the library before any pending migration is applied, not when there is nothing to apply */
+  beforeApply?: (currentVersion: number) => Promise<void>;
+};
+
 const exec = (database: Database, query: string) =>
   new Promise<void>((resolve, reject) => {
     database.exec(query, (err) => (err ? reject(err) : resolve()));
   });
 
-const readMigrations = (folder: string) => {
-  const migrations = fs
-    .readdirSync(folder, 'utf8')
-    .map((file) => ({ file, version: Number(migrationName.exec(file)?.[1]), query: fs.readFileSync(path.resolve(folder, file), 'utf8') }))
-    .sort((a, b) => a.version - b.version);
+// only the names are read, the SQL of a migration that the library has seen is never opened
+const listMigrations = (folder: string): Migration[] => {
+  const files = fs.readdirSync(folder, 'utf8').filter((file) => file.endsWith('.sql'));
 
-  const invalid = migrations.find(({ version }, index) => !version || version === migrations[index - 1]?.version);
-  if (invalid) throw new Error(`${invalid.file} is not named like 004-name.sql with a number that no other migration has`);
+  const unnamed = files.find((file) => !Number(migrationName.exec(file)?.[1]));
+  if (unnamed) throw new Error(`${unnamed} is not named like 004-name.sql with a number above 0`);
+
+  const migrations = files.map((file) => ({ file, version: Number(migrationName.exec(file)?.[1]) })).sort((a, b) => a.version - b.version);
+
+  const misplaced = migrations.find(({ version }, index) => version !== index + 1);
+  if (misplaced)
+    throw new Error(`${misplaced.file} is not named like 004-name.sql: the numbers start at 1, no number is skipped and no two migrations share one`);
 
   return migrations;
 };
 
 // the version is stored with the data, so a failed migration leaves both as they were
-const apply = async (database: Database, { version, query }: { version: number; query: string }) => {
+const apply = async (database: Database, folder: string, { file, version }: Migration) => {
+  const query = fs.readFileSync(path.resolve(folder, file), 'utf8');
   await exec(database, 'BEGIN');
   try {
     await exec(database, `${query}\n;\nPRAGMA user_version = ${version};`);
@@ -36,12 +58,19 @@ const apply = async (database: Database, { version, query }: { version: number; 
 
 /**
  * Applies the migrations of the folder that the database has not seen, each one once and in the order of their number.
- * A database that predates the version (0) gets all of them, so 001 to 003, which ran on every start before, have to stay safe to run again
+ * A database that predates the version (0) gets all of them, so 001 to 003, which ran on every start before, have to stay safe to run again.
+ * A database that is ahead of the folder was opened by a newer app and is left alone.
+ * A migration runs in a transaction, so it cannot change `PRAGMA foreign_keys`, which SQLite ignores there
  */
-export const migrate = async (database: Database, folder: string) => {
+export const migrate = async (database: Database, folder: string, { beforeApply }: MigrateOptions = {}) => {
   const [{ user_version: current }] = await executeQuery<{ user_version: number }>(database, { query: 'PRAGMA user_version', variables: [] });
+  const migrations = listMigrations(folder);
 
-  await readMigrations(folder)
-    .filter(({ version }) => version > current)
-    .reduce((previous, migration) => previous.then(() => apply(database, migration)), Promise.resolve());
+  if (current > migrations.length) throw new NewerLibraryError(current, migrations.length);
+
+  const pending = migrations.filter(({ version }) => version > current);
+  if (pending.length === 0) return;
+
+  await beforeApply?.(current);
+  await pending.reduce((previous, migration) => previous.then(() => apply(database, folder, migration)), Promise.resolve());
 };
