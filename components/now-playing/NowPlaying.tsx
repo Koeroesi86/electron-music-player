@@ -1,8 +1,8 @@
 import classNames from 'classnames';
 import slugify from 'slugify';
-import { basename } from 'path';
 import { MdPlayArrow as PlayIcon } from 'react-icons/md';
 import type { Track } from '../../types/library';
+import { toNowPlaying } from '../../client/now-playing';
 import { useTranslation } from '../../client/i18n';
 import style from './NowPlaying.scss';
 
@@ -11,30 +11,28 @@ interface NowPlayingProps {
   currentSong: Track | null;
   port: string;
   streamTitle: string | null;
+  streamArt: string | null;
   playTrack: (track: Track) => void;
 }
 
-const NowPlaying = ({ nowPlaying, currentSong, port, streamTitle, playTrack }: NowPlayingProps) => {
+const NowPlaying = ({ nowPlaying, currentSong, port, streamTitle, streamArt, playTrack }: NowPlayingProps) => {
   const { t } = useTranslation();
+  const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt, port) : undefined;
 
   return (
     <div className={style.nowPlaying}>
       <div className={style.header}>{t('nowPlaying.title')}</div>
       <div className={style.contents}>
-        {currentSong && (
+        {shown && (
           <div className={style.currentSong}>
-            <div
-              className={style.cover}
-              style={currentSong.picture ? { backgroundImage: `url("http://127.0.0.1:${port}/albumart/${basename(currentSong.picture)}")` } : undefined}
-            />
+            <div className={style.cover} style={shown.cover ? { backgroundImage: `url("${shown.cover}")` } : undefined} />
             <div className={style.meta}>
               <div className={style.title}>
-                {currentSong.track ? <span className={style.trackNo}>#{currentSong.track}</span> : ''}
-                {currentSong.title}
+                {shown.track.track ? <span className={style.trackNo}>#{shown.track.track}</span> : ''}
+                {shown.track.title}
               </div>
-              {streamTitle && <div className={style.streamTitle}>{streamTitle}</div>}
-              <div className={style.album}>{currentSong.album}</div>
-              <div className={style.artist}>{currentSong.artist}</div>
+              <div className={style.album}>{shown.track.album}</div>
+              <div className={style.artist}>{shown.track.artist}</div>
             </div>
           </div>
         )}

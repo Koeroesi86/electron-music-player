@@ -14,6 +14,8 @@ const mapState = (state: RootState) => ({
   repeat: state.uiState.repeat,
   currentTime: state.uiState.currentTime,
   currentSong: state.uiState.currentSong,
+  streamTitle: state.uiState.streamTitle,
+  streamArt: state.uiState.streamArt,
 });
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({

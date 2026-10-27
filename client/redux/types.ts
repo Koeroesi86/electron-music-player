@@ -40,6 +40,8 @@ export interface UiState extends PersistedSettings {
   isPlaying: boolean;
   /** The track the current radio station is playing, as the stream announces it */
   streamTitle: string | null;
+  /** The key of the art the main process found for the stream title, null while it is looked up or when there is none */
+  streamArt: string | null;
   /** Whether the app can add itself to the application menu (from an AppImage on Linux), and whether it did, and whether the user was asked */
   launcher: { available: boolean; enabled: boolean; offered: boolean };
 }
@@ -78,6 +80,7 @@ export type AppAction =
   | PayloadAction<'RADIO_TAGS_LOADED', { tags: RadioTag[] }>
   | PayloadAction<'PLAY_RADIO_STATION', { station: RadioStation }>
   | PayloadAction<'RADIO_STREAM_TITLE', { uuid: string; title: string }>
+  | PayloadAction<'RADIO_STREAM_ART', { uuid: string; title: string; art: string }>
   | PayloadAction<'FOLDERS_ADDED_TO_LIBRARY', { folders: Folder[] }>
   | PayloadAction<'STORE_FOLDERS', { folders: Folder[] }>
   | EmptyAction<'INVALIDATE_LIBRARY'>
