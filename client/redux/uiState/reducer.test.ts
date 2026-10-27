@@ -206,6 +206,30 @@ describe('uiState reducer', () => {
     expect(run({ type: 'RESTORE_SETTINGS', payload: { settings } }).tab).toBe('home');
   });
 
+  describe('the radio query', () => {
+    it('starts without filters', () => {
+      expect(initial.radioQuery).toEqual({});
+    });
+
+    it('keeps the last search without its page', () => {
+      expect(run({ type: 'SEARCH_RADIO', payload: { query: { country: 'HU', sort: 'name', offset: 60 } } }).radioQuery).toEqual({
+        country: 'HU',
+        sort: 'name',
+      });
+    });
+
+    it('restores a saved query and ignores what is not valid', () => {
+      const saved = { ...initial, radioQuery: { name: 'a' } };
+
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { radioQuery: { codec: 'AAC', bitrateMin: 320 } } } }, saved).radioQuery).toEqual({
+        codec: 'AAC',
+        bitrateMin: 320,
+      });
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { radioQuery: { sort: 'x', bitrateMin: 5 } as never } } }, saved).radioQuery).toEqual({});
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.1 } } }, saved).radioQuery).toEqual({ name: 'a' });
+    });
+  });
+
   describe('the sort and the folders of the library', () => {
     it('starts with the default order and all folders', () => {
       expect(initial).toMatchObject({ trackSort: undefined, albumSort: undefined, libraryFolders: [] });

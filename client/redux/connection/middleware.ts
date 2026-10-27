@@ -1,6 +1,6 @@
 import type { Middleware } from 'redux';
 import type { Folder, Track } from '../../../types/library';
-import type { RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
+import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
 import type { UpdateState } from '../../../types/update';
 import { electronAPI } from '../../electron-api';
 import { debounce } from '../../utils/debounce';
@@ -34,10 +34,13 @@ function addListeners(store: Store) {
   electronAPI.on<UpdateState>('UPDATE_STATE', (payload) => store.dispatch({ type: 'UPDATE_STATE', payload }));
   electronAPI.on<{ settings: Partial<PersistedSettings> }>('RESTORE_SETTINGS', (payload) => store.dispatch({ type: 'RESTORE_SETTINGS', payload }));
   electronAPI.on<{ fileName: string; progress: number; totalCount: number }>('SCANNING_FILE', (payload) => store.dispatch({ type: 'SCANNING_FILE', payload }));
-  electronAPI.on<{ query: RadioQuery; stations: RadioStation[]; error?: string }>('RADIO_STATIONS', (payload) =>
+  electronAPI.on<{ query: RadioQuery; stations: RadioStation[]; hasMore?: boolean; error?: string }>('RADIO_STATIONS', (payload) =>
     store.dispatch({ type: 'RADIO_STATIONS', payload })
   );
   electronAPI.on<{ tags: RadioTag[] }>('RADIO_TAGS_LOADED', (payload) => store.dispatch({ type: 'RADIO_TAGS_LOADED', payload }));
+  electronAPI.on<{ kind: RadioOptionKind; options: RadioOption[] }>('RADIO_OPTIONS_LOADED', (payload) =>
+    store.dispatch({ type: 'RADIO_OPTIONS_LOADED', payload })
+  );
   electronAPI.on<{ uuid: string; title: string }>('RADIO_STREAM_TITLE', (payload) => store.dispatch({ type: 'RADIO_STREAM_TITLE', payload }));
   electronAPI.on<{ uuid: string; title: string; art: string }>('RADIO_STREAM_ART', (payload) => store.dispatch({ type: 'RADIO_STREAM_ART', payload }));
   // a favourite of a source this version does not know is left out
@@ -116,6 +119,7 @@ const persistedKeys = [
   'trackSort',
   'albumSort',
   'libraryFolders',
+  'radioQuery',
 ] satisfies (keyof PersistedSettings)[];
 
 const saveSettings = (uiState: UiState) => electronAPI.send('SAVE_SETTINGS', Object.fromEntries(persistedKeys.map((key) => [key, uiState[key]])));
@@ -211,6 +215,7 @@ const handleActions = actionMiddleware((store) => [
   onAction('REMOVE_FAVOURITE', ({ payload }) => electronAPI.send('FAVOURITE_REMOVE', payload.key)),
   onAction('SEARCH_RADIO', ({ payload }) => electronAPI.send('RADIO_SEARCH', payload.query)),
   onAction('LOAD_RADIO_TAGS', () => electronAPI.send('RADIO_TAGS')),
+  onAction('LOAD_RADIO_OPTIONS', () => electronAPI.send('RADIO_OPTIONS')),
   onAction('CHECK_FOR_UPDATES', () => electronAPI.send('CHECK_FOR_UPDATES')),
   onAction('OPEN_RELEASES', () => electronAPI.send('OPEN_RELEASES')),
   // the restart quits the app, so the queue and the position are saved first (the main process closes the database after what it has queued)

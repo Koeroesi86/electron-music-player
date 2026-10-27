@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createRadioBrowser, toRadioQuery } from './radioBrowser';
+import { createRadioBrowser, toRadioQuery, toSearchParameters } from './radioBrowser';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
@@ -24,8 +24,9 @@ describe('radio-browser client', () => {
     it('lists the stations of a query, the most popular first', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([station]));
 
-      const stations = await createRadioBrowser('eMusic/1.0.0').searchStations({ name: 'jazz', tag: 'smooth' });
+      const { stations, hasMore } = await createRadioBrowser('eMusic/1.0.0').searchStations({ name: 'jazz', tag: 'smooth' });
 
+      expect(hasMore).toBe(false);
       expect(stations).toEqual([{ uuid: 'abc-1', name: 'Jazz FM', country: 'Hungary', tags: ['jazz', 'smooth'], codec: 'MP3', bitrate: 128 }]);
       const url = new URL(requestedUrls(fetchMock)[1]);
       expect(url.pathname).toBe('/json/stations/search');
@@ -63,7 +64,7 @@ describe('radio-browser client', () => {
           ])
         );
 
-      expect((await createRadioBrowser('eMusic').searchStations({})).map(({ uuid }) => uuid)).toEqual(['abc-1', 'plain']);
+      expect((await createRadioBrowser('eMusic').searchStations({})).stations.map(({ uuid }) => uuid)).toEqual(['abc-1', 'plain']);
     });
 
     it('fails on an answer that is not a list', async () => {
@@ -78,7 +79,7 @@ describe('radio-browser client', () => {
         .mockResolvedValueOnce(json({}, 500))
         .mockResolvedValueOnce(json([station]));
 
-      expect(await createRadioBrowser('eMusic').searchStations({})).toHaveLength(1);
+      expect((await createRadioBrowser('eMusic').searchStations({})).stations).toHaveLength(1);
       const [, first, second] = requestedUrls(fetchMock).map((url) => new URL(url).hostname);
       expect(first).not.toBe(second);
     });
@@ -92,7 +93,7 @@ describe('radio-browser client', () => {
     it('uses the round robin host when the servers cannot be discovered', async () => {
       fetchMock.mockResolvedValueOnce(json({}, 500)).mockResolvedValueOnce(json([station]));
 
-      expect(await createRadioBrowser('eMusic').searchStations({})).toHaveLength(1);
+      expect((await createRadioBrowser('eMusic').searchStations({})).stations).toHaveLength(1);
       expect(new URL(requestedUrls(fetchMock)[1]).hostname).toBe('all.api.radio-browser.info');
     });
 
@@ -104,6 +105,83 @@ describe('radio-browser client', () => {
       await radio.searchStations({ name: 'rock' });
 
       expect(requestedUrls(fetchMock).filter((url) => url.endsWith('/json/servers'))).toHaveLength(1);
+    });
+  });
+
+  describe('searchStations with filters', () => {
+    it('asks the directory for a combination of the filters and the sort', async () => {
+      fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([station]));
+
+      await createRadioBrowser('eMusic').searchStations({
+        name: 'jazz',
+        tag: 'smooth',
+        country: 'HU',
+        language: 'hungarian',
+        codec: 'AAC',
+        bitrateMin: 192,
+        sort: 'bitrate',
+        descending: false,
+        offset: 60,
+      });
+
+      expect(Object.fromEntries(new URL(requestedUrls(fetchMock)[1]).searchParams)).toEqual({
+        hidebroken: 'true',
+        hls: 'false',
+        order: 'bitrate',
+        reverse: 'false',
+        limit: '60',
+        name: 'jazz',
+        tag: 'smooth',
+        countrycode: 'HU',
+        language: 'hungarian',
+        languageExact: 'true',
+        codec: 'AAC',
+        bitrateMin: '192',
+        offset: '60',
+      });
+    });
+
+    it('says there may be more when a full page came back, also if some of it can not be played', async () => {
+      const page = Array.from({ length: 60 }, (_, index) => ({ ...station, stationuuid: `s${index}`, hls: index === 0 ? 1 : 0 }));
+      fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json(page));
+
+      const { stations, hasMore } = await createRadioBrowser('eMusic').searchStations({});
+
+      expect(stations).toHaveLength(59);
+      expect(hasMore).toBe(true);
+    });
+  });
+
+  describe('getOptions', () => {
+    it.each([
+      ['countries', '/json/countries', { name: 'Hungary', iso_3166_1: 'HU', stationcount: 12 }, { value: 'HU', name: 'Hungary', stationCount: 12 }],
+      ['languages', '/json/languages', { name: 'hungarian', stationcount: 7 }, { value: 'hungarian', name: 'hungarian', stationCount: 7 }],
+      ['codecs', '/json/codecs', { name: 'AAC', stationcount: 3 }, { value: 'AAC', name: 'AAC', stationCount: 3 }],
+    ] as const)('lists the %s with their station count', async (kind, path, item, option) => {
+      fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([item, { stationcount: 1 }, null]));
+
+      expect(await createRadioBrowser('eMusic').getOptions(kind)).toEqual([option]);
+      expect(new URL(requestedUrls(fetchMock)[1]).pathname).toBe(path);
+    });
+
+    it('loads a list once for the session', async () => {
+      fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValue(json([{ name: 'AAC', stationcount: 3 }]));
+      const radio = createRadioBrowser('eMusic');
+
+      await radio.getOptions('codecs');
+      await radio.getOptions('codecs');
+
+      expect(requestedUrls(fetchMock)).toHaveLength(2);
+    });
+
+    it('asks again after a failure', async () => {
+      fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json({}, 500)).mockResolvedValueOnce(json({}, 500));
+      const radio = createRadioBrowser('eMusic');
+      await expect(radio.getOptions('codecs')).rejects.toThrow('answered 500');
+
+      fetchMock.mockResolvedValueOnce(json([{ name: 'AAC', stationcount: 3 }]));
+
+      expect(await radio.getOptions('codecs')).toHaveLength(1);
     });
   });
 
@@ -163,5 +241,51 @@ describe('toRadioQuery', () => {
 
   it('limits the length', () => {
     expect(toRadioQuery({ name: 'a'.repeat(500) }).name).toHaveLength(100);
+  });
+});
+
+describe('toRadioQuery fields', () => {
+  it('keeps every field of a valid query', () => {
+    const query = { name: 'a', tag: 'b', country: 'HU', language: 'hungarian', codec: 'MP3', bitrateMin: 320, sort: 'votes', descending: false, offset: 120 };
+
+    expect(toRadioQuery(query)).toEqual(query);
+  });
+
+  it('trims and limits the text of the filters', () => {
+    expect(toRadioQuery({ country: ' hu ', language: 'x'.repeat(500), codec: ' ' })).toEqual({ country: 'hu', language: 'x'.repeat(100) });
+  });
+
+  it('takes the sort from the whitelist and leaves the default out', () => {
+    expect(toRadioQuery({ sort: 'clicktrend' }).sort).toBeUndefined();
+    expect(toRadioQuery({ sort: 'name; DROP' }).sort).toBeUndefined();
+    expect(toRadioQuery({ sort: 'popularity' }).sort).toBeUndefined();
+    expect(toRadioQuery({ sort: 'trending' }).sort).toBe('trending');
+  });
+
+  it('takes the direction as a boolean, descending is the default', () => {
+    expect(toRadioQuery({ descending: false }).descending).toBe(false);
+    expect(toRadioQuery({ descending: true }).descending).toBeUndefined();
+    expect(toRadioQuery({ descending: 'false' }).descending).toBeUndefined();
+  });
+
+  it('takes a bitrate that is offered', () => {
+    expect(toRadioQuery({ bitrateMin: 192 }).bitrateMin).toBe(192);
+    expect(toRadioQuery({ bitrateMin: 1 }).bitrateMin).toBeUndefined();
+    expect(toRadioQuery({ bitrateMin: '128' }).bitrateMin).toBeUndefined();
+  });
+
+  it('takes a positive whole offset, within limits', () => {
+    expect(toRadioQuery({ offset: 60 }).offset).toBe(60);
+    expect(toRadioQuery({ offset: 10 ** 9 }).offset).toBe(10000);
+    expect(toRadioQuery({ offset: -1 }).offset).toBeUndefined();
+    expect(toRadioQuery({ offset: 1.5 }).offset).toBeUndefined();
+    expect(toRadioQuery({ offset: '60' }).offset).toBeUndefined();
+  });
+
+  it('never passes an unknown field to the URL', () => {
+    const query = toRadioQuery({ name: 'a', limit: 100000, order: 'x', hidebroken: 'false' });
+
+    expect([...toSearchParameters(query).keys()].sort()).toEqual(['hidebroken', 'hls', 'limit', 'name', 'order', 'reverse']);
+    expect(toSearchParameters(query).get('limit')).toBe('60');
   });
 });

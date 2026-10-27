@@ -14,6 +14,7 @@ const mapState = (state: RootState) => ({
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
   search: (query: RadioQuery) => dispatch({ type: 'SEARCH_RADIO', payload: { query } }),
   loadTags: () => dispatch({ type: 'LOAD_RADIO_TAGS', payload: {} }),
+  loadOptions: () => dispatch({ type: 'LOAD_RADIO_OPTIONS', payload: {} }),
   play: (station: RadioStation) => dispatch({ type: 'PLAY_RADIO_STATION', payload: { station } }),
 });
 
