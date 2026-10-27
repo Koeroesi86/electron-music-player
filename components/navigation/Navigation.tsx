@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 import {
+  MdHome as HomeIcon,
   MdEqualizer as EQIcon,
   MdSettings as SettingsIcon,
   MdCloudQueue as OnlineIcon,
@@ -16,11 +17,20 @@ interface NavigationProps {
   tab?: Tab;
 }
 
-function Navigation({ setTab = () => {}, tab = 'local' }: NavigationProps) {
+function Navigation({ setTab = () => {}, tab = 'home' }: NavigationProps) {
   const { t } = useTranslation();
 
   return (
     <div className={style.navigation}>
+      <div
+        onClick={() => setTab('home')}
+        className={classNames(style.item, {
+          [style.active]: tab === 'home',
+        })}
+      >
+        <HomeIcon size={'12px'} />
+        <span className={style.label}>{t('nav.home')}</span>
+      </div>
       <div
         onClick={() => setTab('now-playing')}
         className={classNames(style.item, {

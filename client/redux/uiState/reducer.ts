@@ -9,7 +9,7 @@ const initialState: UiState = {
   view: 'albums',
   port: window.location.search.match(/^\?port=([0-9]+)/)?.[1] ?? '3000',
   onlineView: 'radio',
-  tab: 'local',
+  tab: 'home',
   nowPlaying: [],
   played: [],
   currentSong: null,
@@ -112,6 +112,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return {
         ...state,
         ...settings,
+        // a tab saved by an earlier version does not decide where the app opens
+        tab: state.tab,
         ...(settings.onlineView && { onlineView: restoreOnlineView() }),
         ...(settings.equalizer && { equalizer: restoreGains(settings.equalizer) }),
         ...(settings.theme && { theme: restoreTheme(settings.theme) }),

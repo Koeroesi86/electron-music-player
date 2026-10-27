@@ -27,3 +27,16 @@ export interface StoredFavourite extends FavouriteKey {
   snapshot: unknown;
   addedAt: number;
 }
+
+/** What was played: the same items as the favourites, with the time they were played last */
+export type HistoryItem = NewFavourite & {
+  playedAt: number;
+  /** False when the track or station is not in its source any more */
+  available: boolean;
+};
+
+/** An item of the history as the main process stores it, any source, with the snapshot as it was saved */
+export interface StoredHistoryItem extends FavouriteKey {
+  snapshot: unknown;
+  playedAt: number;
+}

@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 import type { Tab } from '../../client/redux/types';
+import Home from '../home';
 import LocalCollection from '../local-collection';
 import NowPlaying from '../now-playing';
 import OnlineSources from '../online-sources';
@@ -18,9 +19,16 @@ interface PlayerTabsProps {
   addFiles?: (files: FileList) => void;
 }
 
-function PlayerTabs({ tab = 'local', addFiles = () => {} }: PlayerTabsProps) {
+function PlayerTabs({ tab = 'home', addFiles = () => {} }: PlayerTabsProps) {
   return (
     <div className={style.collection}>
+      <div
+        className={classNames(style.tab, {
+          [style.active]: tab === 'home',
+        })}
+      >
+        <Home />
+      </div>
       <div
         className={classNames(style.tab, {
           [style.active]: tab === 'local',

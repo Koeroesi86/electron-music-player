@@ -111,6 +111,7 @@ describe('connection middleware', () => {
     expect(send.mock.calls.map(([channel]) => channel)).toEqual(['SAVE_SETTINGS', 'INSTALL_UPDATE']);
     expect(send.mock.calls[0][1]).toMatchObject({ nowPlaying: [track], currentTime: 42 });
   });
+
   describe('favourites', () => {
     const station = { uuid: 'abc', name: 'Jazz FM', country: 'Hungary', tags: [], codec: 'MP3', bitrate: 128 };
     const favourite = { source: 'radio', kind: 'station', id: 'abc', snapshot: station, addedAt: 1, available: true };
@@ -144,6 +145,66 @@ describe('connection middleware', () => {
       expect(send).toHaveBeenCalledWith('FAVOURITE_ADD', item);
       expect(send).toHaveBeenCalledWith('FAVOURITE_REMOVE', { source: 'radio', kind: 'station', id: 'abc' });
       expect(store.getState().favourites).toEqual([]);
+    });
+  });
+
+  describe('history', () => {
+    const station = { uuid: 'abc', name: 'Jazz FM', country: 'Hungary', tags: [], codec: 'MP3', bitrate: 128 };
+    const track = { path: '/a.flac', title: 'A', artist: '', album: '', year: '', track: '', disk: '', genre: '', picture: null, duration: 1 };
+    const item = { source: 'radio', kind: 'station', id: 'abc', snapshot: station, playedAt: 1, available: true };
+
+    it('asks the main process for the history when it starts and when the library changed', async () => {
+      const { send, listen } = await setup();
+      expect(send).toHaveBeenCalledWith('HISTORY_LOAD');
+      send.mockClear();
+
+      listen('RESCAN_COMPLETE', {});
+
+      expect(send).toHaveBeenCalledWith('HISTORY_LOAD');
+    });
+
+    it('stores the history of the sources it knows and leaves out the others', async () => {
+      const { store, listen } = await setup();
+
+      listen('HISTORY', { history: [item, { ...item, source: 'drive:usb' }, 'broken'] });
+
+      expect(store.getState().history).toEqual([item]);
+    });
+
+    it('records a track of the library when it starts playing', async () => {
+      const { store, send } = await setup();
+      vi.stubGlobal('Notification', vi.fn());
+
+      store.dispatch({ type: 'PLAY_TRACK', payload: { track } });
+
+      expect(send).toHaveBeenCalledWith('HISTORY_RECORD', { source: 'local', kind: 'track', id: '/a.flac', snapshot: track });
+    });
+
+    it('records the station a radio track plays, not the track', async () => {
+      const { store, send } = await setup();
+
+      store.dispatch({ type: 'PLAY_RADIO_STATION', payload: { station } });
+
+      expect(send).toHaveBeenCalledWith('HISTORY_RECORD', { source: 'radio', kind: 'station', id: 'abc', snapshot: station });
+    });
+
+    it('records nothing when playback is cleared', async () => {
+      const { store, send } = await setup();
+      send.mockClear();
+
+      store.dispatch({ type: 'PLAY_TRACK', payload: { track: null } });
+
+      expect(send).not.toHaveBeenCalledWith('HISTORY_RECORD', expect.anything());
+    });
+
+    it('clears the history in the store and in the main process', async () => {
+      const { store, send, listen } = await setup();
+      listen('HISTORY', { history: [item] });
+
+      store.dispatch({ type: 'CLEAR_HISTORY' });
+
+      expect(send).toHaveBeenCalledWith('HISTORY_CLEAR');
+      expect(store.getState().history).toEqual([]);
     });
   });
 });
