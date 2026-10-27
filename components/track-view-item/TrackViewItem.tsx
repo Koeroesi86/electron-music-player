@@ -9,6 +9,7 @@ import { useTranslation } from '../../client/i18n';
 import style from './TrackViewItem.scss';
 import Time from '../time';
 import FavouriteButton from '../favourite-button';
+import AddToPlaylist from '../add-to-playlist';
 
 /** The header row displays labels in place of the track values */
 export type TrackLabels = Record<'duration' | 'artist' | 'year' | 'album' | 'track' | 'title', string>;
@@ -96,7 +97,14 @@ const TrackViewItem = ({
       onClick={() => 'path' in track && clickTrack(track)}
       onDoubleClick={() => 'path' in track && doubleClickTrack(track)}
     >
-      <TrackViewItemField className={style.favourite}>{'path' in track && <FavouriteButton item={trackFavourite(track)} />}</TrackViewItemField>
+      <TrackViewItemField className={style.favourite}>
+        {'path' in track && (
+          <>
+            <FavouriteButton item={trackFavourite(track)} />
+            <AddToPlaylist source={track} />
+          </>
+        )}
+      </TrackViewItemField>
       {renderField('duration', style.duration, typeof track.duration === 'string' ? track.duration : <Time seconds={track.duration} />)}
       {renderField('artist', style.artist, track.artist || '-')}
       {renderField('year', style.year, track.year || '-')}

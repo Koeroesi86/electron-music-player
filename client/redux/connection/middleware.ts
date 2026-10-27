@@ -9,6 +9,7 @@ import toAddedFiles from '../../added-files';
 import { getCoverUrl } from '../../cover-url';
 import { isFavourite, stationFavourite, trackFavourite } from '../../favourites';
 import { isHistoryItem } from '../../history';
+import { toPlaylist } from '../../playlists';
 import { radioUuidOf } from '../../radio-track';
 import { fetchAlbumPage, fetchTrackPage } from '../../library-api';
 import { selectAlbumQuery, selectTrackQuery } from '../../library-query';
@@ -49,6 +50,10 @@ function addListeners(store: Store) {
   );
   electronAPI.on<{ history: unknown[] }>('HISTORY', ({ history }) =>
     store.dispatch({ type: 'HISTORY_LOADED', payload: { history: history.filter(isHistoryItem) } })
+  );
+  // a track the player cannot show (saved by a newer version) is left out of its playlist
+  electronAPI.on<{ playlists: unknown[] }>('PLAYLISTS', ({ playlists }) =>
+    store.dispatch({ type: 'PLAYLISTS_LOADED', payload: { playlists: playlists.flatMap(toPlaylist) } })
   );
   electronAPI.on<{ folder: string }>('SCANNING_FOLDER', (payload) => store.dispatch({ type: 'SCANNING_FOLDER', payload }));
 }
@@ -158,6 +163,7 @@ const start = (store: Store) => {
   electronAPI.send('GET_APP_VERSION');
   electronAPI.send('FAVOURITES_LOAD');
   electronAPI.send('HISTORY_LOAD');
+  electronAPI.send('PLAYLISTS_LOAD');
 
   setInterval(() => {
     if (store.getState().uiState.totalCount === 0) rescanLibrary(false);
@@ -192,6 +198,7 @@ const handleActions = actionMiddleware((store) => [
       // what the library has decides which local favourites are available
       store.dispatch({ type: 'LOAD_FAVOURITES' });
       store.dispatch({ type: 'LOAD_HISTORY' });
+      store.dispatch({ type: 'LOAD_PLAYLISTS' });
     })
   ),
   onAction('CLOSE_APP', () => {
@@ -210,6 +217,14 @@ const handleActions = actionMiddleware((store) => [
   onAction('PLAY_RADIO_STATION', ({ payload }) => electronAPI.send('HISTORY_RECORD', stationFavourite(payload.station))),
   onAction('LOAD_FAVOURITES', () => electronAPI.send('FAVOURITES_LOAD')),
   onAction('LOAD_HISTORY', () => electronAPI.send('HISTORY_LOAD')),
+  onAction('LOAD_PLAYLISTS', () => electronAPI.send('PLAYLISTS_LOAD')),
+  onAction('CREATE_PLAYLIST', ({ payload }) => electronAPI.send('PLAYLIST_CREATE', payload)),
+  onAction('RENAME_PLAYLIST', ({ payload }) => electronAPI.send('PLAYLIST_RENAME', payload)),
+  onAction('DELETE_PLAYLIST', ({ payload }) => electronAPI.send('PLAYLIST_DELETE', payload)),
+  onAction('MOVE_PLAYLIST', ({ payload }) => electronAPI.send('PLAYLIST_MOVE', payload)),
+  onAction('ADD_TO_PLAYLIST', ({ payload }) => electronAPI.send('PLAYLIST_ADD', payload)),
+  onAction('REMOVE_FROM_PLAYLIST', ({ payload }) => electronAPI.send('PLAYLIST_REMOVE_ENTRY', payload)),
+  onAction('MOVE_PLAYLIST_ENTRY', ({ payload }) => electronAPI.send('PLAYLIST_MOVE_ENTRY', payload)),
   onAction('CLEAR_HISTORY', () => electronAPI.send('HISTORY_CLEAR')),
   onAction('ADD_FAVOURITE', ({ payload }) => electronAPI.send('FAVOURITE_ADD', payload.favourite)),
   onAction('REMOVE_FAVOURITE', ({ payload }) => electronAPI.send('FAVOURITE_REMOVE', payload.key)),

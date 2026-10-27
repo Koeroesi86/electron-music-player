@@ -34,4 +34,36 @@
       padding-left: 6px;
     }
   }
+
+  .group {
+    padding-left: 15px;
+    margin: 18px 0 6px;
+    font-size: 11px;
+    line-height: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-soft);
+    opacity: 0.7;
+  }
+
+  .item.dropTarget {
+    border-left-color: var(--accent);
+    background: var(--overlay);
+  }
+
+  .item {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .newPlaylist {
+    -webkit-app-region: no-drag;
+    padding: 0 12px 12px 15px;
+
+    input {
+      box-sizing: border-box;
+      width: 100%;
+    }
+  }
 }

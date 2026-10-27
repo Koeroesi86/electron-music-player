@@ -9,6 +9,7 @@ import Time from '../time';
 import { getCoverUrl } from '../../client/cover-url';
 import { albumFavourite } from '../../client/favourites';
 import FavouriteButton from '../favourite-button';
+import AddToPlaylist from '../add-to-playlist';
 
 interface AlbumViewThumbnailProps {
   album: AlbumSummary;
@@ -31,6 +32,7 @@ const AlbumViewThumbnail = ({ album, offlineFolders, selectAlbum, playAlbum }: A
     >
       <div title={album.title} className={style.cover} style={album.cover ? { backgroundImage: `url("${getCoverUrl(album.cover)}")` } : undefined}>
         <FavouriteButton item={albumFavourite(album)} className={style.favourite} />
+        <AddToPlaylist source={album} className={style.playlist} />
         <div className={style.overlay}>
           <div
             className={classNames(style.metaData, style.icon)}

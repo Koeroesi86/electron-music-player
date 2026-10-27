@@ -41,6 +41,17 @@
     border-radius: 50%;
   }
 
+  .playlist {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 1;
+    color: var(--art-text);
+    text-shadow: 0 0 3px var(--art-text-shadow);
+    background: var(--art-scrim);
+    border-radius: 50%;
+  }
+
   .overlay {
         opacity: 1;
       }

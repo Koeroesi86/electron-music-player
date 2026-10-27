@@ -9,6 +9,7 @@ describe('root reducer', () => {
       'history',
       'library',
       'offlineFolders',
+      'playlists',
       'radio',
       'uiState',
       'update',

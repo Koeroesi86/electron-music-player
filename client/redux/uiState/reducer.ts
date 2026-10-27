@@ -11,6 +11,7 @@ const initialState: UiState = {
   view: 'albums',
   onlineView: 'radio',
   tab: 'home',
+  playlistId: null,
   nowPlaying: [],
   played: [],
   currentSong: null,
@@ -108,6 +109,11 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, maximized: action.payload.maximized };
     case 'SET_TAB':
       return { ...state, tab: action.payload.tab };
+    case 'OPEN_PLAYLIST':
+      return { ...state, tab: 'playlist', playlistId: action.payload.id };
+    // the tab of a playlist that is gone shows nothing
+    case 'DELETE_PLAYLIST':
+      return state.playlistId === action.payload.id ? { ...state, playlistId: null, tab: state.tab === 'playlist' ? 'home' : state.tab } : state;
     case 'LAUNCHER_STATE':
       return { ...state, launcher: action.payload };
     case 'SET_LANGUAGE':
