@@ -65,6 +65,8 @@
   "tracks.selectAll": "Select All",
   "tracks.playSelected": "Play selected",
   "album.play": "Play album",
+  "album.close": "Close",
+  "album.cover": "Album cover",
   "radio.search": "Search stations",
   "radio.allGenres": "All genres",
   "radio.loading": "Loading stations…",

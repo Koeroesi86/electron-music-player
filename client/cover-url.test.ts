@@ -10,4 +10,8 @@ describe('getCoverUrl', () => {
   ])('points %s at its optimized copy', (picture, name) => {
     expect(getCoverUrl('3000', picture)).toBe(`http://127.0.0.1:3000/albumart/${name}-optimized.png`);
   });
+
+  it('keeps a name with URL characters inside the path', () => {
+    expect(getCoverUrl('3000', '/data/albumart/a?b#c.jpg')).toBe('http://127.0.0.1:3000/albumart/a%3Fb%23c-optimized.png');
+  });
 });
