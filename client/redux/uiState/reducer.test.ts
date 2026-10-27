@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Album, Track } from '../../../types/library';
-import type { AppAction, UiState } from '../types';
+import type { AppAction, PersistedSettings, UiState } from '../types';
 import reducer from './reducer';
 
 const track = (path: string): Track => ({
@@ -200,6 +200,64 @@ describe('uiState reducer', () => {
     const settings = JSON.parse('{ "volume": 0.2, "tab": "equalizer" }');
 
     expect(run({ type: 'RESTORE_SETTINGS', payload: { settings } }).tab).toBe('home');
+  });
+
+  describe('the sort and the folders of the library', () => {
+    it('starts with the default order and all folders', () => {
+      expect(initial).toMatchObject({ trackSort: undefined, albumSort: undefined, libraryFolders: [] });
+    });
+
+    it('sets and clears the sorts', () => {
+      const trackSort = { field: 'year', direction: 'desc' } as const;
+      const withSort = run({ type: 'SET_TRACK_SORT', payload: { sort: trackSort } });
+
+      expect(withSort.trackSort).toEqual(trackSort);
+      expect(run({ type: 'SET_TRACK_SORT', payload: { sort: undefined } }, withSort).trackSort).toBeUndefined();
+      expect(run({ type: 'SET_ALBUM_SORT', payload: { sort: { field: 'title', direction: 'asc' } } }).albumSort).toEqual({ field: 'title', direction: 'asc' });
+    });
+
+    it('sets the folders once each', () => {
+      expect(run({ type: 'SET_LIBRARY_FOLDERS', payload: { folders: ['/a', '/b', '/a'] } }).libraryFolders).toEqual(['/a', '/b']);
+    });
+
+    it('drops the folders the library no longer has from the selection, and keeps the state when none left', () => {
+      const selected = { ...initial, libraryFolders: ['/a', '/b'] };
+      const folders = (paths: string[]) => paths.map((path) => ({ path, lastModified: 1 }));
+
+      expect(run({ type: 'STORE_FOLDERS', payload: { folders: folders(['/b', '/c']) } }, selected).libraryFolders).toEqual(['/b']);
+      expect(run({ type: 'STORE_FOLDERS', payload: { folders: folders(['/a', '/b']) } }, selected)).toBe(selected);
+    });
+
+    it('restores a saved sort and selection', () => {
+      const settings: Partial<PersistedSettings> = {
+        trackSort: { field: 'artist', direction: 'desc' },
+        albumSort: { field: 'trackCount', direction: 'asc' },
+        libraryFolders: ['/a'],
+      };
+
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings } })).toMatchObject(settings);
+    });
+
+    it('falls back to the default order and all folders for a saved value that is not valid', () => {
+      const saved = {
+        ...initial,
+        trackSort: { field: 'title', direction: 'asc' } as const,
+        albumSort: { field: 'title', direction: 'asc' } as const,
+        libraryFolders: ['/a'],
+      };
+      const settings = { trackSort: { field: 'path; DROP', direction: 'asc' }, albumSort: 'title', libraryFolders: 'all' } as never;
+
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings } }, saved)).toMatchObject({ trackSort: undefined, albumSort: undefined, libraryFolders: [] });
+    });
+
+    it('keeps the sort and the selection when the saved settings have none', () => {
+      const saved = { ...initial, trackSort: { field: 'title', direction: 'asc' } as const, libraryFolders: ['/a'] };
+
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.1 } } }, saved)).toMatchObject({
+        trackSort: saved.trackSort,
+        libraryFolders: ['/a'],
+      });
+    });
   });
 
   describe('radio', () => {

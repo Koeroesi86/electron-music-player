@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyMiddleware, createStore } from 'redux';
 
-const setup = async () => {
+const setup = async (fetchImpl: (url: string) => Promise<unknown> = () => Promise.reject(new Error('no server'))) => {
   const send = vi.fn();
   const on = vi.fn();
   vi.resetModules();
-  vi.stubGlobal('fetch', () => Promise.reject(new Error('no server')));
+  const fetchMock = vi.fn(fetchImpl);
+  vi.stubGlobal('fetch', fetchMock);
   window.electronAPI = { send, on, getPathForFile: () => '', blurred: false };
 
   const { default: reducers } = await import('../reducers');
@@ -14,7 +15,7 @@ const setup = async () => {
 
   const listen = (channel: string, payload: unknown) => on.mock.calls.find(([name]) => name === channel)?.[1](payload);
 
-  return { store, send, listen };
+  return { store, send, listen, fetchMock };
 };
 
 describe('connection middleware', () => {
@@ -205,6 +206,106 @@ describe('connection middleware', () => {
 
       expect(send).toHaveBeenCalledWith('HISTORY_CLEAR');
       expect(store.getState().history).toEqual([]);
+    });
+  });
+
+  describe('the sort and the folders of the library', () => {
+    const emptyPage = () => Promise.resolve({ ok: true, json: () => Promise.resolve({ items: [], total: 0 }) });
+    const requested = (fetchMock: ReturnType<typeof vi.fn>) => fetchMock.mock.calls.map(([url]) => String(url));
+    const folder = (path: string) => ({ path, lastModified: 1 });
+
+    it('saves the sort and the selected folders with the settings', async () => {
+      const { store, send } = await setup();
+
+      store.dispatch({ type: 'SET_TRACK_SORT', payload: { sort: { field: 'year', direction: 'desc' } } });
+      store.dispatch({ type: 'SET_ALBUM_SORT', payload: { sort: { field: 'title', direction: 'asc' } } });
+      store.dispatch({ type: 'SET_LIBRARY_FOLDERS', payload: { folders: ['/m'] } });
+      store.dispatch({ type: 'SAVE_SETTINGS', payload: {} });
+
+      expect(send).toHaveBeenLastCalledWith(
+        'SAVE_SETTINGS',
+        expect.objectContaining({
+          trackSort: { field: 'year', direction: 'desc' },
+          albumSort: { field: 'title', direction: 'asc' },
+          libraryFolders: ['/m'],
+        })
+      );
+    });
+
+    it('drops the pages of the list whose sort changed, and fetches the first page sorted', async () => {
+      const { store, fetchMock } = await setup(emptyPage);
+      store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 500 } });
+      store.dispatch({ type: 'STORE_ALBUM_PAGE', payload: { page: 0, items: [], total: 5 } });
+
+      store.dispatch({ type: 'SET_TRACK_SORT', payload: { sort: { field: 'title', direction: 'desc' } } });
+
+      expect(store.getState().library.tracks).toEqual({ total: undefined, pages: {}, stale: [] });
+      expect(store.getState().library.albums.total).toBe(5);
+      store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'tracks', page: 0 } });
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('http://127.0.0.1:3000/library/tracks?offset=0&limit=100&sort=title&dir=desc'));
+    });
+
+    it('drops the albums when their sort changes, and not the tracks', async () => {
+      const { store } = await setup(emptyPage);
+      store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 500 } });
+      store.dispatch({ type: 'STORE_ALBUM_PAGE', payload: { page: 0, items: [], total: 5 } });
+
+      store.dispatch({ type: 'SET_ALBUM_SORT', payload: { sort: { field: 'year', direction: 'asc' } } });
+
+      expect(store.getState().library.albums.total).toBeUndefined();
+      expect(store.getState().library.tracks.total).toBe(500);
+    });
+
+    it('keeps the pages when the sort is set to what it was', async () => {
+      const { store } = await setup(emptyPage);
+      store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 500 } });
+
+      store.dispatch({ type: 'SET_TRACK_SORT', payload: { sort: undefined } });
+
+      expect(store.getState().library.tracks.total).toBe(500);
+    });
+
+    it('does not store a page that was asked for before the sort changed, and asks for it again with the new sort', async () => {
+      const resolvers: (() => void)[] = [];
+      const { store, fetchMock } = await setup(
+        () =>
+          new Promise((resolve) => {
+            resolvers.push(() => resolve({ ok: true, json: () => Promise.resolve({ items: [], total: 7 }) }));
+          })
+      );
+      await vi.waitFor(() => expect(resolvers).toHaveLength(1));
+
+      store.dispatch({ type: 'SET_TRACK_SORT', payload: { sort: { field: 'artist', direction: 'asc' } } });
+      resolvers[0]();
+
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('http://127.0.0.1:3000/library/tracks?offset=0&limit=100&sort=artist&dir=asc'));
+      expect(store.getState().library.tracks.total).toBeUndefined();
+    });
+
+    it('limits the lists to the selected folders the library has, and ignores a stale one', async () => {
+      const { store, listen, fetchMock } = await setup(emptyPage);
+      store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 500 } });
+      store.dispatch({ type: 'RESTORE_SETTINGS', payload: { settings: { libraryFolders: ['/m/a', '/gone'] } } });
+
+      // the folders arrive after the settings, and the selection is only of the folder that exists
+      listen('STORE_FOLDERS', { folders: [folder('/m/a'), folder('/m/b')] });
+      expect(store.getState().library.tracks.total).toBeUndefined();
+      expect(store.getState().uiState.libraryFolders).toEqual(['/m/a']);
+      store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'albums', page: 0 } });
+
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('http://127.0.0.1:3000/library/albums?offset=0&limit=100&folder=%2Fm%2Fa'));
+    });
+
+    it('shows everything again when the only selected folder leaves the library', async () => {
+      const { store, listen } = await setup(emptyPage);
+      listen('STORE_FOLDERS', { folders: [folder('/m/a'), folder('/m/b')] });
+      store.dispatch({ type: 'SET_LIBRARY_FOLDERS', payload: { folders: ['/m/a'] } });
+      store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 2 } });
+
+      listen('STORE_FOLDERS', { folders: [folder('/m/b')] });
+
+      expect(store.getState().uiState.libraryFolders).toEqual([]);
+      expect(store.getState().library.tracks.total).toBeUndefined();
     });
   });
 });

@@ -1,10 +1,13 @@
-import { useCallback, useMemo, useState } from 'react';
-import type { Track } from '../../types/library';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Folder, Track } from '../../types/library';
+import { cycleSort } from '../../types/library-query';
+import type { TrackSort, TrackSortField } from '../../types/library-query';
 import { useTranslation } from '../../client/i18n';
 import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
 import { usePageLoader } from '../../client/hooks/use-page-loader';
 import { useWindowedList } from '../../client/hooks/use-windowed-list';
 import { fetchLibrary } from '../../client/library-api';
+import { selectedFolders } from '../../client/library-query';
 import { getCachedItem } from '../../client/redux/library/pages';
 import type { PageCache } from '../../client/redux/library/pages';
 import { isOffline } from '../../client/offline-folders';
@@ -20,11 +23,17 @@ interface TrackViewProps {
   currentSong: Track | null;
   port: string;
   offlineFolders: string[];
+  /** The sort of the list, undefined is the default order */
+  sort: TrackSort | undefined;
+  /** The selected folders and the folders of the library, the selection can hold a folder the library no longer has */
+  selected: string[];
+  folders: Folder[];
   playTracks: (tracks: Track[]) => void;
   loadPage: (page: number) => void;
+  setSort: (sort: TrackSort | undefined) => void;
 }
 
-const TrackView = ({ currentSong, playTracks, tracks, port, offlineFolders, loadPage }: TrackViewProps) => {
+const TrackView = ({ currentSong, playTracks, tracks, port, offlineFolders, sort, selected, folders, loadPage, setSort }: TrackViewProps) => {
   const { t } = useTranslation();
   const headerLabels = useMemo<TrackLabels>(
     () => ({
@@ -49,6 +58,16 @@ const TrackView = ({ currentSong, playTracks, tracks, port, offlineFolders, load
   );
   usePageLoader(tracks, firstIndex, lastIndex, loadPage);
 
+  const folderSelection = selectedFolders(selected, folders);
+  const query = { sort, folders: folderSelection };
+  const queryKey = JSON.stringify(query);
+  // another sort or other folders are another list, which starts from its top
+  useEffect(() => {
+    if (listing.current) listing.current.scrollTop = 0;
+  }, [listing, queryKey]);
+
+  const sortBy = useCallback((field: TrackSortField) => setSort(cycleSort(sort, field)), [setSort, sort]);
+
   const toggleTrack = useCallback(
     (track: Track) =>
       setSelectedTracks((selected) => {
@@ -69,13 +88,13 @@ const TrackView = ({ currentSong, playTracks, tracks, port, offlineFolders, load
 
   // the pages that are not fetched yet are not in the cache, the whole library is fetched for the selection
   const selectAll = () =>
-    fetchLibrary(port)
+    fetchLibrary(port, query)
       .then((library) => setSelectedTracks(new Map(library.map((track) => [track.path, track]))))
       .catch(console.error);
 
   return (
     <div className={style.tracks}>
-      <TrackViewItem track={headerLabels} isHeader />
+      <TrackViewItem track={headerLabels} isHeader sort={sort} onSort={sortBy} />
       <div ref={separator} className={style.separator} />
       <div className={style.listing} ref={setListing}>
         <div className={style.window} style={{ height, paddingTop: offsetTop }}>

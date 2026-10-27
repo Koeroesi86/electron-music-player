@@ -158,6 +158,27 @@ describe('setupServer /local', () => {
       expect((await (await get('/library/tracks?offset=-4&limit=100000')).json()).items.length).toBeLessThanOrEqual(500);
     });
 
+    it('sorts and filters by the folders of the request', async () => {
+      const inFolder = `folder=${encodeURIComponent(folder)}`;
+      const elsewhere = `folder=${encodeURIComponent(path.join(folder, 'elsewhere'))}`;
+
+      expect((await (await get(`/library/tracks?sort=title&dir=desc&${inFolder}`)).json()).total).toBeGreaterThanOrEqual(1);
+      expect((await (await get(`/library/tracks?${elsewhere}`)).json()).total).toBe(0);
+      expect((await (await get(`/library/tracks?${elsewhere}&${inFolder}`)).json()).total).toBeGreaterThanOrEqual(1);
+      expect((await (await get(`/library/albums?sort=trackCount&dir=asc&${inFolder}`)).json()).total).toBeGreaterThanOrEqual(1);
+      expect(await (await get(`/library?sort=year&dir=asc&${elsewhere}`)).json()).toEqual([]);
+    });
+
+    it.each([
+      '/library/tracks?sort=nope&dir=asc',
+      '/library/tracks?sort=title&dir=up',
+      '/library/tracks?sort=title',
+      '/library/albums?sort=track&dir=asc',
+      '/library?sort=x&dir=asc',
+    ])('rejects the sort of %s that is not a known field with a known direction', async (route) => {
+      expect((await get(route)).status).toBe(400);
+    });
+
     it('rejects an album request without a folder and a title', async () => {
       expect((await get('/library/album')).status).toBe(400);
     });

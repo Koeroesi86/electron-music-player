@@ -90,13 +90,16 @@ describe('migrate', () => {
 
     it('create the tables and keep an existing library, also one from before the version was stored', async () => {
       const files = await readdir(migrationsPath);
-      await Promise.all(files.map((file) => readFile(join(migrationsPath, file), 'utf8').then((sql) => query(database, sql))));
+      // 001 to 003 are the ones that ran on every start before the version was stored
+      await Promise.all(
+        files.filter((file) => /^00[1-3]-/.test(file)).map((file) => readFile(join(migrationsPath, file), 'utf8').then((sql) => query(database, sql)))
+      );
       await query(database, `INSERT INTO library (path, title) VALUES ('/music/a.flac', 'A')`);
       await expect(getVersion(database)).resolves.toBe(0);
 
       await migrate(database, migrationsPath);
 
-      await expect(query(database, 'SELECT title FROM library')).resolves.toEqual([{ title: 'A' }]);
+      await expect(query(database, 'SELECT title, title_key FROM library')).resolves.toEqual([{ title: 'A', title_key: null }]);
       await expect(getVersion(database)).resolves.toBe(files.length);
     });
 

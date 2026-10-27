@@ -66,6 +66,15 @@ describe('library reducer', () => {
     expect(state.tracks.pages[0].map((track) => track.path)).toEqual(['/a']);
   });
 
+  it('drops the pages of one list when it is reset, and keeps the other', () => {
+    const stored = reducer(storeTracks(undefined, 0, ['/a'], 150), { type: 'STORE_ALBUM_PAGE', payload: { page: 0, items: [createAlbum('one')], total: 1 } });
+    const state = reducer(stored, { type: 'RESET_LIBRARY', payload: { kind: 'tracks' } });
+
+    expect(state.tracks).toEqual({ total: undefined, pages: {}, stale: [] });
+    expect(state.albums).toBe(stored.albums);
+    expect(state.loaded).toBe(true);
+  });
+
   it('ignores unrelated actions', () => {
     const state = storeTracks(undefined, 0, ['/a'], 1);
 

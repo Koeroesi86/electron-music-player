@@ -2,6 +2,7 @@ import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { Favourite, FavouriteKey, HistoryItem, NewFavourite } from '../../types/favourites';
 import type { RadioQuery, RadioStation, RadioTag } from '../../types/radio';
 import type { ThemeMode, ThemeSettings } from '../../types/theme';
+import type { AlbumSort, TrackSort } from '../../types/library-query';
 import type { UpdateState } from '../../types/update';
 
 export type LibraryView = 'albums' | 'tracks' | 'folders';
@@ -33,6 +34,11 @@ export interface PersistedSettings {
   language: string | undefined;
   /** The mode and the accent colour picked in the settings */
   theme: ThemeSettings;
+  /** The sort of the tracks and of the albums, undefined is the default order */
+  trackSort: TrackSort | undefined;
+  albumSort: AlbumSort | undefined;
+  /** The library folders the local collection is limited to, none is all of them */
+  libraryFolders: string[];
 }
 
 export interface UiState extends PersistedSettings {
@@ -100,6 +106,10 @@ export type AppAction =
   | EmptyAction<'INVALIDATE_LIBRARY'>
   | PayloadAction<'LOAD_LIBRARY_PAGE', { kind: 'tracks' | 'albums'; page: number }>
   | PayloadAction<'STORE_TRACK_PAGE', { page: number; items: Track[]; total: number }>
+  | PayloadAction<'RESET_LIBRARY', { kind: 'tracks' | 'albums' }>
+  | PayloadAction<'SET_TRACK_SORT', { sort: TrackSort | undefined }>
+  | PayloadAction<'SET_ALBUM_SORT', { sort: AlbumSort | undefined }>
+  | PayloadAction<'SET_LIBRARY_FOLDERS', { folders: string[] }>
   | PayloadAction<'STORE_ALBUM_PAGE', { page: number; items: AlbumSummary[]; total: number }>
   | PayloadAction<'FILES_ADDED', { fileList: FileList }>
   | PayloadAction<'REMOVE_FOLDER', { path: string }>

@@ -1,4 +1,5 @@
 import type { Reducer } from 'redux';
+import { knownFolders, parseFolders, restoreAlbumSort, restoreTrackSort } from '../../../types/library-query';
 import { isAppAction } from '../types';
 import type { OnlineView, UiState } from '../types';
 import { radioUuidOf } from '../../radio-track';
@@ -30,6 +31,9 @@ const initialState: UiState = {
   desktopBlur: false,
   language: undefined,
   theme: defaultTheme,
+  trackSort: undefined,
+  albumSort: undefined,
+  libraryFolders: [],
 };
 
 // the Shoutcast page and the Spotify page are gone, any other saved view shows the radio
@@ -45,6 +49,20 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, view: action.payload.view };
     case 'SET_ONLINE_VIEW':
       return { ...state, onlineView: action.payload.view };
+    case 'SET_TRACK_SORT':
+      return { ...state, trackSort: action.payload.sort };
+    case 'SET_ALBUM_SORT':
+      return { ...state, albumSort: action.payload.sort };
+    case 'SET_LIBRARY_FOLDERS':
+      return { ...state, libraryFolders: parseFolders(action.payload.folders) };
+    // a folder that is not in the library any more is dropped from the selection
+    case 'STORE_FOLDERS': {
+      const libraryFolders = knownFolders(
+        state.libraryFolders,
+        action.payload.folders.map(({ path }) => path)
+      );
+      return libraryFolders.length === state.libraryFolders.length ? state : { ...state, libraryFolders };
+    }
     case 'PLAY_TRACKS':
       return { ...state, nowPlaying: action.payload.tracks, played: [] };
     case 'PLAY_TRACK':
@@ -117,6 +135,10 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
         ...(settings.onlineView && { onlineView: restoreOnlineView() }),
         ...(settings.equalizer && { equalizer: restoreGains(settings.equalizer) }),
         ...(settings.theme && { theme: restoreTheme(settings.theme) }),
+        // a saved value that is not valid gives the default order and all folders
+        ...('trackSort' in settings && { trackSort: restoreTrackSort(settings.trackSort) }),
+        ...('albumSort' in settings && { albumSort: restoreAlbumSort(settings.albumSort) }),
+        ...('libraryFolders' in settings && { libraryFolders: parseFolders(settings.libraryFolders) }),
       };
     }
     default:

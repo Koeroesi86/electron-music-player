@@ -1,7 +1,9 @@
 import { memo } from 'react';
 import type { MouseEventHandler, ReactNode } from 'react';
 import classNames from 'classnames';
+import { FaCaretDown, FaCaretUp } from 'react-icons/fa';
 import type { Track } from '../../types/library';
+import type { TrackSort, TrackSortField } from '../../types/library-query';
 import { trackFavourite } from '../../client/favourites';
 import { useTranslation } from '../../client/i18n';
 import style from './TrackViewItem.scss';
@@ -23,8 +25,36 @@ const TrackViewItemField = ({ onClick = () => {}, className = '', children = nul
   </div>
 );
 
+interface TrackViewHeaderFieldProps {
+  field: TrackSortField;
+  className: string;
+  label: string;
+  sort: TrackSort | undefined;
+  onSort: (field: TrackSortField) => void;
+}
+
+const ariaSorts = { asc: 'ascending', desc: 'descending' } as const;
+
+/** A column header that sorts by its column when it is clicked, and shows the direction while it is the sorted column */
+const TrackViewHeaderField = ({ field, className, label, sort, onSort }: TrackViewHeaderFieldProps) => {
+  const active = sort?.field === field ? sort : undefined;
+
+  return (
+    <div role="columnheader" aria-sort={active ? ariaSorts[active.direction] : 'none'} className={classNames(style.field, style.sortable, className)}>
+      <button type="button" onClick={() => onSort(field)}>
+        {label}
+        {active?.direction === 'asc' && <FaCaretUp aria-hidden />}
+        {active?.direction === 'desc' && <FaCaretDown aria-hidden />}
+      </button>
+    </div>
+  );
+};
+
 interface TrackViewItemProps {
   track: Track | TrackLabels;
+  /** The sort of the list and how to change it, the header sorts by a column when it has them */
+  sort?: TrackSort;
+  onSort?: (field: TrackSortField) => void;
   isHeader?: boolean;
   isSelected?: boolean;
   isCurrent?: boolean;
@@ -40,10 +70,19 @@ const TrackViewItem = ({
   isCurrent = false,
   isOffline = false,
   isHeader = false,
+  sort,
+  onSort,
   clickTrack = () => {},
   doubleClickTrack = () => {},
 }: TrackViewItemProps) => {
   const { t } = useTranslation();
+
+  const renderField = (field: TrackSortField, className: string, content: ReactNode) =>
+    isHeader && onSort && !('path' in track) ? (
+      <TrackViewHeaderField field={field} className={className} label={track[field]} sort={sort} onSort={onSort} />
+    ) : (
+      <TrackViewItemField className={className}>{content}</TrackViewItemField>
+    );
 
   return (
     <div
@@ -58,14 +97,12 @@ const TrackViewItem = ({
       onDoubleClick={() => 'path' in track && doubleClickTrack(track)}
     >
       <TrackViewItemField className={style.favourite}>{'path' in track && <FavouriteButton item={trackFavourite(track)} />}</TrackViewItemField>
-      <TrackViewItemField className={style.duration}>
-        {typeof track.duration === 'string' ? track.duration : <Time seconds={track.duration} />}
-      </TrackViewItemField>
-      <TrackViewItemField className={style.artist}>{track.artist || '-'}</TrackViewItemField>
-      <TrackViewItemField className={style.year}>{track.year || '-'}</TrackViewItemField>
-      <TrackViewItemField className={style.album}>{track.album || '-'}</TrackViewItemField>
-      <TrackViewItemField className={style.trackNo}>{track.track || '-'}</TrackViewItemField>
-      <TrackViewItemField className={style.title}>{track.title || '-'}</TrackViewItemField>
+      {renderField('duration', style.duration, typeof track.duration === 'string' ? track.duration : <Time seconds={track.duration} />)}
+      {renderField('artist', style.artist, track.artist || '-')}
+      {renderField('year', style.year, track.year || '-')}
+      {renderField('album', style.album, track.album || '-')}
+      {renderField('track', style.trackNo, track.track || '-')}
+      {renderField('title', style.title, track.title || '-')}
     </div>
   );
 };
