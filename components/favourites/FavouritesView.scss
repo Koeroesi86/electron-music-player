@@ -10,7 +10,7 @@
     font-weight: 400;
     line-height: 56px;
     padding: 0 12px;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 3px var(--shadow-soft);
   }
 
   .contents {
@@ -51,13 +51,13 @@
     font-size: 12px;
     line-height: 32px;
     padding: 0 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--overlay);
+    background-color: var(--overlay-faint);
     transition: background-color 0.1s ease-in-out;
     will-change: background-color;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: var(--overlay);
     }
 
     &.unavailable .name,

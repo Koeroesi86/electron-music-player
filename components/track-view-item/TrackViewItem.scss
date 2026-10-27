@@ -14,12 +14,12 @@
 
   &.header {
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--overlay);
     padding: 3px 0;
   }
 
   &.selected {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--overlay-faint);
   }
 
   &.current {

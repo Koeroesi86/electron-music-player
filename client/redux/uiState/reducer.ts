@@ -2,6 +2,7 @@ import type { Reducer } from 'redux';
 import { isAppAction } from '../types';
 import type { OnlineView, UiState } from '../types';
 import { radioUuidOf } from '../../radio-track';
+import { defaultTheme, parseAccent, restoreTheme } from '../../theme';
 import { clampGain, defaultGains, restoreGains } from '../../audio/equalizer';
 
 const initialState: UiState = {
@@ -28,6 +29,7 @@ const initialState: UiState = {
   equalizer: defaultGains,
   desktopBlur: false,
   language: undefined,
+  theme: defaultTheme,
 };
 
 // the Shoutcast page and the Spotify page are gone, any other saved view shows the radio
@@ -87,6 +89,10 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, launcher: action.payload };
     case 'SET_LANGUAGE':
       return { ...state, language: action.payload.language };
+    case 'SET_THEME_MODE':
+      return { ...state, theme: { ...state.theme, mode: action.payload.mode } };
+    case 'SET_ACCENT':
+      return { ...state, theme: { ...state.theme, accent: parseAccent(action.payload.accent) } };
     case 'SET_PLAYING':
       return { ...state, isPlaying: action.payload.isPlaying };
     case 'TOGGLE_REPEAT':
@@ -108,6 +114,7 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
         ...settings,
         ...(settings.onlineView && { onlineView: restoreOnlineView() }),
         ...(settings.equalizer && { equalizer: restoreGains(settings.equalizer) }),
+        ...(settings.theme && { theme: restoreTheme(settings.theme) }),
       };
     }
     default:

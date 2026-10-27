@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron';
 import { resolve } from 'path';
 import windowStateKeeper from 'electron-window-state';
 import lockNavigation from './lockNavigation';
+import { isDarkTheme } from './theme';
 import { applyWindowBackdrop, getBackdropArguments, getWindowBackdrop } from './windowBackdrop';
 
 const createWindow = () => {
@@ -18,7 +19,8 @@ const createWindow = () => {
     height: mainWindowState.height,
     frame: false,
     transparent: true,
-    darkTheme: true,
+    // the mode is on the native theme before the window opens (index.ts), so the first paint has the right theme; the window is transparent, so it has no background of its own
+    darkTheme: isDarkTheme(),
     show: false,
     icon: resolve(__dirname, '../../icons/png/512x512.png'),
     webPreferences: {

@@ -1,0 +1,126 @@
+// The only stylesheet with colour values: the others use these custom properties, so a new component can not bypass the theme.
+// ThemeProvider.tsx puts data-theme on the root element and the accent properties (--accent, --accent-contrast) on it;
+// the values of the accent below are what shows until it runs, and are the default accent (client/theme.ts) in each theme.
+
+@mixin dark {
+  color-scheme: dark;
+
+  --accent: #ff8686;
+  --accent-contrast: #000000;
+
+  --app-background: #1f1f1f;
+  --panel-solid: #333333;
+  --panel-glass: rgba(51, 51, 51, 0.4);
+  // what lies over a transparent window: the desktop shows through, so it is tinted more where nothing blurs it
+  --window-tint: rgba(0, 0, 0, 0.3);
+  --window-tint-dense: rgba(0, 0, 0, 0.6);
+  --window-tint-densest: rgba(0, 0, 0, 0.75);
+  --bar-background: rgba(0, 0, 0, 0.3);
+
+  --text: #ffffff;
+  --text-soft: #efefef;
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-faint: rgba(255, 255, 255, 0.4);
+  --text-disabled: #cccccc;
+  --text-shadow: rgba(0, 0, 0, 0.4);
+
+  --overlay-faint: rgba(255, 255, 255, 0.05);
+  --overlay: rgba(255, 255, 255, 0.1);
+  --overlay-strong: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.65);
+
+  --shadow-soft: rgba(0, 0, 0, 0.4);
+  --shadow: rgba(0, 0, 0, 0.6);
+  --shadow-hard: #000000;
+
+  --control-background: #797979;
+  --control-background-hover: #888888;
+  --control-text: #efefef;
+  --control-text-hover: #ffffff;
+
+  --popup-header: #5b3d7a;
+}
+
+@mixin light {
+  color-scheme: light;
+
+  --accent: #a65757;
+  --accent-contrast: #ffffff;
+
+  --app-background: #f2f2f2;
+  --panel-solid: #fafafa;
+  --panel-glass: rgba(255, 255, 255, 0.55);
+  --window-tint: rgba(255, 255, 255, 0.3);
+  --window-tint-dense: rgba(255, 255, 255, 0.6);
+  --window-tint-densest: rgba(255, 255, 255, 0.75);
+  --bar-background: rgba(255, 255, 255, 0.5);
+
+  --text: #1f1f1f;
+  --text-soft: #333333;
+  --text-muted: rgba(0, 0, 0, 0.6);
+  --text-faint: rgba(0, 0, 0, 0.45);
+  --text-disabled: #8a8a8a;
+  --text-shadow: rgba(255, 255, 255, 0.5);
+
+  --overlay-faint: rgba(0, 0, 0, 0.04);
+  --overlay: rgba(0, 0, 0, 0.08);
+  --overlay-strong: rgba(0, 0, 0, 0.16);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.45);
+
+  --shadow-soft: rgba(0, 0, 0, 0.18);
+  --shadow: rgba(0, 0, 0, 0.28);
+  --shadow-hard: rgba(0, 0, 0, 0.45);
+
+  --control-background: #d6d6d6;
+  --control-background-hover: #c6c6c6;
+  --control-text: #333333;
+  --control-text-hover: #000000;
+
+  --popup-header: #dccdee;
+}
+
+:root {
+  @include dark;
+
+  // on the cover art, which looks the same in every theme: white on translucent dark
+  --art-placeholder: #efefef;
+  --art-text: #ffffff;
+  --art-text-faint: rgba(255, 255, 255, 0.4);
+  --art-icon: rgba(255, 255, 255, 0.6);
+  --art-text-shadow: #000000;
+  --art-scrim: rgba(51, 51, 51, 0.4);
+  --art-shadow: rgba(0, 0, 0, 0.8);
+  --art-edge: rgba(0, 0, 0, 0.2);
+  --art-glow: rgba(255, 255, 255, 0.4);
+  --art-glow-hard: #ffffff;
+
+  // the confirm dialog is a paper card in every theme
+  --card-background: #ffffff;
+  --card-text: #333333;
+  --card-border: rgba(0, 0, 0, 0.1);
+  --card-border-strong: rgba(0, 0, 0, 0.2);
+  --card-button: #efefef;
+  --card-button-hover: #cccccc;
+  --card-button-text-hover: #000000;
+
+  --favourite: #ff6b81;
+
+  // the shades of the accent
+  --accent-soft: color-mix(in srgb, var(--accent) 60%, transparent);
+  --accent-muted: color-mix(in srgb, var(--accent) 75%, var(--panel-solid));
+  --thumb-gradient: linear-gradient(to bottom, #ffffff 0%, color-mix(in srgb, var(--accent) 55%, #ffffff) 47%, color-mix(in srgb, var(--accent) 76%, #000000) 100%);
+  // what the canvases draw with, they read it from the computed style
+  --spectrum-meter: var(--accent-soft);
+  --spectrum-cap: var(--accent);
+}
+
+:root[data-theme='light'] {
+  @include light;
+}
+
+// until data-theme is set the system decides (the main process sets the preference of the page to the picked mode)
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    @include light;
+  }
+}

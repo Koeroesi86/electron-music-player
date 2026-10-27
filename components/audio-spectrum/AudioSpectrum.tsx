@@ -3,48 +3,34 @@ import { useAudioListener } from '../../client/hooks/use-audio-listener';
 import { getBandValues } from './getBandValues';
 import style from './AudioSpectrum.scss';
 
-interface MeterStop {
-  stop: number;
-  color: string;
-}
-
 export interface AudioSpectrumProps {
   width?: number;
   height?: number;
+  /** Defaults to the cap color of the theme (--spectrum-cap) */
   capColor?: string;
   capHeight?: number;
   meterWidth?: number;
   meterCount?: number;
-  meterColor?: string | MeterStop[];
+  /** Defaults to the meter color of the theme (--spectrum-meter) */
+  meterColor?: string;
   gap?: number;
   fps?: number;
   createAnalyser?: () => AnalyserNode | undefined;
   addPlayStatusListener?: (listener: (isPlaying: boolean) => void) => void;
 }
 
-const defaultMeterColor: MeterStop[] = [
-  { stop: 0, color: '#f00' },
-  { stop: 0.5, color: '#0CD7FD' },
-  { stop: 1, color: 'red' },
-];
-
-const createFill = (context: CanvasRenderingContext2D, meterColor: string | MeterStop[]) => {
-  if (typeof meterColor === 'string') return meterColor;
-
-  const gradient = context.createLinearGradient(0, 0, 0, 300);
-  meterColor.forEach(({ stop, color }) => gradient.addColorStop(stop, color));
-  return gradient;
-};
+/** A color of the theme as it is now, so the bars follow the accent and the mode as soon as they change */
+const readThemeColor = (property: string) => getComputedStyle(document.documentElement).getPropertyValue(property).trim();
 
 // @see https://github.com/hu-ke/react-audio-spectrum
 const AudioSpectrum = ({
   width = 200,
   height = 150,
-  capColor = '#FFF',
+  capColor,
   capHeight = 2,
   meterWidth = 2,
   meterCount = 40 * (2 + 2),
-  meterColor = defaultMeterColor,
+  meterColor,
   gap = 10,
   fps = 30,
   createAnalyser = () => undefined,
@@ -72,7 +58,6 @@ const AudioSpectrum = ({
     const canvasWidth = canvas.current.width;
     const canvasHeight = canvas.current.height - capHeight;
     const caps: number[] = []; // the vertical position of the caps in the previous frame
-    const fill = createFill(context, meterColor);
 
     const clearCanvas = () => context.clearRect(0, 0, canvasWidth, canvasHeight + capHeight);
     const getY = (value: number) => ((255 - value) * canvasHeight) / 255;
@@ -80,12 +65,14 @@ const AudioSpectrum = ({
 
     const drawBars = (data: Uint8Array) => {
       const values = getBandValues(data, meterCount);
+      const cap = capColor ?? readThemeColor('--spectrum-cap');
+      const fill = meterColor ?? readThemeColor('--spectrum-meter');
       clearCanvas();
       for (let i = 0; i < meterCount; i++) {
         const value = values[i];
         if (caps.length < Math.round(meterCount)) caps.push(value);
 
-        context.fillStyle = capColor;
+        context.fillStyle = cap;
         // the cap falls slowly and jumps up with the meter
         caps[i] = value < caps[i] ? caps[i] - 1 : value;
         drawRect(i, getY(caps[i]), capHeight);

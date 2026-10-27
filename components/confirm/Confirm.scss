@@ -3,7 +3,7 @@
   top: -100vh;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #fff;
+  background: var(--card-background);
   z-index: 100;
   padding: 20px;
   opacity: 0;
@@ -17,7 +17,7 @@
   }
 
   .message {
-    color: #333;
+    color: var(--card-text);
     margin-bottom: 12px;
     font-size: 16px;
   }
@@ -31,16 +31,16 @@
       line-height: 32px;
       padding: 0 12px;
       font-weight: 600;
-      color: #333333;
-      background: #efefef;
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: var(--card-text);
+      background: var(--card-button);
+      border: 1px solid var(--card-border);
       cursor: pointer;
       transition: all .2s ease-in-out;
 
       &:hover {
-        color: #000000;
-        background: #cccccc;
-        border-color: rgba(0, 0, 0, 0.2);
+        color: var(--card-button-text-hover);
+        background: var(--card-button-hover);
+        border-color: var(--card-border-strong);
       }
     }
   }

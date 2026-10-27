@@ -18,7 +18,7 @@
     min-height: 2px;
     margin-top: -2px;
     width: 100%;
-    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 3px var(--shadow-soft);
     transition: opacity .2s ease-in-out;
     opacity: 0;
 
@@ -59,8 +59,8 @@
       font-size: 12px;
       font-weight: 400;
       cursor: pointer;
-      color: #efefef;
-      background: #797979;
+      color: var(--control-text);
+      background: var(--control-background);
       border: 0;
       border-radius: 0;
       transition: color .2s ease-in-out, background-color .2s ease-in-out;
@@ -77,8 +77,8 @@
 
       &:hover {
         z-index: 1;
-        color: #ffffff;
-        background-color: #888888;
+        color: var(--control-text-hover);
+        background-color: var(--control-background-hover);
       }
 
       &:focus {

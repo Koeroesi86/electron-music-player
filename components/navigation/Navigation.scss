@@ -12,21 +12,21 @@
     margin-bottom: 12px;
     line-height: 24px;
     cursor: pointer;
-    color: #efefef;
+    color: var(--text-soft);
     border-left: 3px solid transparent;
     transition: all .2s ease-in-out;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    text-shadow: 0 1px 2px var(--text-shadow);
 
     &:hover {
-      border-left-color: rgba(255, 255, 255, 0.2);
+      border-left-color: var(--overlay-strong);
     }
 
     &.active {
-      color: #ff8686;
-      border-left-color: rgba(255, 134, 134, 0.6);
+      color: var(--accent);
+      border-left-color: var(--accent-soft);
 
       &:hover {
-        border-left-color: #ff8686;
+        border-left-color: var(--accent);
       }
     }
 

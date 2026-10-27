@@ -12,7 +12,7 @@
     font-weight: 400;
     line-height: 56px;
     padding: 0 12px;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 3px var(--shadow-soft);
   }
 
   .contents {
@@ -34,7 +34,7 @@
       background: transparent url(../../assets/album-placeholder.svg) center center no-repeat;
       background-size: cover;
       border-radius: 3px;
-      box-shadow: inset 0 0 0px 2px rgba(0, 0, 0, 0.2);
+      box-shadow: inset 0 0 0px 2px var(--art-edge);
 
       &::after {
         content: '';
@@ -43,7 +43,7 @@
         left: 0;
         height: 100%;
         width: 100%;
-        box-shadow: 0 0 12px rgb(0, 0, 0);
+        box-shadow: 0 0 12px var(--shadow-hard);
         animation: flashing 3s ease-in-out infinite;
       }
     }
@@ -69,7 +69,7 @@
       }
 
       .streamTitle {
-        color: #ff8686;
+        color: var(--accent);
       }
 
       .favourite {
@@ -104,8 +104,8 @@
       line-height: 32px;
       padding: 0 12px;
       cursor: pointer;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      background-color: rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid var(--overlay);
+      background-color: var(--overlay-faint);
       transition: background-color .1s ease-in-out;
       will-change: background-color;
 
@@ -118,7 +118,7 @@
       }
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: var(--overlay);
       }
 
       .trackNo {

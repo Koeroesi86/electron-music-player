@@ -96,9 +96,12 @@ const persistedKeys = [
   'equalizer',
   'desktopBlur',
   'language',
+  'theme',
 ] satisfies (keyof PersistedSettings)[];
 
 const saveSettings = (uiState: UiState) => electronAPI.send('SAVE_SETTINGS', Object.fromEntries(persistedKeys.map((key) => [key, uiState[key]])));
+
+const saveAccent = debounce((store: Store) => saveSettings(store.getState().uiState), 500);
 
 const toPlaylistTrack = ({ file, title }: PlaylistItem): Track => ({
   path: file,
@@ -184,6 +187,13 @@ const handleActions = actionMiddleware((store) => [
   // the main process has text of its own and follows the language from the saved settings
   // the handlers run before the reducer, so the saved settings get the new language here
   onAction('SET_LANGUAGE', ({ payload }) => saveSettings({ ...store.getState().uiState, language: payload.language })),
+  // the main process matches its native parts (menus, dialogs) to the mode
+  onAction('SET_THEME_MODE', ({ payload }) => {
+    const { uiState } = store.getState();
+    saveSettings({ ...uiState, theme: { ...uiState.theme, mode: payload.mode } });
+  }),
+  // the colour input fires while it is dragged, the main process does not need the accent before it is saved
+  onAction('SET_ACCENT', () => saveAccent(store)),
   onAction('SAVE_SETTINGS', () => saveSettings(store.getState().uiState)),
 ]);
 
