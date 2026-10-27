@@ -6,20 +6,33 @@
 
   .select {
     -webkit-app-region: no-drag;
-    height: 28px;
+    height: 30px;
     padding: 0 8px;
-    color: inherit;
+    color: var(--text-soft);
     font-size: 12px;
     border: 0;
     border-radius: 3px;
     background-color: var(--overlay);
 
+    cursor: pointer;
+
+    // the open list takes the background of the select, which is translucent: it gets a solid one of the theme
     option {
       color: var(--text);
+      background-color: var(--panel-solid);
+    }
+
+    &:hover:not(:disabled) {
+      background-color: var(--overlay-strong);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
     }
 
     &:disabled {
-      color: var(--text-disabled);
+      color: var(--text-faint);
+      cursor: default;
     }
   }
 }
