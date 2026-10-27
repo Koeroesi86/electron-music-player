@@ -85,10 +85,16 @@ const connectToSource = (item: AudioNode) => {
 };
 
 const play = () => {
+  // a track change asks for play more than once; a started element is not asked again, as a request that a new source interrupts is rejected
+  if (!audioNode?.paused) return;
+
   audioNode
-    ?.play()
+    .play()
     .then(() => console.log('playing', audioNode?.src))
-    .catch((err) => console.error(err));
+    .catch((err) => {
+      // a play that a new source or a pause interrupted is not a failure
+      if (!(err instanceof DOMException && err.name === 'AbortError')) console.error(err);
+    });
 };
 
 const pause = () => audioNode?.pause();
