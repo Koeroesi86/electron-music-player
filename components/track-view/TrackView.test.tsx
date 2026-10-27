@@ -4,6 +4,9 @@ import type { Track } from '../../types/library';
 import { createPageCache, pageSize, storePage } from '../../client/redux/library/pages';
 import TrackView from './TrackView';
 
+// the heart is tested with its own component, it needs the store
+vi.mock('../favourite-button', () => ({ default: () => null }));
+
 const track = (index: number): Track => ({
   path: `/music/${index}.flac`,
   artist: 'Artist',

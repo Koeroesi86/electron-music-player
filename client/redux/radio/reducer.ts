@@ -7,6 +7,8 @@ export interface RadioState {
   stations: RadioStation[];
   tags: RadioTag[];
   loading: boolean;
+  /** The station that was played last, for what needs more than the radio track knows of it */
+  playing?: RadioStation;
   error?: string;
 }
 
@@ -26,6 +28,8 @@ const reducer: Reducer<RadioState> = (state = initialState, action) => {
       const { stations, error } = action.payload;
       return { ...state, stations, error, loading: false };
     }
+    case 'PLAY_RADIO_STATION':
+      return { ...state, playing: action.payload.station };
     case 'RADIO_TAGS_LOADED':
       return { ...state, tags: action.payload.tags };
     default:

@@ -3,6 +3,7 @@ import type { Tab } from '../../client/redux/types';
 import LocalCollection from '../local-collection';
 import NowPlaying from '../now-playing';
 import OnlineSources from '../online-sources';
+import Favourites from '../favourites';
 import Equalizer from '../equalizer';
 import FolderManagement from '../folder-management';
 import LauncherIntegration from '../launcher-integration';
@@ -39,6 +40,13 @@ function PlayerTabs({ tab = 'local', addFiles = () => {} }: PlayerTabsProps) {
         })}
       >
         <OnlineSources />
+      </div>
+      <div
+        className={classNames(style.tab, {
+          [style.active]: tab === 'favourites',
+        })}
+      >
+        <Favourites />
       </div>
       <div
         className={classNames(style.tab, {

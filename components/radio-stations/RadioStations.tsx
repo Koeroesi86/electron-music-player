@@ -6,7 +6,9 @@ import type { RadioState } from '../../client/redux/radio/reducer';
 import { useTranslation } from '../../client/i18n';
 import { useDelayedValue } from '../../client/hooks/use-delayed-value';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
+import { stationFavourite } from '../../client/favourites';
 import type { Translator } from '../../locales/translate';
+import FavouriteButton from '../favourite-button';
 import style from './RadioStations.scss';
 
 interface RadioStationsProps {
@@ -68,6 +70,7 @@ const RadioStations = ({ radio, currentStation, search, loadTags, play }: RadioS
             </span>
             <span className={style.name}>{station.name}</span>
             <span className={style.details}>{describe(station, translator)}</span>
+            <FavouriteButton item={stationFavourite(station)} className={style.favourite} />
           </div>
         ))}
       </div>

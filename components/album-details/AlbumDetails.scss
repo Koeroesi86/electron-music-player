@@ -65,6 +65,16 @@
     font-weight: 600;
   }
 
+  .favourite {
+    flex-shrink: 0;
+    margin-top: 6px;
+    color: #333;
+
+    &.active {
+      color: #e0455d;
+    }
+  }
+
   .meta {
     flex-shrink: 0;
     margin: 6px 0;

@@ -84,4 +84,39 @@ describe('connection middleware', () => {
     expect(send.mock.calls.map(([channel]) => channel)).toEqual(['SAVE_SETTINGS', 'INSTALL_UPDATE']);
     expect(send.mock.calls[0][1]).toMatchObject({ nowPlaying: [track], currentTime: 42 });
   });
+  describe('favourites', () => {
+    const station = { uuid: 'abc', name: 'Jazz FM', country: 'Hungary', tags: [], codec: 'MP3', bitrate: 128 };
+    const favourite = { source: 'radio', kind: 'station', id: 'abc', snapshot: station, addedAt: 1, available: true };
+
+    it('asks the main process for the favourites when it starts and when the library changed', async () => {
+      const { store, send, listen } = await setup();
+      expect(send).toHaveBeenCalledWith('FAVOURITES_LOAD');
+      send.mockClear();
+
+      listen('RESCAN_COMPLETE', {});
+
+      expect(send).toHaveBeenCalledWith('FAVOURITES_LOAD');
+      expect(store.getState().favourites).toEqual([]);
+    });
+
+    it('stores the favourites of the sources it knows and leaves out the others', async () => {
+      const { store, listen } = await setup();
+
+      listen('FAVOURITES', { favourites: [favourite, { ...favourite, source: 'drive:usb' }, 'broken'] });
+
+      expect(store.getState().favourites).toEqual([favourite]);
+    });
+
+    it('sends the added and the removed favourite to the main process', async () => {
+      const { store, send } = await setup();
+      const item = { source: 'radio', kind: 'station', id: 'abc', snapshot: station } as const;
+
+      store.dispatch({ type: 'ADD_FAVOURITE', payload: { favourite: item } });
+      store.dispatch({ type: 'REMOVE_FAVOURITE', payload: { key: { source: 'radio', kind: 'station', id: 'abc' } } });
+
+      expect(send).toHaveBeenCalledWith('FAVOURITE_ADD', item);
+      expect(send).toHaveBeenCalledWith('FAVOURITE_REMOVE', { source: 'radio', kind: 'station', id: 'abc' });
+      expect(store.getState().favourites).toEqual([]);
+    });
+  });
 });

@@ -108,10 +108,17 @@ export const createRadioBrowser = (userAgent: string) => {
     return toList(await request(`/json/tags?${parameters}`), toTag);
   };
 
+  /** The stations of the directory among the uuids, the ones it no longer lists are left out */
+  const findStations = async (uuids: string[]) => {
+    if (uuids.length === 0) return [];
+
+    return toList(await request(`/json/stations/byuuid?${new URLSearchParams({ uuids: uuids.join(',') })}`), toStation);
+  };
+
   /** Also registers a click of the station, which ranks it in the directory */
   const resolveStream = async (uuid: string) => toStreamUrl(await request(`/json/url/${encodeURIComponent(uuid)}`));
 
-  return { searchStations, getTags, resolveStream };
+  return { searchStations, getTags, findStations, resolveStream };
 };
 
 export type RadioBrowser = ReturnType<typeof createRadioBrowser>;

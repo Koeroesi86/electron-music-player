@@ -116,6 +116,24 @@ describe('radio-browser client', () => {
     });
   });
 
+  describe('findStations', () => {
+    it('lists the stations of the directory among the uuids in one request', async () => {
+      fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([station]));
+
+      const stations = await createRadioBrowser('eMusic').findStations(['abc-1', 'gone-2']);
+
+      expect(stations.map(({ uuid }) => uuid)).toEqual(['abc-1']);
+      const url = new URL(requestedUrls(fetchMock)[1]);
+      expect(url.pathname).toBe('/json/stations/byuuid');
+      expect(url.searchParams.get('uuids')).toBe('abc-1,gone-2');
+    });
+
+    it('does not ask the directory about no stations', async () => {
+      expect(await createRadioBrowser('eMusic').findStations([])).toEqual([]);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   describe('resolveStream', () => {
     it('resolves the stream address of a station', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json({ ok: true, url: 'http://stream.example.com/live' }));

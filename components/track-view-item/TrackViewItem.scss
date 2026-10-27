@@ -34,6 +34,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
+    &.favourite {
+      width: 26px;
+      padding-right: 0;
+      padding-left: 6px;
+      vertical-align: top;
+    }
+
     &.duration {
       width: 70px;
       padding-left: 6px;
@@ -57,7 +64,7 @@
     }
 
     &.title {
-      width: calc(100% - 455px);
+      width: calc(100% - 481px);
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
