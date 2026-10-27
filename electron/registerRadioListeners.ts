@@ -10,8 +10,18 @@ const registerRadioListeners = ({ radio }: ListenerContext) => {
 
     radio
       .searchStations(query)
-      .then((stations) => event.sender.send('RADIO_STATIONS', { query, stations }))
+      .then(({ stations, hasMore }) => event.sender.send('RADIO_STATIONS', { query, stations, hasMore }))
       .catch((error) => event.sender.send('RADIO_STATIONS', { query, stations: [], error: errorMessage(error) }));
+  });
+
+  // each list is loaded on its own, one that fails leaves its filter empty
+  ipcMain.on('RADIO_OPTIONS', (event) => {
+    (['countries', 'languages', 'codecs'] as const).forEach((kind) =>
+      radio
+        .getOptions(kind)
+        .then((options) => event.sender.send('RADIO_OPTIONS_LOADED', { kind, options }))
+        .catch((error) => console.error(error))
+    );
   });
 
   ipcMain.on('RADIO_TAGS', (event) => {

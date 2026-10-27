@@ -1,9 +1,9 @@
-import type { RadioQuery, RadioStation, RadioTag } from '../types/radio';
+import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../types/radio';
+import { parseRadioSearch, radioPageSize, radioSortOrders } from '../types/radio-query';
 
 const directoryUrl = 'https://all.api.radio-browser.info';
 const requestTimeout = 10000;
-const maxQueryLength = 100;
-const stationLimit = 60;
+const optionLimit = { countries: 300, languages: 300, codecs: 20 };
 const tagLimit = 40;
 
 type JsonRecord = Record<string, unknown>;
@@ -55,14 +55,37 @@ const shuffled = <T>(items: T[]) =>
     .sort((a, b) => a.order - b.order)
     .map(({ item }) => item);
 
-const clean = (value: unknown) => (typeof value === 'string' ? value.trim().slice(0, maxQueryLength) : '');
-
 /** The query of a renderer message, anything but plain text is dropped */
-export const toRadioQuery = (payload: unknown): RadioQuery => {
-  const { name, tag } = isRecord(payload) ? payload : {};
+export const toRadioQuery = parseRadioSearch;
 
-  return { name: clean(name) || undefined, tag: clean(tag) || undefined };
+/** The parameters of a search: only the fields of the query that are known, in the spelling of the directory */
+export const toSearchParameters = ({ name, tag, country, language, codec, bitrateMin, sort, descending, offset }: RadioQuery) => {
+  const parameters = new URLSearchParams({
+    hidebroken: 'true',
+    hls: 'false',
+    order: radioSortOrders[sort ?? 'popularity'],
+    reverse: `${descending !== false}`,
+    limit: `${radioPageSize}`,
+  });
+  Object.entries({ name, tag, countrycode: country, language, codec, bitrateMin, offset })
+    .filter(([, value]) => value !== undefined)
+    .forEach(([key, value]) => parameters.set(key, `${value}`));
+  if (language) parameters.set('languageExact', 'true');
+
+  return parameters;
 };
+
+const toOption = (value: unknown, valueKey: string): RadioOption | undefined =>
+  isRecord(value) && text(value.name) && text(value[valueKey])
+    ? { value: text(value[valueKey]), name: text(value.name), stationCount: count(value.stationcount) }
+    : undefined;
+
+// the directory names a country by its code, a language and a codec by their name
+const optionSources = {
+  countries: { path: '/json/countries', order: 'name', valueKey: 'iso_3166_1' },
+  languages: { path: '/json/languages', order: 'stationcount', valueKey: 'name' },
+  codecs: { path: '/json/codecs', order: 'stationcount', valueKey: 'name' },
+} satisfies Record<RadioOptionKind, { path: string; order: string; valueKey: string }>;
 
 /** Client of the radio-browser.info API: it has no single host, so a server is picked at random and the next one is tried when it fails */
 export const createRadioBrowser = (userAgent: string) => {
@@ -94,12 +117,30 @@ export const createRadioBrowser = (userAgent: string) => {
 
   const request = async (path: string) => fetchFrom(await getServers(), path);
 
-  const searchStations = async ({ name, tag }: RadioQuery) => {
-    const parameters = new URLSearchParams({ hidebroken: 'true', hls: 'false', order: 'clickcount', reverse: 'true', limit: `${stationLimit}` });
-    if (name) parameters.set('name', name);
-    if (tag) parameters.set('tag', tag);
+  /** A full page means that the directory may have more, the stations it lists but the app cannot play do not count */
+  const searchStations = async (query: RadioQuery) => {
+    const answer = await request(`/json/stations/search?${toSearchParameters(query)}`);
 
-    return toList(await request(`/json/stations/search?${parameters}`), toStation);
+    return { stations: toList(answer, toStation), hasMore: Array.isArray(answer) && answer.length >= radioPageSize };
+  };
+
+  // the lists are fetched once for the session, a failed fetch is tried again with the next request
+  const options: Partial<Record<RadioOptionKind, Promise<RadioOption[]>>> = {};
+
+  const getOptions = (kind: RadioOptionKind) => {
+    const { path, order, valueKey } = optionSources[kind];
+    const parameters = new URLSearchParams({ hidebroken: 'true', order, reverse: `${order !== 'name'}`, limit: `${optionLimit[kind]}` });
+    const cached =
+      options[kind] ??
+      request(`${path}?${parameters}`)
+        .then((list) => toList(list, (item) => toOption(item, valueKey)))
+        .catch((error) => {
+          delete options[kind];
+          throw error;
+        });
+    options[kind] = cached;
+
+    return cached;
   };
 
   const getTags = async () => {
@@ -118,7 +159,7 @@ export const createRadioBrowser = (userAgent: string) => {
   /** Also registers a click of the station, which ranks it in the directory */
   const resolveStream = async (uuid: string) => toStreamUrl(await request(`/json/url/${encodeURIComponent(uuid)}`));
 
-  return { searchStations, getTags, findStations, resolveStream };
+  return { searchStations, getTags, getOptions, findStations, resolveStream };
 };
 
 export type RadioBrowser = ReturnType<typeof createRadioBrowser>;

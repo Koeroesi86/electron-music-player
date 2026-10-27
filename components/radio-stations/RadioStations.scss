@@ -11,11 +11,14 @@
     -webkit-app-region: no-drag;
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     flex-shrink: 0;
+    gap: 12px;
     padding: 0 12px 12px;
 
     .search,
-    .tags {
+    .select,
+    .clear {
       height: 28px;
       padding: 0 8px;
       color: inherit;
@@ -27,14 +30,24 @@
 
     .search {
       flex: 1 1 auto;
-      margin-right: 12px;
     }
 
-    .tags {
-      flex: 0 0 200px;
+    .select {
+      flex: 0 1 200px;
+      min-width: 0;
 
       option {
         color: var(--text);
+      }
+    }
+
+    .clear {
+      flex: 0 0 auto;
+      cursor: pointer;
+
+      &:disabled {
+        cursor: default;
+        opacity: 0.5;
       }
     }
   }
@@ -49,6 +62,19 @@
       font-size: 12px;
       line-height: 32px;
       padding: 0 12px;
+    }
+
+    .loadMore {
+      display: block;
+      margin: 12px auto 0;
+      height: 28px;
+      padding: 0 16px;
+      color: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      border: 0;
+      border-radius: 3px;
+      background-color: var(--overlay);
     }
 
     .station {

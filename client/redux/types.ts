@@ -1,6 +1,6 @@
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { Favourite, FavouriteKey, HistoryItem, NewFavourite } from '../../types/favourites';
-import type { RadioQuery, RadioStation, RadioTag } from '../../types/radio';
+import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../../types/radio';
 import type { ThemeMode, ThemeSettings } from '../../types/theme';
 import type { AlbumSort, TrackSort } from '../../types/library-query';
 import type { UpdateState } from '../../types/update';
@@ -39,6 +39,8 @@ export interface PersistedSettings {
   albumSort: AlbumSort | undefined;
   /** The library folders the local collection is limited to, none is all of them */
   libraryFolders: string[];
+  /** The search of the radio stations: the filters and the sort, the page is not saved */
+  radioQuery: RadioQuery;
 }
 
 export interface UiState extends PersistedSettings {
@@ -81,6 +83,7 @@ export type AppAction =
   | EmptyAction<'CLEAR_PLAYED'>
   | EmptyAction<'POP_PLAYED'>
   | EmptyAction<'LOAD_RADIO_TAGS'>
+  | EmptyAction<'LOAD_RADIO_OPTIONS'>
   | EmptyAction<'LOAD_FAVOURITES'>
   | EmptyAction<'LOAD_HISTORY'>
   | EmptyAction<'CLEAR_HISTORY'>
@@ -90,8 +93,9 @@ export type AppAction =
   | EmptyAction<'OPEN_RELEASES'>
   | PayloadAction<'UPDATE_STATE', UpdateState>
   | PayloadAction<'SEARCH_RADIO', { query: RadioQuery }>
-  | PayloadAction<'RADIO_STATIONS', { query: RadioQuery; stations: RadioStation[]; error?: string }>
+  | PayloadAction<'RADIO_STATIONS', { query: RadioQuery; stations: RadioStation[]; hasMore?: boolean; error?: string }>
   | PayloadAction<'RADIO_TAGS_LOADED', { tags: RadioTag[] }>
+  | PayloadAction<'RADIO_OPTIONS_LOADED', { kind: RadioOptionKind; options: RadioOption[] }>
   | PayloadAction<'FAVOURITES_LOADED', { favourites: Favourite[] }>
   | PayloadAction<'HISTORY_LOADED', { history: HistoryItem[] }>
   | PayloadAction<'ADD_FAVOURITE', { favourite: NewFavourite }>

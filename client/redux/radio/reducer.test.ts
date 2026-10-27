@@ -11,7 +11,7 @@ const run = (action: AppAction, state: RadioState = initial) => reducer(state, a
 
 describe('radio reducer', () => {
   it('starts without stations', () => {
-    expect(initial).toEqual({ query: {}, stations: [], tags: [], loading: false });
+    expect(initial).toEqual({ query: {}, offset: 0, hasMore: false, stations: [], tags: [], countries: [], languages: [], codecs: [], loading: false });
   });
 
   it('is loading from a search until its stations arrive', () => {
@@ -51,6 +51,78 @@ describe('radio reducer', () => {
     const tags = [{ name: 'jazz', stationCount: 3 }];
 
     expect(run({ type: 'RADIO_TAGS_LOADED', payload: { tags } }).tags).toEqual(tags);
+  });
+
+  it('drops the stations of a search with other filters or another sort', () => {
+    const searching = run({ type: 'SEARCH_RADIO', payload: { query: { country: 'HU', sort: 'name' } } });
+
+    expect(run({ type: 'RADIO_STATIONS', payload: { query: { country: 'HU' }, stations: [station] } }, searching)).toBe(searching);
+    expect(run({ type: 'RADIO_STATIONS', payload: { query: { sort: 'name' }, stations: [station] } }, searching)).toBe(searching);
+    expect(run({ type: 'RADIO_STATIONS', payload: { query: { country: 'HU', sort: 'name', descending: false }, stations: [station] } }, searching)).toBe(
+      searching
+    );
+  });
+
+  it('drops the answer of another page', () => {
+    const searching = run({ type: 'SEARCH_RADIO', payload: { query: { name: 'a', offset: 60 } } });
+
+    expect(searching).toMatchObject({ query: { name: 'a' }, offset: 60 });
+    expect(run({ type: 'RADIO_STATIONS', payload: { query: { name: 'a' }, stations: [station] } }, searching)).toBe(searching);
+  });
+
+  it('adds the next page to the stations without repeating one', () => {
+    const other = { ...station, uuid: 'def' };
+    const loaded = run(
+      { type: 'RADIO_STATIONS', payload: { query: {}, stations: [station], hasMore: true } },
+      run({ type: 'SEARCH_RADIO', payload: { query: {} } })
+    );
+    const next = run({ type: 'SEARCH_RADIO', payload: { query: { offset: 60 } } }, loaded);
+    const appended = run({ type: 'RADIO_STATIONS', payload: { query: { offset: 60 }, stations: [station, other], hasMore: false } }, next);
+
+    expect(loaded.hasMore).toBe(true);
+    expect(next.stations).toEqual([station]);
+    expect(appended).toMatchObject({ stations: [station, other], hasMore: false, loading: false });
+  });
+
+  it('keeps the loaded stations when the next page fails, and offers it again', () => {
+    const loaded = { ...initial, stations: [station], hasMore: true };
+    const next = run({ type: 'SEARCH_RADIO', payload: { query: { offset: 60 } } }, loaded);
+
+    expect(run({ type: 'RADIO_STATIONS', payload: { query: { offset: 60 }, stations: [], error: 'offline' } }, next)).toMatchObject({
+      stations: [station],
+      hasMore: true,
+      error: 'offline',
+    });
+  });
+
+  it('replaces the stations with the first page of a new search', () => {
+    const loaded = { ...initial, stations: [station], hasMore: true };
+    const searching = run({ type: 'SEARCH_RADIO', payload: { query: { codec: 'AAC' } } }, loaded);
+
+    expect(run({ type: 'RADIO_STATIONS', payload: { query: { codec: 'AAC' }, stations: [], error: 'offline' } }, searching)).toMatchObject({
+      stations: [],
+      hasMore: false,
+    });
+  });
+
+  it('stores each list of values to filter by', () => {
+    const options = [{ value: 'HU', name: 'Hungary', stationCount: 4 }];
+
+    expect(run({ type: 'RADIO_OPTIONS_LOADED', payload: { kind: 'countries', options } })).toMatchObject({ countries: options, languages: [], codecs: [] });
+    expect(run({ type: 'RADIO_OPTIONS_LOADED', payload: { kind: 'codecs', options } }).codecs).toEqual(options);
+  });
+
+  it('opens with the saved query, and ignores a saved value that is not valid', () => {
+    const settings = (radioQuery: unknown) => ({ type: 'RESTORE_SETTINGS' as const, payload: { settings: { radioQuery } as never } });
+
+    expect(run(settings({ country: 'HU', sort: 'bitrate', descending: false, bitrateMin: 192 })).query).toEqual({
+      country: 'HU',
+      sort: 'bitrate',
+      descending: false,
+      bitrateMin: 192,
+    });
+    expect(run(settings({ sort: 'x', bitrateMin: 7, codec: 3 }), { ...initial, query: { name: 'a' } }).query).toEqual({});
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 1 } } })).toBe(initial);
   });
 
   it('ignores unrelated and malformed actions', () => {

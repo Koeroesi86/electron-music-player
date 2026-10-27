@@ -1,5 +1,6 @@
 import type { Reducer } from 'redux';
 import { knownFolders, parseFolders, restoreAlbumSort, restoreTrackSort } from '../../../types/library-query';
+import { parseRadioQuery } from '../../../types/radio-query';
 import { isAppAction } from '../types';
 import type { OnlineView, UiState } from '../types';
 import { radioUuidOf } from '../../radio-track';
@@ -34,6 +35,7 @@ const initialState: UiState = {
   trackSort: undefined,
   albumSort: undefined,
   libraryFolders: [],
+  radioQuery: {},
 };
 
 // the Shoutcast page and the Spotify page are gone, any other saved view shows the radio
@@ -63,6 +65,9 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       );
       return libraryFolders.length === state.libraryFolders.length ? state : { ...state, libraryFolders };
     }
+    // the page of a search is not part of what is saved
+    case 'SEARCH_RADIO':
+      return { ...state, radioQuery: parseRadioQuery(action.payload.query) };
     case 'PLAY_TRACKS':
       return { ...state, nowPlaying: action.payload.tracks, played: [] };
     case 'PLAY_TRACK':
@@ -140,6 +145,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
         ...('trackSort' in settings && { trackSort: restoreTrackSort(settings.trackSort) }),
         ...('albumSort' in settings && { albumSort: restoreAlbumSort(settings.albumSort) }),
         ...('libraryFolders' in settings && { libraryFolders: parseFolders(settings.libraryFolders) }),
+        // a saved filter or sort that is not valid is dropped
+        ...('radioQuery' in settings && { radioQuery: parseRadioQuery(settings.radioQuery) }),
       };
     }
     default:
