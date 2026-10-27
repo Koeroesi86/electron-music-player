@@ -1,0 +1,128 @@
+.playlist {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  .header {
+    -webkit-app-region: drag;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    line-height: 56px;
+    padding: 0 12px;
+    box-shadow: 0 0 3px var(--shadow-soft);
+
+    > * {
+      -webkit-app-region: no-drag;
+    }
+
+    .name {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 0;
+      font: inherit;
+      font-weight: 400;
+      text-align: left;
+      color: inherit;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      border: 0;
+      background: transparent;
+      cursor: text;
+    }
+
+    .rename {
+      flex: 1 1 auto;
+    }
+
+    .count {
+      flex: 0 0 auto;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .danger {
+      color: var(--accent-contrast);
+      background: var(--accent);
+    }
+  }
+
+  .contents {
+    height: calc(100% - 56px);
+    overflow-y: auto;
+    padding: 12px;
+    will-change: transform;
+  }
+
+  .message {
+    font-size: 12px;
+    line-height: 32px;
+    padding: 0 12px;
+    opacity: 0.7;
+  }
+
+  .entry {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    font-size: 12px;
+    line-height: 32px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--overlay);
+    background-color: var(--overlay-faint);
+    cursor: grab;
+    transition: background-color 0.1s ease-in-out;
+
+    &:hover {
+      background-color: var(--overlay);
+    }
+
+    &.dropTarget {
+      border-top: 2px solid var(--accent);
+    }
+
+    &.unavailable .title,
+    &.unavailable .details {
+      opacity: 0.5;
+    }
+
+    &.unavailable .title {
+      text-decoration: line-through;
+    }
+
+    &.unavailable .details {
+      font-style: italic;
+    }
+
+    .title {
+      flex: 1 1 auto;
+      overflow-x: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .details {
+      flex: 0 0 auto;
+      margin-left: 12px;
+      opacity: 0.7;
+    }
+
+    .action {
+      flex: 0 0 auto;
+      margin-left: 12px;
+      color: inherit;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+    }
+  }
+}

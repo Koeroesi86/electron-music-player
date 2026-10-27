@@ -308,4 +308,47 @@ describe('connection middleware', () => {
       expect(store.getState().library.tracks.total).toBeUndefined();
     });
   });
+
+  it('stores the playlists the main process reports and leaves out the tracks it cannot show', async () => {
+    const { store, listen } = await setup();
+    const track = { path: '/a.flac', title: 'A' };
+
+    listen('PLAYLISTS', {
+      playlists: [
+        {
+          id: 1,
+          name: 'Road',
+          entries: [
+            { id: 1, track, available: true },
+            { id: 2, track: 5, available: true },
+          ],
+        },
+      ],
+    });
+
+    expect(store.getState().playlists).toEqual([{ id: 1, name: 'Road', entries: [{ id: 1, track, available: true }] }]);
+  });
+
+  it('asks for the playlists when it starts and sends every change to the main process', async () => {
+    const { store, send } = await setup();
+
+    store.dispatch({ type: 'CREATE_PLAYLIST', payload: { name: 'Road' } });
+    store.dispatch({ type: 'RENAME_PLAYLIST', payload: { id: 1, name: 'Night' } });
+    store.dispatch({ type: 'MOVE_PLAYLIST', payload: { id: 1, toIndex: 0 } });
+    store.dispatch({ type: 'ADD_TO_PLAYLIST', payload: { id: 1, tracks: [] } });
+    store.dispatch({ type: 'MOVE_PLAYLIST_ENTRY', payload: { id: 1, entryId: 2, toIndex: 0 } });
+    store.dispatch({ type: 'REMOVE_FROM_PLAYLIST', payload: { id: 1, entryId: 2 } });
+    store.dispatch({ type: 'DELETE_PLAYLIST', payload: { id: 1 } });
+
+    expect(send.mock.calls.map(([channel]) => channel).filter((channel) => channel.startsWith('PLAYLIST'))).toEqual([
+      'PLAYLISTS_LOAD',
+      'PLAYLIST_CREATE',
+      'PLAYLIST_RENAME',
+      'PLAYLIST_MOVE',
+      'PLAYLIST_ADD',
+      'PLAYLIST_MOVE_ENTRY',
+      'PLAYLIST_REMOVE_ENTRY',
+      'PLAYLIST_DELETE',
+    ]);
+  });
 });

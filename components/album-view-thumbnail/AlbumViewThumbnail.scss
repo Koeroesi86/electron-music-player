@@ -30,10 +30,17 @@
     &:hover {
       box-shadow: 0 0 5px var(--art-glow);
 
-      .favourite {
+      .overlay {
+        opacity: 1;
+      }
+    }
+  }
+
+  // the buttons sit on the corners of the cover, whether the pointer is over it or not
+  .favourite,
+  .playlist {
     position: absolute;
     top: 4px;
-    right: 4px;
     z-index: 1;
     color: var(--art-text);
     text-shadow: 0 0 3px var(--art-text-shadow);
@@ -41,10 +48,12 @@
     border-radius: 50%;
   }
 
-  .overlay {
-        opacity: 1;
-      }
-    }
+  .favourite {
+    right: 4px;
+  }
+
+  .playlist {
+    left: 4px;
   }
 
   .overlay {

@@ -5,6 +5,7 @@ import LocalCollection from '../local-collection';
 import NowPlaying from '../now-playing';
 import OnlineSources from '../online-sources';
 import Favourites from '../favourites';
+import PlaylistView from '../playlist-view';
 import Equalizer from '../equalizer';
 import FolderManagement from '../folder-management';
 import LauncherIntegration from '../launcher-integration';
@@ -56,6 +57,13 @@ function PlayerTabs({ tab = 'home', addFiles = () => {} }: PlayerTabsProps) {
         })}
       >
         <Favourites />
+      </div>
+      <div
+        className={classNames(style.tab, {
+          [style.active]: tab === 'playlist',
+        })}
+      >
+        <PlaylistView />
       </div>
       <div
         className={classNames(style.tab, {

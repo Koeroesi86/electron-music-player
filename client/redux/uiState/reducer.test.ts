@@ -336,4 +336,24 @@ describe('uiState reducer', () => {
       expect(run({ type: 'RADIO_STREAM_ART', payload: { uuid: 'abc', title: 'Artist - Song', art: 'abcd' } }, titled)).toBe(titled);
     });
   });
+
+  describe('playlists', () => {
+    it('opens a playlist on its tab', () => {
+      expect(run({ type: 'OPEN_PLAYLIST', payload: { id: 3 } })).toMatchObject({ tab: 'playlist', playlistId: 3 });
+    });
+
+    it('leaves the tab of a playlist that is deleted', () => {
+      const open = run({ type: 'OPEN_PLAYLIST', payload: { id: 3 } });
+
+      expect(run({ type: 'DELETE_PLAYLIST', payload: { id: 3 } }, open)).toMatchObject({ tab: 'home', playlistId: null });
+    });
+
+    it('keeps the tab when another playlist is deleted, or when the playlist is not on show', () => {
+      const open = run({ type: 'OPEN_PLAYLIST', payload: { id: 3 } });
+      const elsewhere = run({ type: 'SET_TAB', payload: { tab: 'settings' } }, open);
+
+      expect(run({ type: 'DELETE_PLAYLIST', payload: { id: 4 } }, open)).toBe(open);
+      expect(run({ type: 'DELETE_PLAYLIST', payload: { id: 3 } }, elsewhere)).toMatchObject({ tab: 'settings', playlistId: null });
+    });
+  });
 });

@@ -10,6 +10,7 @@ import { getImageTint } from '../../client/cover-tint';
 import { albumFavourite } from '../../client/favourites';
 import style from './AlbumDetails.scss';
 import FavouriteButton from '../favourite-button';
+import AddToPlaylist from '../add-to-playlist';
 import Time from '../time';
 
 interface AlbumDetailsProps {
@@ -51,7 +52,12 @@ const AlbumDetails = ({ album, playTracks, close }: AlbumDetailsProps) => {
         <div className={style.info}>
           <div className={style.artist}>{displayed.artist}</div>
           <div className={style.title}>{displayed.title}</div>
-          {shown && <FavouriteButton item={albumFavourite(shown)} className={style.favourite} />}
+          {shown && (
+            <div className={style.actions}>
+              <FavouriteButton item={albumFavourite(shown)} className={style.favourite} />
+              <AddToPlaylist source={shown} className={style.addToPlaylist} />
+            </div>
+          )}
           <div className={style.meta}>
             {displayed.year && <span>{displayed.year}</span>}
             <Time seconds={displayed.duration} />

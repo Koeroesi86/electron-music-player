@@ -84,14 +84,21 @@
     line-height: 1.15;
   }
 
-  .favourite {
-    flex-shrink: 0;
-    align-self: flex-start;
-    color: var(--text);
+  .actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
 
-    &.active {
-      color: var(--favourite);
-    }
+  .favourite,
+  .addToPlaylist {
+    flex-shrink: 0;
+    color: var(--text);
+  }
+
+  .favourite.active {
+    color: var(--favourite);
   }
 
   .meta {

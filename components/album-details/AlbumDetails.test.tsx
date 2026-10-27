@@ -6,6 +6,7 @@ import { getImageTint } from '../../client/cover-tint';
 import AlbumDetails from './AlbumDetails';
 
 vi.mock('../favourite-button', () => ({ default: () => null }));
+vi.mock('../add-to-playlist', () => ({ default: () => null }));
 vi.mock('../../client/cover-tint', () => ({ getImageTint: vi.fn() }));
 
 const album: Album = {

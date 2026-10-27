@@ -1,13 +1,14 @@
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { Favourite, FavouriteKey, HistoryItem, NewFavourite } from '../../types/favourites';
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../../types/radio';
+import type { Playlist } from '../../types/playlists';
 import type { ThemeMode, ThemeSettings } from '../../types/theme';
 import type { AlbumSort, TrackSort } from '../../types/library-query';
 import type { UpdateState } from '../../types/update';
 
 export type LibraryView = 'albums' | 'tracks' | 'folders';
 export type OnlineView = 'radio';
-export type Tab = 'home' | 'now-playing' | 'local' | 'online-sources' | 'favourites' | 'equalizer' | 'settings';
+export type Tab = 'home' | 'now-playing' | 'local' | 'online-sources' | 'favourites' | 'playlist' | 'equalizer' | 'settings';
 
 export interface PlaylistItem {
   file: string;
@@ -46,6 +47,8 @@ export interface PersistedSettings {
 export interface UiState extends PersistedSettings {
   /** The app opens on the home screen, the tab is not saved */
   tab: Tab;
+  /** The playlist the playlist tab shows */
+  playlistId: number | null;
   scanningFolder: string | null;
   progress: number;
   totalCount: number;
@@ -85,6 +88,7 @@ export type AppAction =
   | EmptyAction<'LOAD_RADIO_OPTIONS'>
   | EmptyAction<'LOAD_FAVOURITES'>
   | EmptyAction<'LOAD_HISTORY'>
+  | EmptyAction<'LOAD_PLAYLISTS'>
   | EmptyAction<'CLEAR_HISTORY'>
   | EmptyAction<'CLICK_NOTIFICATION'>
   | EmptyAction<'CHECK_FOR_UPDATES'>
@@ -97,6 +101,15 @@ export type AppAction =
   | PayloadAction<'RADIO_OPTIONS_LOADED', { kind: RadioOptionKind; options: RadioOption[] }>
   | PayloadAction<'FAVOURITES_LOADED', { favourites: Favourite[] }>
   | PayloadAction<'HISTORY_LOADED', { history: HistoryItem[] }>
+  | PayloadAction<'PLAYLISTS_LOADED', { playlists: Playlist[] }>
+  | PayloadAction<'OPEN_PLAYLIST', { id: number }>
+  | PayloadAction<'CREATE_PLAYLIST', { name: string; tracks?: Track[] }>
+  | PayloadAction<'RENAME_PLAYLIST', { id: number; name: string }>
+  | PayloadAction<'DELETE_PLAYLIST', { id: number }>
+  | PayloadAction<'MOVE_PLAYLIST', { id: number; toIndex: number }>
+  | PayloadAction<'ADD_TO_PLAYLIST', { id: number; tracks: Track[] }>
+  | PayloadAction<'REMOVE_FROM_PLAYLIST', { id: number; entryId: number }>
+  | PayloadAction<'MOVE_PLAYLIST_ENTRY', { id: number; entryId: number; toIndex: number }>
   | PayloadAction<'ADD_FAVOURITE', { favourite: NewFavourite }>
   | PayloadAction<'REMOVE_FAVOURITE', { key: FavouriteKey }>
   | PayloadAction<'PLAY_RADIO_STATION', { station: RadioStation }>
