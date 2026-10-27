@@ -23,7 +23,7 @@ describe('uiState reducer', () => {
   it('provides sensible defaults', () => {
     expect(initial).toMatchObject({
       view: 'albums',
-      tab: 'local',
+      tab: 'home',
       port: '3000',
       volume: 0.5,
       isPlaying: false,
@@ -189,11 +189,17 @@ describe('uiState reducer', () => {
   });
 
   it('merges restored settings', () => {
-    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.2, tab: 'equalizer' } } })).toMatchObject({
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.2, view: 'tracks' } } })).toMatchObject({
       volume: 0.2,
-      tab: 'equalizer',
-      view: 'albums',
+      view: 'tracks',
+      tab: 'home',
     });
+  });
+
+  it('opens on the home screen whatever tab an earlier version saved', () => {
+    const settings = JSON.parse('{ "volume": 0.2, "tab": "equalizer" }');
+
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings } }).tab).toBe('home');
   });
 
   describe('radio', () => {

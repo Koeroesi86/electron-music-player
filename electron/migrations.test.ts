@@ -14,12 +14,12 @@ describe('migrations', () => {
     database.close();
   });
 
-  it('creates the folders, library, settings and favourites tables', async () => {
+  it('creates the folders, library, settings, favourites and history tables', async () => {
     const tables = await executeQuery<{ name: string }>(database, {
       query: `SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name`,
       variables: [],
     });
 
-    expect(tables.map(({ name }) => name)).toEqual(expect.arrayContaining(['folders', 'library', 'settings', 'favourites']));
+    expect(tables.map(({ name }) => name)).toEqual(expect.arrayContaining(['folders', 'library', 'settings', 'favourites', 'history']));
   });
 });

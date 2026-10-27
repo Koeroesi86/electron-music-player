@@ -1,12 +1,12 @@
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
-import type { Favourite, FavouriteKey, NewFavourite } from '../../types/favourites';
+import type { Favourite, FavouriteKey, HistoryItem, NewFavourite } from '../../types/favourites';
 import type { RadioQuery, RadioStation, RadioTag } from '../../types/radio';
 import type { ThemeMode, ThemeSettings } from '../../types/theme';
 import type { UpdateState } from '../../types/update';
 
 export type LibraryView = 'albums' | 'tracks' | 'folders';
 export type OnlineView = 'radio';
-export type Tab = 'now-playing' | 'local' | 'online-sources' | 'favourites' | 'equalizer' | 'settings';
+export type Tab = 'home' | 'now-playing' | 'local' | 'online-sources' | 'favourites' | 'equalizer' | 'settings';
 
 export interface PlaylistItem {
   file: string;
@@ -17,7 +17,6 @@ export interface PlaylistItem {
 export interface PersistedSettings {
   view: LibraryView;
   onlineView: OnlineView;
-  tab: Tab;
   nowPlaying: Track[];
   played: Track[];
   currentSong: Track | null;
@@ -37,6 +36,8 @@ export interface PersistedSettings {
 }
 
 export interface UiState extends PersistedSettings {
+  /** The app opens on the home screen, the tab is not saved */
+  tab: Tab;
   port: string;
   scanningFolder: string | null;
   progress: number;
@@ -75,6 +76,8 @@ export type AppAction =
   | EmptyAction<'POP_PLAYED'>
   | EmptyAction<'LOAD_RADIO_TAGS'>
   | EmptyAction<'LOAD_FAVOURITES'>
+  | EmptyAction<'LOAD_HISTORY'>
+  | EmptyAction<'CLEAR_HISTORY'>
   | EmptyAction<'CLICK_NOTIFICATION'>
   | EmptyAction<'CHECK_FOR_UPDATES'>
   | EmptyAction<'INSTALL_UPDATE'>
@@ -84,6 +87,7 @@ export type AppAction =
   | PayloadAction<'RADIO_STATIONS', { query: RadioQuery; stations: RadioStation[]; error?: string }>
   | PayloadAction<'RADIO_TAGS_LOADED', { tags: RadioTag[] }>
   | PayloadAction<'FAVOURITES_LOADED', { favourites: Favourite[] }>
+  | PayloadAction<'HISTORY_LOADED', { history: HistoryItem[] }>
   | PayloadAction<'ADD_FAVOURITE', { favourite: NewFavourite }>
   | PayloadAction<'REMOVE_FAVOURITE', { key: FavouriteKey }>
   | PayloadAction<'PLAY_RADIO_STATION', { station: RadioStation }>

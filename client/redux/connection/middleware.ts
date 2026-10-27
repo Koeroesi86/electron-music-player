@@ -7,7 +7,9 @@ import { debounce } from '../../utils/debounce';
 import type { RootState } from '../reducers';
 import toAddedFiles from '../../added-files';
 import { getCoverUrl } from '../../cover-url';
-import { isFavourite } from '../../favourites';
+import { isFavourite, stationFavourite, trackFavourite } from '../../favourites';
+import { isHistoryItem } from '../../history';
+import { radioUuidOf } from '../../radio-track';
 import { fetchAlbumPage, fetchTrackPage } from '../../library-api';
 import { actionMiddleware, onAction } from '../on-action';
 import type { Store } from '../on-action';
@@ -39,6 +41,9 @@ function addListeners(store: Store) {
   // a favourite of a source this version does not know is left out
   electronAPI.on<{ favourites: unknown[] }>('FAVOURITES', ({ favourites }) =>
     store.dispatch({ type: 'FAVOURITES_LOADED', payload: { favourites: favourites.filter(isFavourite) } })
+  );
+  electronAPI.on<{ history: unknown[] }>('HISTORY', ({ history }) =>
+    store.dispatch({ type: 'HISTORY_LOADED', payload: { history: history.filter(isHistoryItem) } })
   );
   electronAPI.on<{ folder: string }>('SCANNING_FOLDER', (payload) => store.dispatch({ type: 'SCANNING_FOLDER', payload }));
 }
@@ -83,7 +88,6 @@ const rescanInterval = 1000 * 60 * 60;
 const persistedKeys = [
   'view',
   'onlineView',
-  'tab',
   'nowPlaying',
   'played',
   'currentSong',
@@ -134,6 +138,7 @@ const start = (store: Store) => {
   electronAPI.send('APP_READY', 'Ready to receive');
   electronAPI.send('GET_APP_VERSION');
   electronAPI.send('FAVOURITES_LOAD');
+  electronAPI.send('HISTORY_LOAD');
 
   setInterval(() => {
     if (store.getState().uiState.totalCount === 0) rescanLibrary(false);
@@ -160,6 +165,7 @@ const handleActions = actionMiddleware((store) => [
       store.dispatch({ type: 'INVALIDATE_LIBRARY' });
       // what the library has decides which local favourites are available
       store.dispatch({ type: 'LOAD_FAVOURITES' });
+      store.dispatch({ type: 'LOAD_HISTORY' });
     })
   ),
   onAction('CLOSE_APP', () => {
@@ -169,9 +175,16 @@ const handleActions = actionMiddleware((store) => [
   ...(['MINIMIZE_APP', 'MAXIMIZE_APP'] as const).map((type) => onAction(type, () => electronAPI.send(type, {}))),
   onAction('CLICKED_URL', ({ payload }) => store.dispatch({ type: 'PLAY_TRACKS', payload: { tracks: payload.playlist.map(toPlaylistTrack) } })),
   onAction('PLAY_TRACK', ({ payload }) => {
-    if (payload.track) notifyTrack(store, payload.track);
+    if (!payload.track) return;
+
+    notifyTrack(store, payload.track);
+    // a station is recorded with all that is known of it when it is picked, the track of the radio knows its name only
+    if (!radioUuidOf(payload.track.path)) electronAPI.send('HISTORY_RECORD', trackFavourite(payload.track));
   }),
+  onAction('PLAY_RADIO_STATION', ({ payload }) => electronAPI.send('HISTORY_RECORD', stationFavourite(payload.station))),
   onAction('LOAD_FAVOURITES', () => electronAPI.send('FAVOURITES_LOAD')),
+  onAction('LOAD_HISTORY', () => electronAPI.send('HISTORY_LOAD')),
+  onAction('CLEAR_HISTORY', () => electronAPI.send('HISTORY_CLEAR')),
   onAction('ADD_FAVOURITE', ({ payload }) => electronAPI.send('FAVOURITE_ADD', payload.favourite)),
   onAction('REMOVE_FAVOURITE', ({ payload }) => electronAPI.send('FAVOURITE_REMOVE', payload.key)),
   onAction('SEARCH_RADIO', ({ payload }) => electronAPI.send('RADIO_SEARCH', payload.query)),

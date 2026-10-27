@@ -3,19 +3,7 @@ import type { WebContents } from 'electron';
 import type { ListenerContext } from './listenerContext';
 import { addFavourite, getFavourites, removeFavourite } from './favouritesRepository';
 import { withAvailability } from './favouriteAvailability';
-
-const maxFieldLength = 2000;
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
-
-const isField = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= maxFieldLength;
-
-/** The key of a renderer message, anything but plain text fields is dropped */
-const toKey = (payload: unknown) => {
-  const { source, kind, id } = isRecord(payload) ? payload : {};
-
-  return isField(source) && isField(kind) && isField(id) ? { source, kind, id } : undefined;
-};
+import { isRecord, toKey } from './keyPayload';
 
 const sendFavourites = async (context: ListenerContext, sender: WebContents) => {
   const favourites = await withAvailability(await getFavourites(context.database), context);

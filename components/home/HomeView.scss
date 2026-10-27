@@ -1,0 +1,123 @@
+.home {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  .header {
+    -webkit-app-region: drag;
+    font-weight: 400;
+    line-height: 56px;
+    padding: 0 12px;
+    box-shadow: 0 0 3px var(--shadow-soft);
+  }
+
+  .contents {
+    height: calc(100% - 56px);
+    overflow-y: auto;
+    padding: 12px;
+    will-change: transform;
+  }
+
+  .message {
+    font-size: 12px;
+    line-height: 32px;
+    padding: 0 12px;
+    opacity: 0.7;
+  }
+
+  .sectionHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px 6px;
+
+    .sectionTitle {
+      font-weight: 600;
+    }
+  }
+
+  .item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    font-size: 12px;
+    line-height: 40px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--overlay);
+    background-color: var(--overlay-faint);
+    transition: background-color 0.1s ease-in-out;
+    will-change: background-color;
+
+    &:hover {
+      background-color: var(--overlay);
+    }
+
+    &.current {
+      color: var(--accent);
+      background-color: var(--overlay-strong);
+    }
+
+    &.unavailable .name,
+    &.unavailable .artist {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
+    &.unavailable .album {
+      font-style: italic;
+    }
+
+    .cover {
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      margin-right: 12px;
+      border-radius: 3px;
+      background: var(--overlay) url('../../assets/album-placeholder.svg') center / cover no-repeat;
+    }
+
+    .name,
+    .artist,
+    .album {
+      overflow-x: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .name {
+      flex: 2 1 0;
+      font-weight: 600;
+    }
+
+    .artist,
+    .album {
+      flex: 1 1 0;
+      margin-left: 12px;
+      opacity: 0.7;
+    }
+
+    .duration {
+      flex: 0 0 64px;
+      margin-left: 12px;
+      text-align: right;
+      opacity: 0.7;
+    }
+
+    .playButton {
+      flex: 0 0 auto;
+      margin-left: 12px;
+      color: inherit;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+    }
+  }
+}

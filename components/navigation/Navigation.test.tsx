@@ -6,6 +6,7 @@ describe('Navigation', () => {
   afterEach(cleanup);
 
   it.each([
+    ['Home', 'home'],
     ['Now playing', 'now-playing'],
     ['Local collection', 'local'],
     ['Online', 'online-sources'],
@@ -28,9 +29,9 @@ describe('Navigation', () => {
     expect(active).toEqual(['Equalizer']);
   });
 
-  it('defaults to the local collection', () => {
+  it('defaults to the home screen', () => {
     render(<Navigation />);
 
-    expect(document.querySelector('.active')?.textContent).toBe('Local collection');
+    expect(document.querySelector('.active')?.textContent).toBe('Home');
   });
 });
