@@ -17,6 +17,7 @@ import { getAppUserModelId } from './electron/appUserModelId';
 import { registerDevDesktopEntry, removeDevDesktopEntry } from './electron/devDesktopEntry';
 import closeDatabase from './electron/closeDatabase';
 import { getMainTranslator, setPickedLanguage } from './electron/language';
+import { applyThemeMode } from './electron/theme';
 import { getSettings } from './electron/settingsRepository';
 import { autoUpdater } from 'electron-updater';
 import { createMockUpdateSource, getUpdateUnavailableReason, runUpdate } from './electron/updater';
@@ -191,7 +192,10 @@ app
     global._database = d;
 
     return getSettings(d)
-      .then(setPickedLanguage)
+      .then((settings) => {
+        setPickedLanguage(settings);
+        applyThemeMode(settings);
+      })
       .then(() => d);
   })
   .then((d) => {

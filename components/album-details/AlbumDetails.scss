@@ -10,10 +10,10 @@
   max-height: 90vh;
   flex-direction: column;
   overflow: hidden;
-  color: #fff;
-  background: #333333;
+  color: var(--text);
+  background: var(--panel-solid);
   border-radius: 16px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px var(--shadow), 0 0 0 1px var(--overlay);
   opacity: 0;
   transition: opacity .2s ease-in-out, transform .2s ease-in-out, top 0s linear .2s;
   will-change: opacity, transform;
@@ -30,7 +30,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
   }
 
@@ -42,8 +42,8 @@
     align-items: flex-end;
     gap: 24px;
     padding: 28px 28px 24px;
-    color: #fff;
-    background: linear-gradient(135deg, #5b3d7a, #333333);
+    color: var(--text);
+    background: linear-gradient(135deg, var(--popup-header), var(--panel-solid));
   }
 
   .cover {
@@ -52,9 +52,9 @@
     height: 200px;
     overflow: hidden;
     border-radius: 10px;
-    background: #efefef url(../../assets/album-placeholder.svg) no-repeat center center;
+    background: var(--art-placeholder) url(../../assets/album-placeholder.svg) no-repeat center center;
     background-size: cover;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 12px 30px var(--shadow);
 
     img {
       display: block;
@@ -87,10 +87,10 @@
   .favourite {
     flex-shrink: 0;
     align-self: flex-start;
-    color: #fff;
+    color: var(--text);
 
     &.active {
-      color: #ff6b81;
+      color: var(--favourite);
     }
   }
 
@@ -111,8 +111,8 @@
     padding: 0 20px;
     border: 0;
     border-radius: 22px;
-    color: #1c1c20;
-    background: #fff;
+    color: var(--panel-solid);
+    background: var(--text);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -134,8 +134,8 @@
     height: 44px;
     border: 0;
     border-radius: 22px;
-    color: #fff;
-    background: rgba(255, 255, 255, 0.16);
+    color: var(--text);
+    background: var(--overlay-strong);
     cursor: pointer;
   }
 
@@ -155,12 +155,12 @@
     border-radius: 8px;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--overlay);
     }
 
     .number {
       width: 28px;
-      color: rgba(255, 255, 255, 0.55);
+      color: var(--text-muted);
     }
 
     .trackTitle {

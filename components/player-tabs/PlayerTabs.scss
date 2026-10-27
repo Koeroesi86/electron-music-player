@@ -4,7 +4,7 @@
   position: relative;
   overflow: hidden;
   background-color: var(--panel-background);
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 6px var(--shadow-soft);
 
   .tab {
     position: absolute;

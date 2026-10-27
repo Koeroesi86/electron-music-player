@@ -10,7 +10,7 @@
   font-size: 12px;
   padding: 0 12px;
   min-width: 0;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
   opacity: 0;
@@ -71,11 +71,11 @@
     left: 0;
     width: 100%;
     margin: 0 6px;
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--overlay-strong);
 
     .current {
       height: 2px;
-      background-color: rgba(255, 134, 134, 0.6);
+      background-color: var(--accent-soft);
       transition: width .1s ease-in-out;
     }
   }

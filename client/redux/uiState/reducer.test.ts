@@ -125,6 +125,40 @@ describe('uiState reducer', () => {
     expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { desktopBlur: true } } }).desktopBlur).toBe(true);
   });
 
+  it('follows the system with the default accent until a theme is picked', () => {
+    expect(initial.theme).toEqual({ mode: 'system', accent: undefined });
+  });
+
+  it('sets the mode and the accent separately', () => {
+    const dark = run({ type: 'SET_THEME_MODE', payload: { mode: 'dark' } });
+    const blue = run({ type: 'SET_ACCENT', payload: { accent: '#5AA9FF' } }, dark);
+
+    expect(dark.theme).toEqual({ mode: 'dark', accent: undefined });
+    expect(blue.theme).toEqual({ mode: 'dark', accent: '#5aa9ff' });
+    expect(run({ type: 'SET_THEME_MODE', payload: { mode: 'system' } }, blue).theme).toEqual({ mode: 'system', accent: '#5aa9ff' });
+  });
+
+  it('resets the accent with undefined, and falls back to the default for a colour that is not #rrggbb', () => {
+    const blue = { ...initial, theme: { mode: 'light' as const, accent: '#5aa9ff' } };
+
+    expect(run({ type: 'SET_ACCENT', payload: { accent: undefined } }, blue).theme).toEqual({ mode: 'light', accent: undefined });
+    expect(run({ type: 'SET_ACCENT', payload: { accent: 'blue' } }, blue).theme.accent).toBeUndefined();
+  });
+
+  it('restores the saved theme, and the default for what is not valid', () => {
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { theme: { mode: 'light', accent: '#4cc38a' } } } }).theme).toEqual({
+      mode: 'light',
+      accent: '#4cc38a',
+    });
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { theme: { mode: 'sepia', accent: 'red' } as never } } }).theme).toEqual({
+      mode: 'system',
+      accent: undefined,
+    });
+    expect(
+      run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.2 } } }, { ...initial, theme: { mode: 'dark', accent: undefined } }).theme.mode
+    ).toBe('dark');
+  });
+
   it('follows the system language until one is picked, and restores the picked one', () => {
     expect(initial.language).toBeUndefined();
     expect(run({ type: 'SET_LANGUAGE', payload: { language: 'hu' } }).language).toBe('hu');

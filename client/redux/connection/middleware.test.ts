@@ -52,6 +52,33 @@ describe('connection middleware', () => {
     expect(send).toHaveBeenCalledWith('SAVE_SETTINGS', expect.objectContaining({ language: 'hu' }));
   });
 
+  it('saves the picked mode at once with the settings, so the main process matches its native parts to it', async () => {
+    const { store, send } = await setup();
+
+    store.dispatch({ type: 'SET_THEME_MODE', payload: { mode: 'light' } });
+
+    expect(send).toHaveBeenCalledWith('SAVE_SETTINGS', expect.objectContaining({ theme: { mode: 'light', accent: undefined } }));
+  });
+
+  it('saves the accent once the colour input stops changing, with the last colour', async () => {
+    vi.useFakeTimers();
+    try {
+      const { store, send } = await setup();
+
+      store.dispatch({ type: 'SET_ACCENT', payload: { accent: '#111111' } });
+      store.dispatch({ type: 'SET_ACCENT', payload: { accent: '#222222' } });
+      expect(send).not.toHaveBeenCalledWith('SAVE_SETTINGS', expect.anything());
+
+      vi.advanceTimersByTime(500);
+
+      expect(send.mock.calls.filter(([channel]) => channel === 'SAVE_SETTINGS')).toEqual([
+        ['SAVE_SETTINGS', expect.objectContaining({ theme: { mode: 'system', accent: '#222222' } })],
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('asks the main process for the version when it starts and stores the update state it reports', async () => {
     const { store, send, listen } = await setup();
     const state = { version: '26.10.5', electron: '40.0.0', chrome: '140.0.0', unavailable: undefined, status: { kind: 'checking' } };

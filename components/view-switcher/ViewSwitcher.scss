@@ -19,11 +19,11 @@
       transition: color .2s ease-in-out;
 
       &:hover:not(.current) {
-        color: #c78080;
+        color: var(--accent-muted);
       }
 
       &.current {
-        color: #ff8686;
+        color: var(--accent);
       }
     }
   }

@@ -1,6 +1,7 @@
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { Favourite, FavouriteKey, NewFavourite } from '../../types/favourites';
 import type { RadioQuery, RadioStation, RadioTag } from '../../types/radio';
+import type { ThemeMode, ThemeSettings } from '../../types/theme';
 import type { UpdateState } from '../../types/update';
 
 export type LibraryView = 'albums' | 'tracks' | 'folders';
@@ -31,6 +32,8 @@ export interface PersistedSettings {
   desktopBlur: boolean;
   /** The language picked in the settings, undefined follows the system language */
   language: string | undefined;
+  /** The mode and the accent colour picked in the settings */
+  theme: ThemeSettings;
 }
 
 export interface UiState extends PersistedSettings {
@@ -104,6 +107,8 @@ export type AppAction =
   | PayloadAction<'LAUNCHER_STATE', { available: boolean; enabled: boolean; offered: boolean }>
   | PayloadAction<'SET_LAUNCHER', { enabled: boolean }>
   | PayloadAction<'SET_LANGUAGE', { language: string | undefined }>
+  | PayloadAction<'SET_THEME_MODE', { mode: ThemeMode }>
+  | PayloadAction<'SET_ACCENT', { accent: string | undefined }>
   | PayloadAction<'SET_VIEW', { view: LibraryView }>
   | PayloadAction<'SET_ONLINE_VIEW', { view: OnlineView }>
   | PayloadAction<'SET_TAB', { tab: Tab }>

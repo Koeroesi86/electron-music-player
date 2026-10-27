@@ -10,6 +10,7 @@ import LauncherIntegration from '../launcher-integration';
 import WindowBlur from '../window-blur';
 import About from '../about';
 import LanguageSelect from '../language-select';
+import ThemeSelect from '../theme-select';
 import style from './PlayerTabs.scss';
 
 interface PlayerTabsProps {
@@ -61,6 +62,7 @@ function PlayerTabs({ tab = 'local', addFiles = () => {} }: PlayerTabsProps) {
         })}
       >
         <LanguageSelect />
+        <ThemeSelect />
         <FolderManagement addFiles={addFiles} />
         <LauncherIntegration />
         <WindowBlur />

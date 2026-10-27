@@ -18,7 +18,7 @@
   }
 
   &.active {
-    color: #ff6b81;
+    color: var(--favourite);
     opacity: 1;
   }
 }

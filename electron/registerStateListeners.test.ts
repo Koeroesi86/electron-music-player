@@ -6,9 +6,11 @@ import registerStateListeners from './registerStateListeners';
 type Listener = (event: IpcMainEvent, payload?: unknown) => void;
 
 const listeners = new Map<string, Listener>();
+const nativeTheme = vi.hoisted(() => ({ themeSource: 'system' }));
 
 vi.mock('electron', () => ({
   ipcMain: { on: (channel: string, listener: Listener) => listeners.set(channel, listener) },
+  nativeTheme,
 }));
 
 vi.mock('./libraryRepository', () => ({ getFolders: async () => ['/music'] }));
@@ -28,6 +30,7 @@ describe('registerStateListeners', () => {
   beforeEach(() => {
     listeners.clear();
     send.mockReset();
+    nativeTheme.themeSource = 'system';
     registerStateListeners(context);
   });
 
@@ -47,5 +50,13 @@ describe('registerStateListeners', () => {
     await saveSettings.mock.results[0].value;
 
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it('matches the native theme to the mode of the saved settings', async () => {
+    listeners.get('SAVE_SETTINGS')?.({ sender: destroyedSender } as unknown as IpcMainEvent, { theme: { mode: 'light' } });
+    expect(nativeTheme.themeSource).toBe('light');
+
+    listeners.get('SAVE_SETTINGS')?.({ sender: destroyedSender } as unknown as IpcMainEvent, { theme: { mode: 'system' } });
+    expect(nativeTheme.themeSource).toBe('system');
   });
 });
