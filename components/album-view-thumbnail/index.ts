@@ -3,7 +3,6 @@ import type { RootState } from '../../client/redux/reducers';
 import AlbumViewThumbnail from './AlbumViewThumbnail';
 
 const mapState = (state: RootState) => ({
-  port: state.uiState.port,
   offlineFolders: state.offlineFolders,
 });
 

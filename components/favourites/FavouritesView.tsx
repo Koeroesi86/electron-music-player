@@ -11,7 +11,6 @@ import FavouriteButton from '../favourite-button';
 
 interface FavouritesViewProps {
   favourites: Favourite[];
-  port: string;
   playTracks: (tracks: Track[]) => void;
   playStation: (station: RadioStation) => void;
 }
@@ -79,14 +78,14 @@ const Section = ({ title, note, favourites, play }: SectionProps) => {
   );
 };
 
-const FavouritesView = ({ favourites, port, playTracks, playStation }: FavouritesViewProps) => {
+const FavouritesView = ({ favourites, playTracks, playStation }: FavouritesViewProps) => {
   const { t } = useTranslation();
 
   // a single station plays as the station of the radio, anything else is a queue of what the favourites play
   const play = ([first, ...others]: Favourite[]) =>
     first.kind === 'station' && others.length === 0
       ? playStation(first.snapshot)
-      : getFavouriteTracks([first, ...others], port)
+      : getFavouriteTracks([first, ...others])
           .then(playTracks)
           .catch(console.error);
 

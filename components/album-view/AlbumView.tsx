@@ -18,7 +18,6 @@ const rowHeight = 160;
 
 interface AlbumViewProps {
   albums: PageCache<AlbumSummary>;
-  port: string;
   /** The sort of the list and the folders it is limited to, the selection can hold a folder the library no longer has */
   sort: AlbumSortValue | undefined;
   selected: string[];
@@ -28,7 +27,7 @@ interface AlbumViewProps {
   loadPage: (page: number) => void;
 }
 
-const AlbumView = ({ playTracks, selectAlbum, albums, port, sort, selected, folders, loadPage }: AlbumViewProps) => {
+const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, loadPage }: AlbumViewProps) => {
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
   const { listing, columns, firstIndex, lastIndex, offsetTop, height } = useWindowedList({ itemCount: albums.total ?? 0, rowHeight, itemWidth });
   usePageLoader(albums, firstIndex, lastIndex, loadPage);
@@ -48,13 +47,13 @@ const AlbumView = ({ playTracks, selectAlbum, albums, port, sort, selected, fold
   );
 
   // the tracks of an album are fetched when it is opened or played, the listing has the albums only
-  const openAlbum = useCallback((album: AlbumSummary) => fetchAlbum(album, port).then(selectAlbum).catch(console.error), [port, selectAlbum]);
+  const openAlbum = useCallback((album: AlbumSummary) => fetchAlbum(album).then(selectAlbum).catch(console.error), [selectAlbum]);
   const playAlbum = useCallback(
     (album: AlbumSummary) =>
-      fetchAlbum(album, port)
+      fetchAlbum(album)
         .then(({ tracks }) => playTracks(tracks))
         .catch(console.error),
-    [port, playTracks]
+    [playTracks]
   );
 
   const rows = Array.from({ length: Math.ceil((lastIndex - firstIndex) / columns) }, (_, row) =>

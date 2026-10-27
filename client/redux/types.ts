@@ -46,7 +46,6 @@ export interface PersistedSettings {
 export interface UiState extends PersistedSettings {
   /** The app opens on the home screen, the tab is not saved */
   tab: Tab;
-  port: string;
   scanningFolder: string | null;
   progress: number;
   totalCount: number;

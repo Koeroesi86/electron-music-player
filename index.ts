@@ -10,7 +10,7 @@ import createWindow from './electron/createWindow';
 import getLoadingWindow from './electron/getLoadingWindow';
 import createDatabase from './electron/createDatabase';
 import setupListeners from './electron/setupListeners';
-import setupServer from './electron/setupServer';
+import { emusicOrigin, handleEmusicProtocol, registerEmusicScheme } from './electron/emusicProtocol';
 import { createRadioBrowser } from './electron/radioBrowser';
 import { createRadioArt } from './electron/radioArt';
 import { getAppUserModelId } from './electron/appUserModelId';
@@ -60,13 +60,14 @@ const windows: AppWindows = {
   loading: null,
 };
 
-let windowLocation: string | undefined;
-let loadingLocation: string | undefined;
+// the page is served by the emusic protocol; a development run loads it from the dev server, which asks the protocol across origins
+const devOrigin = argv.webpackPort ? `http://localhost:${argv.webpackPort}` : undefined;
+const pageOrigin = devOrigin ?? emusicOrigin;
+const windowLocation = `${pageOrigin}/index.html`;
+const loadingLocation = `${pageOrigin}/loading.html`;
 
-if (argv.webpackPort) {
-  windowLocation = `http://localhost:${argv.webpackPort}/index.html`;
-  loadingLocation = `http://localhost:${argv.webpackPort}/loading.html`;
-}
+// before the app is ready
+registerEmusicScheme();
 
 function setAppId() {
   global._appId = getAppUserModelId(isDev, process.env.NODE_ENV);
@@ -105,7 +106,7 @@ function setAppId() {
 const initWindow = () => {
   setAppId();
   windows.main = createWindow();
-  windows.main.loadURL(windowLocation ?? '');
+  windows.main.loadURL(windowLocation);
 
   windows.main.on('closed', () => {
     windows.main = null;
@@ -119,28 +120,27 @@ if (!fs.existsSync(appDataPath)) {
 
 const libraryLocation = resolve(appDataPath, './library.sqlite');
 
-const radio = createRadioBrowser(`eMusic/${app.getVersion()}`);
+// a test run asks a directory of its own, the real one needs the network
+const radio = createRadioBrowser(`eMusic/${app.getVersion()}`, process.env.EMUSIC_RADIO_DIRECTORY);
 
 const radioArt = createRadioArt();
 
-const getPort = () =>
-  setupServer({
-    resolveStream: radio.resolveStream,
-    getArt: radioArt.get,
-    onTitle: (uuid, title, streamUrl) => {
-      windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title });
-      radioArt
-        .lookup(title, streamUrl)
-        .then((art) => art && windows.main?.webContents.send('RADIO_STREAM_ART', { uuid, title, art }))
-        .catch((error) => console.error(error));
+const serveApp = () =>
+  handleEmusicProtocol({
+    getDatabase: () => global._database,
+    appRoot: resolve(rootPath, 'build'),
+    devOrigin,
+    radio: {
+      resolveStream: radio.resolveStream,
+      getArt: radioArt.get,
+      onTitle: (uuid, title, streamUrl) => {
+        windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title });
+        radioArt
+          .lookup(title, streamUrl)
+          .then((art) => art && windows.main?.webContents.send('RADIO_STREAM_ART', { uuid, title, art }))
+          .catch((error) => console.error(error));
+      },
     },
-  }).then((port) => {
-    if (!windowLocation || !loadingLocation) {
-      windowLocation = `http://127.0.0.1:${port}/app/index.html?port=${port}`;
-      loadingLocation = `http://127.0.0.1:${port}/app/loading.html`;
-    } else {
-      windowLocation += `?port=${port}`;
-    }
   });
 
 // a development run updates from the mock source only when asked to
@@ -172,7 +172,7 @@ const updateOnSplash = async (loading: BrowserWindow) => {
 
 app
   .whenReady()
-  .then(getPort)
+  .then(serveApp)
   .then(async () => {
     const loading = getLoadingWindow();
     windows.loading = loading;
@@ -180,7 +180,7 @@ app
       loading.show();
       if (isWin) loading.setBackgroundMaterial('acrylic');
     });
-    await loading.loadURL(loadingLocation ?? '');
+    await loading.loadURL(loadingLocation);
     // the splash page is static and shows the text the main process sends; the picked language is in the library, which opens after the splash
     loading.webContents.send('SPLASH_PROGRESS', { text: getMainTranslator().t('splash.loading', { title: 'eMusic' }) });
 

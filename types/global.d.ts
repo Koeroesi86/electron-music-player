@@ -22,6 +22,5 @@ declare global {
   // main process state shared between modules
   var _appDataPath: string;
   var _appId: string;
-  var _port: number;
   var _database: Database | undefined;
 }

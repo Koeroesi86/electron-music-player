@@ -242,7 +242,7 @@ describe('connection middleware', () => {
       expect(store.getState().library.tracks).toEqual({ total: undefined, pages: {}, stale: [] });
       expect(store.getState().library.albums.total).toBe(5);
       store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'tracks', page: 0 } });
-      await vi.waitFor(() => expect(requested(fetchMock)).toContain('http://127.0.0.1:3000/library/tracks?offset=0&limit=100&sort=title&dir=desc'));
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/tracks?offset=0&limit=100&sort=title&dir=desc'));
     });
 
     it('drops the albums when their sort changes, and not the tracks', async () => {
@@ -278,7 +278,7 @@ describe('connection middleware', () => {
       store.dispatch({ type: 'SET_TRACK_SORT', payload: { sort: { field: 'artist', direction: 'asc' } } });
       resolvers[0]();
 
-      await vi.waitFor(() => expect(requested(fetchMock)).toContain('http://127.0.0.1:3000/library/tracks?offset=0&limit=100&sort=artist&dir=asc'));
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/tracks?offset=0&limit=100&sort=artist&dir=asc'));
       expect(store.getState().library.tracks.total).toBeUndefined();
     });
 
@@ -293,7 +293,7 @@ describe('connection middleware', () => {
       expect(store.getState().uiState.libraryFolders).toEqual(['/m/a']);
       store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'albums', page: 0 } });
 
-      await vi.waitFor(() => expect(requested(fetchMock)).toContain('http://127.0.0.1:3000/library/albums?offset=0&limit=100&folder=%2Fm%2Fa'));
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/albums?offset=0&limit=100&folder=%2Fm%2Fa'));
     });
 
     it('shows everything again when the only selected folder leaves the library', async () => {

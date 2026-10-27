@@ -15,7 +15,6 @@ import Time from '../time';
 
 interface HomeViewProps {
   history: HistoryItem[];
-  port: string;
   currentSong: Track | null;
   playTracks: (tracks: Track[]) => void;
   playStation: (station: RadioStation) => void;
@@ -24,12 +23,11 @@ interface HomeViewProps {
 
 const nameOf = (item: HistoryItem) => (item.kind === 'station' ? item.snapshot.name : item.kind === 'track' ? item.snapshot.title : '');
 
-const HomeView = ({ history, port, currentSong, playTracks, playStation, clearHistory }: HomeViewProps) => {
+const HomeView = ({ history, currentSong, playTracks, playStation, clearHistory }: HomeViewProps) => {
   const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false);
 
-  const play = (item: HistoryItem) =>
-    item.kind === 'station' ? playStation(item.snapshot) : getFavouriteTracks([item], port).then(playTracks).catch(console.error);
+  const play = (item: HistoryItem) => (item.kind === 'station' ? playStation(item.snapshot) : getFavouriteTracks([item]).then(playTracks).catch(console.error));
 
   return (
     <div className={style.home}>
@@ -50,7 +48,7 @@ const HomeView = ({ history, port, currentSong, playTracks, playStation, clearHi
           >
             <div
               className={style.cover}
-              style={item.kind === 'track' && item.snapshot.picture ? { backgroundImage: `url("${getCoverUrl(port, item.snapshot.picture)}")` } : undefined}
+              style={item.kind === 'track' && item.snapshot.picture ? { backgroundImage: `url("${getCoverUrl(item.snapshot.picture)}")` } : undefined}
             />
             <span className={style.name} title={nameOf(item)}>
               {nameOf(item)}

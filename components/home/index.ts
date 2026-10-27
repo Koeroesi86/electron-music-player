@@ -8,7 +8,6 @@ import HomeView from './HomeView';
 
 const mapState = (state: RootState) => ({
   history: state.history,
-  port: state.uiState.port,
   currentSong: state.uiState.currentSong,
 });
 

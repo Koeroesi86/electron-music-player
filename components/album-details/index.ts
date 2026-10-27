@@ -6,7 +6,6 @@ import type { AppAction } from '../../client/redux/types';
 import AlbumDetails from './AlbumDetails';
 
 const mapState = (state: RootState) => ({
-  port: state.uiState.port,
   album: state.uiState.selectedAlbum,
 });
 

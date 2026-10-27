@@ -8,7 +8,6 @@ import FavouritesView from './FavouritesView';
 
 const mapState = (state: RootState) => ({
   favourites: state.favourites,
-  port: state.uiState.port,
 });
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({

@@ -24,7 +24,6 @@ describe('uiState reducer', () => {
     expect(initial).toMatchObject({
       view: 'albums',
       tab: 'home',
-      port: '3000',
       volume: 0.5,
       isPlaying: false,
       shuffle: false,

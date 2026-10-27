@@ -1,7 +1,7 @@
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../types/radio';
 import { parseRadioSearch, radioPageSize, radioSortOrders } from '../types/radio-query';
 
-const directoryUrl = 'https://all.api.radio-browser.info';
+const defaultDirectoryUrl = 'https://all.api.radio-browser.info';
 const requestTimeout = 10000;
 const optionLimit = { countries: 300, languages: 300, codecs: 20 };
 const tagLimit = 40;
@@ -88,7 +88,7 @@ const optionSources = {
 } satisfies Record<RadioOptionKind, { path: string; order: string; valueKey: string }>;
 
 /** Client of the radio-browser.info API: it has no single host, so a server is picked at random and the next one is tried when it fails */
-export const createRadioBrowser = (userAgent: string) => {
+export const createRadioBrowser = (userAgent: string, directoryUrl = defaultDirectoryUrl) => {
   let servers: Promise<string[]> | undefined;
 
   const fetchJson = async (url: string): Promise<unknown> => {

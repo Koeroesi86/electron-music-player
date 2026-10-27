@@ -7,7 +7,6 @@ import type { AppAction } from '../../client/redux/types';
 import TrackView from './TrackView';
 
 const mapState = (state: RootState) => ({
-  port: state.uiState.port,
   tracks: state.library.tracks,
   currentSong: state.uiState.currentSong,
   offlineFolders: state.offlineFolders,

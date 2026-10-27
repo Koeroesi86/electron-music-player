@@ -23,15 +23,30 @@ describe('lockNavigation', () => {
   };
 
   it('refuses to leave the origin of the app', () => {
-    const { navigate } = setup('http://127.0.0.1:3000/app/index.html?port=3000');
+    const { navigate } = setup('http://127.0.0.1:3000/app/index.html');
 
     expect(navigate('https://example.com/')).toHaveBeenCalled();
     expect(navigate('http://127.0.0.1:3001/')).toHaveBeenCalled();
     expect(navigate('file:///etc/passwd')).toHaveBeenCalled();
   });
 
+  it.each(['file:///etc/passwd', 'emusic://other/index.html', 'https://example.com/', 'http://localhost:3000/'])(
+    'refuses to leave the emusic origin for %s',
+    (url) => {
+      const { navigate } = setup('emusic://app/index.html');
+
+      expect(navigate(url)).toHaveBeenCalled();
+    }
+  );
+
+  it('allows navigation within the emusic origin', () => {
+    const { navigate } = setup('emusic://app/index.html');
+
+    expect(navigate('emusic://app/loading.html')).not.toHaveBeenCalled();
+  });
+
   it('allows navigation within the origin', () => {
-    const { navigate } = setup('http://127.0.0.1:3000/app/index.html?port=3000');
+    const { navigate } = setup('http://127.0.0.1:3000/app/index.html');
 
     expect(navigate('http://127.0.0.1:3000/app/index.html')).not.toHaveBeenCalled();
   });

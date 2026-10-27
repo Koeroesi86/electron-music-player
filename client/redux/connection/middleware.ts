@@ -63,12 +63,12 @@ const appLoaded = debounce(() => {
 
 const pageFetchers = {
   tracks: ({ uiState, folders }: RootState, page: number) =>
-    fetchTrackPage(uiState.port, page, selectTrackQuery({ uiState, folders })).then((result) => ({
+    fetchTrackPage(page, selectTrackQuery({ uiState, folders })).then((result) => ({
       type: 'STORE_TRACK_PAGE' as const,
       payload: { page, ...result },
     })),
   albums: ({ uiState, folders }: RootState, page: number) =>
-    fetchAlbumPage(uiState.port, page, selectAlbumQuery({ uiState, folders })).then((result) => ({
+    fetchAlbumPage(page, selectAlbumQuery({ uiState, folders })).then((result) => ({
       type: 'STORE_ALBUM_PAGE' as const,
       payload: { page, ...result },
     })),
@@ -139,13 +139,13 @@ const toPlaylistTrack = ({ file, title }: PlaylistItem): Track => ({
   duration: 0,
 });
 
-const notifyPlaying = (track: Track, port: string, onClick: () => void) => {
+const notifyPlaying = (track: Track, onClick: () => void) => {
   const notification: NotificationOptions & { image?: string } = {
     body: `${track.artist}\n${track.album}`,
     silent: false,
   };
   if (track.picture) {
-    const url = getCoverUrl(port, track.picture);
+    const url = getCoverUrl(track.picture);
     notification.icon = url;
     notification.image = url;
   }
@@ -173,7 +173,7 @@ const start = (store: Store) => {
 };
 
 const notifyTrack = (store: Store, track: Track) =>
-  notifyPlaying(track, store.getState().uiState.port, () => {
+  notifyPlaying(track, () => {
     store.dispatch({ type: 'CLICK_NOTIFICATION', payload: {} });
     electronAPI.send('NOTIFICATION_CLICKED', { track });
   });

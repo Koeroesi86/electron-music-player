@@ -32,7 +32,7 @@ describe('FavouritesView', () => {
   });
 
   const renderView = (favourites: Favourite[], playTracks = vi.fn(), playStation = vi.fn()) => {
-    render(<FavouritesView favourites={favourites} port="3000" playTracks={playTracks} playStation={playStation} />);
+    render(<FavouritesView favourites={favourites} playTracks={playTracks} playStation={playStation} />);
     return { playTracks, playStation };
   };
 

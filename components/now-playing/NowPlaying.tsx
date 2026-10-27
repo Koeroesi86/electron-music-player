@@ -12,7 +12,6 @@ import FavouriteButton from '../favourite-button';
 interface NowPlayingProps {
   nowPlaying: Track[];
   currentSong: Track | null;
-  port: string;
   streamTitle: string | null;
   streamArt: string | null;
   /** The station that was played last */
@@ -20,9 +19,9 @@ interface NowPlayingProps {
   playTrack: (track: Track) => void;
 }
 
-const NowPlaying = ({ nowPlaying, currentSong, port, streamTitle, streamArt, station, playTrack }: NowPlayingProps) => {
+const NowPlaying = ({ nowPlaying, currentSong, streamTitle, streamArt, station, playTrack }: NowPlayingProps) => {
   const { t } = useTranslation();
-  const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt, port) : undefined;
+  const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt) : undefined;
 
   return (
     <div className={style.nowPlaying}>
