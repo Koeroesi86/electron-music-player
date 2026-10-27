@@ -128,15 +128,15 @@ describe('uiState reducer', () => {
     expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { desktopBlur: true } } }).desktopBlur).toBe(true);
   });
 
-  it('follows the system with the default accent until a theme is picked', () => {
-    expect(initial.theme).toEqual({ mode: 'system', accent: undefined });
+  it('follows the system with the colour of the cover until a theme is picked', () => {
+    expect(initial.theme).toEqual({ mode: 'system', accent: 'auto' });
   });
 
   it('sets the mode and the accent separately', () => {
     const dark = run({ type: 'SET_THEME_MODE', payload: { mode: 'dark' } });
     const blue = run({ type: 'SET_ACCENT', payload: { accent: '#5AA9FF' } }, dark);
 
-    expect(dark.theme).toEqual({ mode: 'dark', accent: undefined });
+    expect(dark.theme).toEqual({ mode: 'dark', accent: 'auto' });
     expect(blue.theme).toEqual({ mode: 'dark', accent: '#5aa9ff' });
     expect(run({ type: 'SET_THEME_MODE', payload: { mode: 'system' } }, blue).theme).toEqual({ mode: 'system', accent: '#5aa9ff' });
   });
@@ -157,6 +157,7 @@ describe('uiState reducer', () => {
       mode: 'system',
       accent: undefined,
     });
+    expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { theme: { mode: 'dark' } as never } } }).theme).toEqual({ mode: 'dark', accent: undefined });
     expect(
       run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.2 } } }, { ...initial, theme: { mode: 'dark', accent: undefined } }).theme.mode
     ).toBe('dark');

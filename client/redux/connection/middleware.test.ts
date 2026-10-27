@@ -58,7 +58,7 @@ describe('connection middleware', () => {
 
     store.dispatch({ type: 'SET_THEME_MODE', payload: { mode: 'light' } });
 
-    expect(send).toHaveBeenCalledWith('SAVE_SETTINGS', expect.objectContaining({ theme: { mode: 'light', accent: undefined } }));
+    expect(send).toHaveBeenCalledWith('SAVE_SETTINGS', expect.objectContaining({ theme: { mode: 'light', accent: 'auto' } }));
   });
 
   it('saves the accent once the colour input stops changing, with the last colour', async () => {
