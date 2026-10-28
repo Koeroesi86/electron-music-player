@@ -18,7 +18,10 @@ const LibrarySearch = ({ search, setSearch }: LibrarySearchProps) => {
   const [text, setText] = useState(search);
   const delayedText = useDelayedValue(text, searchDelay);
 
-  useUpdateEffect(() => setSearch(delayedText), [delayedText]);
+  useUpdateEffect(() => {
+    // what the dispatch returns is not a cleanup
+    setSearch(delayedText);
+  }, [delayedText]);
 
   return (
     <input

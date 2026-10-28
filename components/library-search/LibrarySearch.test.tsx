@@ -35,4 +35,15 @@ describe('LibrarySearch', () => {
     expect(setSearch).toHaveBeenCalledTimes(1);
     expect(setSearch).toHaveBeenCalledWith('bey');
   });
+
+  it('does not take what setSearch returns for a cleanup, as the dispatch of the store returns the action', () => {
+    const setSearch = vi.fn(() => ({ type: 'SET_LIBRARY_SEARCH' }));
+    const { unmount } = render(<LibrarySearch search="" setSearch={setSearch} />);
+
+    fireEvent.change(box(), { target: { value: 'bey' } });
+    act(() => void vi.advanceTimersByTime(400));
+
+    expect(setSearch).toHaveBeenCalledWith('bey');
+    expect(() => unmount()).not.toThrow();
+  });
 });
