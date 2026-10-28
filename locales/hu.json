@@ -105,6 +105,8 @@
   "tracks.clearSelection": "Kijelölés törlése",
   "tracks.selectAll": "Összes kijelölése",
   "tracks.playSelected": "Kijelöltek lejátszása",
+  "albums.count_one": "{count} album",
+  "albums.count_other": "{count} album",
   "albums.sortField": "Albumok rendezése",
   "albums.sortDirection": "Rendezés iránya",
   "albums.sort.default": "Alapértelmezett sorrend",

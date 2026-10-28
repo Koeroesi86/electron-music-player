@@ -105,6 +105,8 @@
   "tracks.clearSelection": "Clear selection",
   "tracks.selectAll": "Select All",
   "tracks.playSelected": "Play selected",
+  "albums.count_one": "{count} album",
+  "albums.count_other": "{count} albums",
   "albums.sortField": "Sort albums by",
   "albums.sortDirection": "Sort direction",
   "albums.sort.default": "Default order",
