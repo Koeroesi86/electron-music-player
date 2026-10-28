@@ -1,0 +1,26 @@
+name: Pull request description
+
+# fast on its own, so editing the description does not run the checks of pr-checks.yml again
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  not-verified:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # dependabot pull requests have no template
+      - name: The description says what was not verified
+        if: github.actor != 'dependabot[bot]'
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if ! printf '%s' "${BODY}" | grep -Eq '\*\*Not verified:\*\*[[:space:]]*[^[:space:]<]'; then
+            echo '::error::Fill in "**Not verified:**" of the description: what CI does not cover and was not tried by hand, or "nothing".'
+            exit 1
+          fi

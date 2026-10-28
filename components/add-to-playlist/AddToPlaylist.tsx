@@ -78,7 +78,7 @@ const AddToPlaylist = ({ source, playlists, add, create, className }: AddToPlayl
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
 
     const stops = Array.from(menu.current?.querySelectorAll<HTMLElement>('input, [role="menuitem"]') ?? []);
-    const next = stops.indexOf(document.activeElement as HTMLElement) + (event.key === 'ArrowDown' ? 1 : -1);
+    const next = stops.findIndex((stop) => stop === document.activeElement) + (event.key === 'ArrowDown' ? 1 : -1);
     event.preventDefault();
     stops.at(next % stops.length)?.focus();
   };

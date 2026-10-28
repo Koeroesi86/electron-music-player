@@ -17,6 +17,7 @@ module.exports = [
     plugins: { '@typescript-eslint': tsPlugin, prettier: prettierPlugin },
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
+      'max-depth': ['warn', 1],
       'prettier/prettier': [
         'error',
         {
@@ -28,5 +29,12 @@ module.exports = [
         { usePrettierrc: false },
       ],
     },
+  },
+  {
+    // tests may cast to build partial fixtures; production code may not
+    files: ['**/*.ts', '**/*.tsx'],
+    ignores: ['**/*.test.ts', '**/*.test.tsx'],
+    plugins: { '@typescript-eslint': tsPlugin },
+    rules: { '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }] },
   },
 ];

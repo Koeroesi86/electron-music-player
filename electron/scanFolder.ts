@@ -54,7 +54,10 @@ const transformMeta = ({ common: metadata, format }: IAudioMetadata, fileName: s
   ...readAudioFormat(format),
 });
 
-const isEqual = (a: Track, b: Track) => (Object.keys(a) as (keyof Track)[]).every((key) => `${a[key]}` === `${b[key]}`);
+const isEqual = (a: Track, b: Track) => {
+  const other = new Map(Object.entries(b));
+  return Object.entries(a).every(([key, value]) => `${value}` === `${other.get(key)}`);
+};
 
 /** Collect the supported audio files of a folder tree, one folder at a time, symbolic links are skipped */
 const findFiles = async (directory: string): Promise<string[]> => {
