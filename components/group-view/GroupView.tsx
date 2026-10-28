@@ -5,7 +5,6 @@ import type { Folder, GroupSummary } from '../../types/library';
 import { cycleSort } from '../../types/library-query';
 import type { GroupKind, GroupSort, GroupSortField } from '../../types/library-query';
 import { useTranslation } from '../../client/i18n';
-import { getCoverUrl } from '../../client/cover-url';
 import { useDelayedValue } from '../../client/hooks/use-delayed-value';
 import { usePageLoader } from '../../client/hooks/use-page-loader';
 import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
@@ -151,7 +150,6 @@ const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPa
     const group = getCachedItem(groups, firstIndex + offset);
     return group ? (
       <button key={group.key} type="button" className={style.group} onClick={() => openOne(group)}>
-        <span className={classNames(style.field, style.cover)} style={group.cover ? { backgroundImage: `url("${getCoverUrl(group.cover)}")` } : undefined} />
         <span className={classNames(style.field, style.name, { [style.unknown]: !group.name })} title={nameOf(group.name)}>
           {nameOf(group.name)}
         </span>
@@ -178,7 +176,6 @@ const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPa
       </div>
       {!tiled && (
         <div role="row" className={style.header}>
-          <div className={classNames(style.field, style.cover)} />
           <HeaderField field="name" className={style.name} label={t('groups.name')} sort={sort} onSort={sortBy} />
           <HeaderField field="albumCount" className={style.count} label={t('groups.albums')} sort={sort} onSort={sortBy} />
           <HeaderField field="trackCount" className={style.count} label={t('groups.tracks')} sort={sort} onSort={sortBy} />

@@ -155,16 +155,6 @@
       }
     }
 
-    &.cover {
-      width: 32px;
-      height: 32px;
-      margin: 0 12px 0 0;
-      padding: 0;
-      border-radius: 3px;
-      background-color: var(--overlay);
-      background-size: cover;
-      background-position: center;
-    }
 
     // takes what the counts leave, however narrow the window is
     &.name {
@@ -181,11 +171,6 @@
       width: 80px;
       text-align: right;
     }
-  }
-
-  .header .cover {
-    height: 0;
-    background: none;
   }
 
   // below the list, not over its last rows
