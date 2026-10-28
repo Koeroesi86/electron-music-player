@@ -44,6 +44,15 @@
     height: 20px;
   }
 
+  .count {
+    position: absolute;
+    bottom: 0;
+    left: 12px;
+    padding: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
   .controls {
     position: absolute;
     bottom: 0;

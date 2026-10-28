@@ -52,6 +52,12 @@ describe('TrackView', () => {
     expect(container.querySelector<HTMLElement>('.window')?.style.height).toBe('1000000px');
   });
 
+  it('tells how many tracks the whole list has', () => {
+    render(<TrackView {...baseProps} tracks={firstPage} />);
+
+    expect(screen.getByText('50000 tracks')).toBeTruthy();
+  });
+
   it('requests the pages missing for the window', () => {
     const loadPage = vi.fn();
     render(<TrackView {...baseProps} tracks={firstPage} loadPage={loadPage} />);

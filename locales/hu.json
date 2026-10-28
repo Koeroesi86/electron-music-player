@@ -100,6 +100,8 @@
   "tracks.year": "Év",
   "tracks.album": "Album",
   "tracks.title": "Cím",
+  "tracks.count_one": "{count} szám",
+  "tracks.count_other": "{count} szám",
   "tracks.clearSelection": "Kijelölés törlése",
   "tracks.selectAll": "Összes kijelölése",
   "tracks.playSelected": "Kijelöltek lejátszása",
