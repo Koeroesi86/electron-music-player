@@ -14,6 +14,11 @@ describe('radio track', () => {
     });
   });
 
+  it('carries the codec and the bitrate of the station as the format', () => {
+    expect(toRadioTrack(station)).toMatchObject({ codec: 'MP3', bitrate: 128000, lossless: 0 });
+    expect(toRadioTrack({ ...station, codec: 'flac', bitrate: 0 })).toMatchObject({ codec: 'FLAC', bitrate: null, lossless: 1 });
+  });
+
   it('copes with a station without country and tags', () => {
     expect(toRadioTrack({ ...station, country: '', tags: [] })).toMatchObject({ album: '', genre: '' });
   });

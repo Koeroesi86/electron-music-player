@@ -1,4 +1,15 @@
-export interface Track {
+/** What a file is encoded as; a row from before the format was read, or a stream that does not tell, has none. The flags are 0 or 1 as the library stores them. */
+export interface AudioFormat {
+  codec: string | null;
+  bitDepth: number | null;
+  sampleRate: number | null;
+  /** Bits per second */
+  bitrate: number | null;
+  vbr: number | null;
+  lossless: number | null;
+}
+
+export interface Track extends Partial<AudioFormat> {
   path: string;
   artist: string;
   album: string;

@@ -20,6 +20,7 @@ import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { useTranslation } from '../../client/i18n';
 import style from './PlayerControls.scss';
 import ScanProgress from '../scan-progress';
+import AudioFormatBadge from '../audio-format-badge';
 import Time from '../time';
 
 interface PlayerControlsProps {
@@ -80,6 +81,11 @@ const TrackDetails = ({
           <div className={style.title}>{shown ? shown.track.title : t('player.none')}</div>
           <div className={style.album}>{shown ? shown.track.album : t('player.none')}</div>
           <div className={style.artist}>{shown ? shown.track.artist : t('player.none')}</div>
+          {shown && (
+            <div className={style.format}>
+              <AudioFormatBadge track={shown.track} />
+            </div>
+          )}
           <div className={style.time}>
             <Time seconds={currentTime} /> / <Time seconds={currentSong ? currentSong.duration : 0} />
           </div>

@@ -105,8 +105,12 @@
       text-align: right;
     }
 
+    &.format {
+      width: 90px;
+    }
+
     &.title {
-      width: calc(100% - 481px);
+      width: calc(100% - 571px);
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;

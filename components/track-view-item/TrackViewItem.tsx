@@ -9,6 +9,7 @@ import { useTranslation } from '../../client/i18n';
 import style from './TrackViewItem.scss';
 import Time from '../time';
 import FavouriteButton from '../favourite-button';
+import AudioFormatBadge from '../audio-format-badge';
 import AddToPlaylist from '../add-to-playlist';
 
 /** The header row displays labels in place of the track values */
@@ -111,6 +112,7 @@ const TrackViewItem = ({
       {renderField('album', style.album, track.album || '-')}
       {renderField('track', style.trackNo, track.track || '-')}
       {renderField('title', style.title, track.title || '-')}
+      <TrackViewItemField className={style.format}>{'path' in track && <AudioFormatBadge track={track} />}</TrackViewItemField>
     </div>
   );
 };
