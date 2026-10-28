@@ -36,6 +36,20 @@ describe('backfillSortKeys', () => {
     ]);
   });
 
+  it('fills the genre key of the tracks from before it existed, and the album artist key from their album artist', async () => {
+    await executeQuery(database, {
+      query: `INSERT INTO library (path, genre, albumArtist, title_key, artist_key, album_key) VALUES ('/m/1', ' Électro ', 'Ékes', 't', 'a', 'b'), ('/m/2', NULL, NULL, 't', 'a', 'b')`,
+      variables: [],
+    });
+
+    await backfillSortKeys(database);
+
+    expect(await executeQuery(database, { query: `SELECT path, genre_key, album_artist_key FROM library ORDER BY path`, variables: [] })).toEqual([
+      { path: '/m/1', genre_key: 'electro', album_artist_key: 'ekes' },
+      { path: '/m/2', genre_key: '', album_artist_key: '' },
+    ]);
+  });
+
   it('leaves the tracks that have keys, and does nothing for an empty library', async () => {
     await backfillSortKeys(database);
     await executeQuery(database, {

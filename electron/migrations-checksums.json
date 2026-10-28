@@ -6,5 +6,6 @@
   "005-create-history-table.sql": "7d9f3f39d8fa5f0637724c50cbaa2ae700d9679983744781c64b3f4ba0f39541",
   "006-add-library-sort-keys.sql": "cc861fe846d0f840eac6e31687e42e631669631ab59f0a957fa3b36cbd286707",
   "007-create-playlists-tables.sql": "7057cc53a0ef3262cbbd03e2bd0b61ee274757df3b16ef96ffb3e39203f767bc",
-  "008-add-audio-format.sql": "db30b12349247acc41abab4cf0b971d472970f2103cfafa234027d0f2fe2d3e2"
+  "008-add-audio-format.sql": "db30b12349247acc41abab4cf0b971d472970f2103cfafa234027d0f2fe2d3e2",
+  "009-add-browse-columns.sql": "0e3081c845c95fc86378f414704f8147c58d042c538285edc721bc2445cebb0b"
 }

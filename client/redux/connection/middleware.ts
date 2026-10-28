@@ -1,6 +1,7 @@
 import type { Middleware } from 'redux';
 import type { Folder, Track } from '../../../types/library';
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
+import type { GroupKind } from '../../../types/library-query';
 import type { UpdateState } from '../../../types/update';
 import { electronAPI } from '../../electron-api';
 import { debounce } from '../../utils/debounce';
@@ -11,11 +12,11 @@ import { isFavourite, stationFavourite, trackFavourite } from '../../favourites'
 import { isHistoryItem } from '../../history';
 import { toPlaylist } from '../../playlists';
 import { radioUuidOf } from '../../radio-track';
-import { fetchAlbumPage, fetchTrackPage } from '../../library-api';
-import { selectAlbumQuery, selectTrackQuery } from '../../library-query';
+import { fetchAlbumPage, fetchGroupPage, fetchTrackPage } from '../../library-api';
+import { selectAlbumQuery, selectGroupAlbumQuery, selectGroupQuery, selectTrackQuery } from '../../library-query';
 import { actionMiddleware, onAction } from '../on-action';
 import type { Store } from '../on-action';
-import type { PersistedSettings, PlaylistItem, UiState } from '../types';
+import type { PageKind, PersistedSettings, PlaylistItem, UiState } from '../types';
 
 type EmptyPayload = Record<string, never>;
 
@@ -66,6 +67,12 @@ const appLoaded = debounce(() => {
   electronAPI.send('APP_LOADED', {});
 }, 500);
 
+const groupFetcher = (kind: GroupKind) => (state: RootState, page: number) =>
+  fetchGroupPage(kind, page, selectGroupQuery(state)).then((result) => ({
+    type: 'STORE_GROUP_PAGE' as const,
+    payload: { kind, page, ...result },
+  }));
+
 const pageFetchers = {
   tracks: ({ uiState, folders }: RootState, page: number) =>
     fetchTrackPage(page, selectTrackQuery({ uiState, folders })).then((result) => ({
@@ -77,13 +84,21 @@ const pageFetchers = {
       type: 'STORE_ALBUM_PAGE' as const,
       payload: { page, ...result },
     })),
-};
+  groupAlbums: ({ uiState, folders }: RootState, page: number) =>
+    fetchAlbumPage(page, selectGroupAlbumQuery({ uiState, folders })).then((result) => ({
+      type: 'STORE_GROUP_ALBUM_PAGE' as const,
+      payload: { page, ...result },
+    })),
+  artist: groupFetcher('artist'),
+  albumArtist: groupFetcher('albumArtist'),
+  genre: groupFetcher('genre'),
+} satisfies Record<PageKind, unknown>;
 
 const loading = new Set<string>();
 let generation = 0;
 
 /** Fetch a page once at a time; a page that was requested before the library changed is fetched again instead of stored */
-const loadPage = (store: Store, kind: keyof typeof pageFetchers, page: number): Promise<void> => {
+const loadPage = (store: Store, kind: PageKind, page: number): Promise<void> => {
   const key = `${kind}:${page}`;
   if (loading.has(key)) return Promise.resolve();
 
@@ -123,6 +138,7 @@ const persistedKeys = [
   'theme',
   'trackSort',
   'albumSort',
+  'groupSort',
   'libraryFolders',
   'radioQuery',
 ] satisfies (keyof PersistedSettings)[];
@@ -252,7 +268,20 @@ const handleActions = actionMiddleware((store) => [
   onAction('SAVE_SETTINGS', () => saveSettings(store.getState().uiState)),
 ]);
 
-const queryKeys = (state: RootState) => ({ tracks: JSON.stringify(selectTrackQuery(state)), albums: JSON.stringify(selectAlbumQuery(state)) });
+const pageKinds: PageKind[] = ['tracks', 'albums', 'groupAlbums', 'artist', 'albumArtist', 'genre'];
+
+const queryKeys = (state: RootState): Record<PageKind, string> => {
+  const groups = JSON.stringify(selectGroupQuery(state));
+
+  return {
+    tracks: JSON.stringify(selectTrackQuery(state)),
+    albums: JSON.stringify(selectAlbumQuery(state)),
+    groupAlbums: JSON.stringify(selectGroupAlbumQuery(state)),
+    artist: groups,
+    albumArtist: groups,
+    genre: groups,
+  };
+};
 
 /**
  * A list whose sort or folders changed (picked, restored, or a selected folder left the library) is another list: its pages are dropped,
@@ -263,7 +292,7 @@ const createQueryWatcher = (store: Store) => {
 
   return () => {
     const next = queryKeys(store.getState());
-    const changed = (['tracks', 'albums'] as const).filter((kind) => next[kind] !== keys[kind]);
+    const changed = pageKinds.filter((kind) => next[kind] !== keys[kind]);
     keys = next;
     changed.forEach((kind) => {
       generation += 1;

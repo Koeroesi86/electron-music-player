@@ -42,6 +42,7 @@ const parsePicture = (picture: IPicture, album: string, appDataPath: string): st
 const transformMeta = ({ common: metadata, format }: IAudioMetadata, fileName: string, appDataPath: string): Track => ({
   path: normalizePath(fileName),
   artist: metadata.artist || '',
+  albumArtist: metadata.albumartist || '',
   album: metadata.album ? `${metadata.album}` : '',
   title: metadata.title || '',
   year: metadata.year || '',

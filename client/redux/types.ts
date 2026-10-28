@@ -1,12 +1,24 @@
-import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
+import type { Album, AlbumSummary, Folder, GroupSummary, Track } from '../../types/library';
 import type { Favourite, FavouriteKey, HistoryItem, NewFavourite } from '../../types/favourites';
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../../types/radio';
 import type { Playlist } from '../../types/playlists';
 import type { ThemeMode, ThemeSettings } from '../../types/theme';
-import type { AlbumSort, TrackSort } from '../../types/library-query';
+import type { AlbumSort, GroupKind, GroupSort, TrackSort } from '../../types/library-query';
 import type { UpdateState } from '../../types/update';
 
-export type LibraryView = 'albums' | 'tracks' | 'folders';
+export type LibraryView = 'albums' | 'artists' | 'albumArtists' | 'genres' | 'tracks' | 'folders';
+
+/** The lists of the library that are fetched a page at a time: the tracks, the albums, the artists, album artists or genres, and the albums of the open one of those */
+export type PageKind = 'tracks' | 'albums' | 'groupAlbums' | GroupKind;
+
+/** The artist, album artist or genre the library view has opened, to show its albums */
+export interface OpenGroup {
+  kind: GroupKind;
+  /** The name as the library compares it, empty for the tracks that have none */
+  key: string;
+  /** The name as it is written, empty for the tracks that have none */
+  name: string;
+}
 export type OnlineView = 'radio';
 export type Tab = 'home' | 'now-playing' | 'local' | 'online-sources' | 'favourites' | 'playlist' | 'equalizer' | 'settings';
 
@@ -38,6 +50,8 @@ export interface PersistedSettings {
   /** The sort of the tracks and of the albums, undefined is the default order */
   trackSort: TrackSort | undefined;
   albumSort: AlbumSort | undefined;
+  /** The sort of the artists, the album artists and the genres */
+  groupSort: GroupSort | undefined;
   /** The library folders the local collection is limited to, none is all of them */
   libraryFolders: string[];
   /** The search of the radio stations: the filters and the sort, the page is not saved */
@@ -47,6 +61,9 @@ export interface PersistedSettings {
 export interface UiState extends PersistedSettings {
   /** The text the albums and the tracks are searched for, it is not saved and starts empty with every view */
   librarySearch: string;
+  /** The artist, album artist or genre that is open, and the text the artists, album artists and genres are filtered by; neither is saved */
+  openGroup: OpenGroup | undefined;
+  groupFilter: string;
   /** The app opens on the home screen, the tab is not saved */
   tab: Tab;
   /** The playlist the playlist tab shows */
@@ -122,9 +139,15 @@ export type AppAction =
   | PayloadAction<'OFFLINE_FOLDERS', { folders: string[] }>
   | EmptyAction<'PICK_FOLDERS'>
   | EmptyAction<'INVALIDATE_LIBRARY'>
-  | PayloadAction<'LOAD_LIBRARY_PAGE', { kind: 'tracks' | 'albums'; page: number }>
+  | PayloadAction<'LOAD_LIBRARY_PAGE', { kind: PageKind; page: number }>
   | PayloadAction<'STORE_TRACK_PAGE', { page: number; items: Track[]; total: number }>
-  | PayloadAction<'RESET_LIBRARY', { kind: 'tracks' | 'albums' }>
+  | PayloadAction<'RESET_LIBRARY', { kind: PageKind }>
+  | PayloadAction<'STORE_GROUP_PAGE', { kind: GroupKind; page: number; items: GroupSummary[]; total: number }>
+  | PayloadAction<'STORE_GROUP_ALBUM_PAGE', { page: number; items: AlbumSummary[]; total: number }>
+  | PayloadAction<'SET_GROUP_SORT', { sort: GroupSort | undefined }>
+  | PayloadAction<'SET_GROUP_FILTER', { filter: string }>
+  | PayloadAction<'OPEN_GROUP', { group: OpenGroup }>
+  | EmptyAction<'CLOSE_GROUP'>
   | PayloadAction<'SET_TRACK_SORT', { sort: TrackSort | undefined }>
   | PayloadAction<'SET_ALBUM_SORT', { sort: AlbumSort | undefined }>
   | PayloadAction<'SET_LIBRARY_FOLDERS', { folders: string[] }>

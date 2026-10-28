@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AlbumSummary, Track } from '../types/library';
-import { fetchAlbum, fetchAlbumPage, fetchLibrary, fetchTrackPage } from './library-api';
+import { fetchAlbum, fetchAlbumPage, fetchGroupPage, fetchLibrary, fetchTrackPage } from './library-api';
 
 const track = (path: string, picture: string | null = null): Track => ({
   path,
@@ -37,6 +37,31 @@ describe('library api', () => {
 
     expect(await fetchAlbumPage(0, unsorted)).toEqual({ items: [{ ...album, cover: '/art.jpg' }], total: 1 });
     expect(fetch).toHaveBeenCalledWith('emusic://app/library/albums?offset=0&limit=100');
+  });
+
+  it('asks for the albums of a group, with the characters of its key escaped', async () => {
+    respond({ items: [], total: 0 });
+
+    await fetchAlbumPage(0, { sort: { field: 'year', direction: 'asc' }, folders: ['/m'], group: { kind: 'artist', key: 'ac/dc & co' } });
+    await fetchAlbumPage(0, { sort: undefined, folders: [], group: { kind: 'genre', key: '' } });
+
+    expect(vi.mocked(fetch).mock.calls.map(([url]) => url)).toEqual([
+      'emusic://app/library/albums?offset=0&limit=100&sort=year&dir=asc&folder=%2Fm&by=artist&group=ac%2Fdc%20%26%20co',
+      'emusic://app/library/albums?offset=0&limit=100&by=genre&group=',
+    ]);
+  });
+
+  it('fetches the page of artists, album artists or genres with the sort, the folders and the filter, and strips the file protocol of the covers', async () => {
+    const group = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 2, cover: 'file:///art.jpg' };
+    respond({ items: [group], total: 1 });
+
+    expect(await fetchGroupPage('artist', 1, { sort: undefined, folders: [], filter: '' })).toEqual({ items: [{ ...group, cover: '/art.jpg' }], total: 1 });
+    await fetchGroupPage('albumArtist', 0, { sort: { field: 'albumCount', direction: 'desc' }, folders: ['/m'], filter: 'a&b' });
+
+    expect(vi.mocked(fetch).mock.calls.map(([url]) => url)).toEqual([
+      'emusic://app/library/groups?offset=100&limit=100&by=artist',
+      'emusic://app/library/groups?offset=0&limit=100&by=albumArtist&sort=albumCount&dir=desc&folder=%2Fm&q=a%26b',
+    ]);
   });
 
   it('fetches the whole library', async () => {

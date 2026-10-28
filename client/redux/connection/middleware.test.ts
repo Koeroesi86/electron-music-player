@@ -305,6 +305,42 @@ describe('connection middleware', () => {
       expect(store.getState().library.tracks.total).toBeUndefined();
     });
 
+    it('drops the artists, album artists and genres when their sort or filter changes, and not the albums', async () => {
+      const { store, fetchMock } = await setup(emptyPage);
+      store.dispatch({ type: 'STORE_ALBUM_PAGE', payload: { page: 0, items: [], total: 5 } });
+      store.dispatch({ type: 'STORE_GROUP_PAGE', payload: { kind: 'artist', page: 0, items: [], total: 9 } });
+
+      store.dispatch({ type: 'SET_GROUP_FILTER', payload: { filter: 'bj' } });
+
+      expect(store.getState().library.groups.artist.total).toBeUndefined();
+      expect(store.getState().library.albums.total).toBe(5);
+      store.dispatch({ type: 'SET_GROUP_SORT', payload: { sort: { field: 'trackCount', direction: 'desc' } } });
+      store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'genre', page: 0 } });
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/groups?offset=0&limit=100&by=genre&sort=trackCount&dir=desc&q=bj'));
+    });
+
+    it('fetches the albums of the open group, and drops them when another group is opened', async () => {
+      const { store, fetchMock } = await setup(emptyPage);
+
+      store.dispatch({ type: 'OPEN_GROUP', payload: { group: { kind: 'artist', key: 'adam', name: 'Adam' } } });
+      store.dispatch({ type: 'STORE_GROUP_ALBUM_PAGE', payload: { page: 0, items: [], total: 3 } });
+      store.dispatch({ type: 'OPEN_GROUP', payload: { group: { kind: 'artist', key: 'bea', name: 'Bea' } } });
+
+      expect(store.getState().library.groupAlbums.total).toBeUndefined();
+      store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'groupAlbums', page: 0 } });
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/albums?offset=0&limit=100&by=artist&group=bea'));
+      expect(store.getState().library.albums.total).toBeUndefined();
+    });
+
+    it('saves the sort of the groups with the settings', async () => {
+      const { store, send } = await setup();
+
+      store.dispatch({ type: 'SET_GROUP_SORT', payload: { sort: { field: 'name', direction: 'desc' } } });
+      store.dispatch({ type: 'SAVE_SETTINGS', payload: {} });
+
+      expect(send).toHaveBeenLastCalledWith('SAVE_SETTINGS', expect.objectContaining({ groupSort: { field: 'name', direction: 'desc' } }));
+    });
+
     it('limits the lists to the selected folders the library has, and ignores a stale one', async () => {
       const { store, listen, fetchMock } = await setup(emptyPage);
       store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 500 } });

@@ -1,7 +1,18 @@
 import path from 'path';
 import type { Database } from 'sqlite3';
-import type { AlbumSummary, AudioFormat, Folder, LibraryPage, Track } from '../types/library';
-import type { AlbumSort, AlbumSortField, LibraryQuery, SortDirection, TrackSort, TrackSortField } from '../types/library-query';
+import type { AlbumSummary, AudioFormat, Folder, GroupSummary, LibraryPage, Track } from '../types/library';
+import type {
+  AlbumGroup,
+  AlbumQuery,
+  AlbumSortField,
+  GroupKind,
+  GroupQuery,
+  GroupSortField,
+  LibraryQuery,
+  SortDirection,
+  TrackSort,
+  TrackSortField,
+} from '../types/library-query';
 import executeQuery from './executeQuery';
 import executeQueries from './executeQueries';
 import { toSortKey } from './sortKey';
@@ -156,35 +167,79 @@ export const getTrackPage = (database: Database, offset: number, limit: number, 
   ]).then(([items, total]) => ({ items, total }));
 };
 
+// the column the tracks of an artist, an album artist or a genre share, and the one that holds the name as it is written; the keys have an index
+const groupColumns: Record<GroupKind, { key: string; name: string }> = {
+  artist: { key: 'artist_key', name: 'artist' },
+  albumArtist: { key: 'album_artist_key', name: 'albumArtist' },
+  genre: { key: 'genre_key', name: 'genre' },
+};
+
+// a folder and an album title make one album
+const albumIdentity = `folder || char(0) || COALESCE(album, '')`;
+
+const groupOrders = (key: string): Record<GroupSortField, FieldOrder> => ({
+  name: textOrder(key),
+  albumCount: { empty: '(1 = 0)', value: `COUNT(DISTINCT ${albumIdentity})` },
+  trackCount: { empty: '(1 = 0)', value: 'COUNT(*)' },
+});
+
+/**
+ * A page of the artists, the album artists or the genres: the tracks with the same name make one, the ones without a name make the last.
+ * The default order and the order of equal values is by name. Limited to the tracks below the folders when there are any and to the names with the text of the query in them
+ */
+export const getGroupPage = (
+  database: Database,
+  kind: GroupKind,
+  offset: number,
+  limit: number,
+  { sort, folders, filter }: GroupQuery
+): Promise<LibraryPage<GroupSummary>> => {
+  const { key, name } = groupColumns[kind];
+  const folderFilter = toTrackFilter({ folders });
+  const source = `FROM (SELECT *, ${folderOf} AS folder FROM library ${folderFilter.where}) WHERE ${key} LIKE ? ESCAPE '!'`;
+  const variables = [...folderFilter.variables, `%${escapeLike(toSortKey(filter))}%`];
+
+  return Promise.all([
+    executeQuery<GroupSummary>(database, {
+      query: `SELECT ${key} AS "key", MIN(TRIM(COALESCE(${name}, ''))) AS name, COUNT(DISTINCT ${albumIdentity}) AS albumCount, COUNT(*) AS trackCount, MAX(picture) AS cover
+        ${source} GROUP BY ${key} ORDER BY ${toOrderBy(groupOrders(key), sort, `(${key} = '') ASC, ${key}`)} LIMIT ? OFFSET ?`,
+      variables: [...variables, limit, offset],
+    }),
+    countTotal(database, `SELECT COUNT(*) AS total FROM (SELECT 1 ${source} GROUP BY ${key})`, variables),
+  ]).then(([items, total]) => ({ items, total }));
+};
+
+/** The condition that limits the tracks to the ones of a group, none when the albums are not of a group */
+const toGroupFilter = (group: AlbumGroup | undefined) => ({
+  where: group ? `WHERE ${groupColumns[group.kind].key} = ?` : '',
+  variables: group ? [group.key] : [],
+});
+
 /**
  * A page of the albums, a folder and an album title make one album. The default order is the first track of the album;
  * a sort by the artist or the year takes the value of that first track, and the albums that are equal keep the default order.
- * Limited to the albums of the tracks below the folders when there are any, and to the albums that have a track matching the search
- * (the album keeps all its tracks in its count and its duration), with the number of albums
+ * Limited to the albums of the tracks below the folders when there are any, to the albums with a track of the group when there is one, and to the albums
+ * that have a track matching the search (the album keeps all its tracks in its count and its duration), with the number of albums
  */
-export const getAlbumPage = (
-  database: Database,
-  offset: number,
-  limit: number,
-  { sort, folders, search }: LibraryQuery<AlbumSort>
-): Promise<LibraryPage<AlbumSummary>> => {
+export const getAlbumPage = (database: Database, offset: number, limit: number, { sort, folders, search, group }: AlbumQuery): Promise<LibraryPage<AlbumSummary>> => {
   const folder = toFolderCondition(folders);
   const match = toSearchCondition(search);
+  const groupFilter = toGroupFilter(group);
   const where = folder.condition ? `WHERE ${folder.condition}` : '';
   const having = match.condition ? `HAVING MAX(${match.condition}) = 1` : '';
-  const variables = [...folder.variables, ...match.variables];
+  const variables = [...folder.variables, ...groupFilter.variables, ...match.variables];
 
   return Promise.all([
     executeQuery<Omit<AlbumSummary, 'id' | 'path'> & { firstPath: string }>(database, {
       // the bare columns come from the row of MIN(path), the first track of the album
       query: `SELECT COALESCE(album, '') AS title, artist, picture AS cover, year, SUM(duration) AS duration, COUNT(*) AS trackCount, MIN(path) AS firstPath
-        FROM (SELECT *, ${folderOf} AS folder FROM library ${where}) GROUP BY folder, COALESCE(album, '') ${having}
+        FROM (SELECT *, ${folderOf} AS folder FROM library ${where}) ${groupFilter.where} GROUP BY folder, COALESCE(album, '') ${having}
         ORDER BY ${toOrderBy(albumOrders, sort, 'MIN(path)')} LIMIT ? OFFSET ?`,
       variables: [...variables, limit, offset],
     }),
     countTotal(
       database,
-      `SELECT COUNT(*) AS total FROM (SELECT 1 FROM (SELECT album, title_key, artist_key, album_key, ${folderOf} AS folder FROM library ${where}) GROUP BY folder, COALESCE(album, '') ${having})`,
+      `SELECT COUNT(*) AS total FROM (SELECT 1 FROM (SELECT *, ${folderOf} AS folder FROM library ${where}) ${groupFilter.where} GROUP BY folder, COALESCE(album, '') ${having})`,
       variables
     ),
   ]).then(([albums, total]) => ({

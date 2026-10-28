@@ -252,6 +252,48 @@ describe('uiState reducer', () => {
       expect(run({ type: 'SET_VIEW', payload: { view: 'tracks' } }, searching).librarySearch).toBe('');
     });
 
+    it('sets and clears the sort of the artists, the album artists and the genres', () => {
+      const withSort = run({ type: 'SET_GROUP_SORT', payload: { sort: { field: 'trackCount', direction: 'desc' } } });
+
+      expect(initial.groupSort).toBeUndefined();
+      expect(withSort.groupSort).toEqual({ field: 'trackCount', direction: 'desc' });
+      expect(run({ type: 'SET_GROUP_SORT', payload: { sort: undefined } }, withSort).groupSort).toBeUndefined();
+    });
+
+    it('restores the saved sort of the groups, and drops one that is not valid', () => {
+      const saved = run({ type: 'SET_GROUP_SORT', payload: { sort: { field: 'name', direction: 'desc' } } });
+
+      expect(
+        run({ type: 'RESTORE_SETTINGS', payload: { settings: { groupSort: { field: 'albumCount', direction: 'asc', extra: 1 } as never } } }).groupSort
+      ).toEqual({
+        field: 'albumCount',
+        direction: 'asc',
+      });
+      expect(
+        run({ type: 'RESTORE_SETTINGS', payload: { settings: { groupSort: { field: 'path', direction: 'asc' } as never } } }, saved).groupSort
+      ).toBeUndefined();
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.1 } } }, saved).groupSort).toEqual({ field: 'name', direction: 'desc' });
+    });
+
+    it('opens and closes an artist, album artist or genre, and filters the names', () => {
+      const group = { kind: 'genre', key: 'pop', name: 'Pop' } as const;
+      const open = run({ type: 'OPEN_GROUP', payload: { group } });
+
+      expect(initial).toMatchObject({ openGroup: undefined, groupFilter: '' });
+      expect(open.openGroup).toEqual(group);
+      expect(run({ type: 'CLOSE_GROUP', payload: {} }, open).openGroup).toBeUndefined();
+      expect(run({ type: 'SET_GROUP_FILTER', payload: { filter: 'po' } }).groupFilter).toBe('po');
+    });
+
+    it('starts another view without the open group and the filter of the names', () => {
+      const state = run(
+        { type: 'SET_GROUP_FILTER', payload: { filter: 'po' } },
+        run({ type: 'OPEN_GROUP', payload: { group: { kind: 'artist', key: 'a', name: 'A' } } })
+      );
+
+      expect(run({ type: 'SET_VIEW', payload: { view: 'genres' } }, state)).toMatchObject({ view: 'genres', openGroup: undefined, groupFilter: '' });
+    });
+
     it('sets the folders once each', () => {
       expect(run({ type: 'SET_LIBRARY_FOLDERS', payload: { folders: ['/a', '/b', '/a'] } }).libraryFolders).toEqual(['/a', '/b']);
     });

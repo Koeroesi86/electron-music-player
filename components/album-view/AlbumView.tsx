@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { AlbumSort as AlbumSortValue } from '../../types/library-query';
 import { useTranslation } from '../../client/i18n';
@@ -28,9 +29,11 @@ interface AlbumViewProps {
   playTracks: (tracks: Track[]) => void;
   selectAlbum: (album: Album | null) => void;
   loadPage: (page: number) => void;
+  /** What the bar above the list holds, the sort of the albums when omitted */
+  toolbar?: ReactNode;
 }
 
-const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, search, loadPage }: AlbumViewProps) => {
+const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, search, loadPage, toolbar = <AlbumSort /> }: AlbumViewProps) => {
   const { t } = useTranslation();
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
   const { listing, columns, firstIndex, lastIndex, offsetTop, height } = useWindowedList({ itemCount: albums.total ?? 0, rowHeight, itemWidth });
@@ -66,9 +69,7 @@ const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, s
 
   return (
     <div className={style.albums}>
-      <div className={style.toolbar}>
-        <AlbumSort />
-      </div>
+      <div className={style.toolbar}>{toolbar}</div>
       <div ref={separator} className={style.separator} />
       {search && albums.total === 0 && <div className={style.empty}>{t('library.noResults', { search })}</div>}
       <div className={style.listing} ref={setListing}>

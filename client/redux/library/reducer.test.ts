@@ -28,6 +28,12 @@ describe('library reducer', () => {
     expect(state).toEqual({
       tracks: { total: undefined, pages: {}, stale: [] },
       albums: { total: undefined, pages: {}, stale: [] },
+      groups: {
+        artist: { total: undefined, pages: {}, stale: [] },
+        albumArtist: { total: undefined, pages: {}, stale: [] },
+        genre: { total: undefined, pages: {}, stale: [] },
+      },
+      groupAlbums: { total: undefined, pages: {}, stale: [] },
       loaded: false,
     });
   });
@@ -73,6 +79,52 @@ describe('library reducer', () => {
     expect(state.tracks).toEqual({ total: undefined, pages: {}, stale: [] });
     expect(state.albums).toBe(stored.albums);
     expect(state.loaded).toBe(true);
+  });
+
+  describe('artists, album artists and genres', () => {
+    const group = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 2, cover: null };
+    const storeGroups = (state: LibraryState | undefined, kind: 'artist' | 'albumArtist' | 'genre') =>
+      reducer(state, { type: 'STORE_GROUP_PAGE', payload: { kind, page: 0, items: [group], total: 1 } });
+
+    it('stores the pages of each kind apart, and the albums of the open one apart from the albums', () => {
+      const state = reducer(storeGroups(undefined, 'genre'), {
+        type: 'STORE_GROUP_ALBUM_PAGE',
+        payload: { page: 0, items: [createAlbum('one')], total: 1 },
+      });
+
+      expect(state.groups.genre.pages[0]).toEqual([group]);
+      expect(state.groups.artist.total).toBeUndefined();
+      expect(state.groupAlbums.pages[0].map((album) => album.id)).toEqual(['one']);
+      expect(state.albums.total).toBeUndefined();
+    });
+
+    it('drops the pages of one kind when it is reset, and the albums of the group when they are', () => {
+      const stored = reducer(storeGroups(storeGroups(undefined, 'artist'), 'genre'), {
+        type: 'STORE_GROUP_ALBUM_PAGE',
+        payload: { page: 0, items: [createAlbum('one')], total: 1 },
+      });
+      const state = reducer(reducer(stored, { type: 'RESET_LIBRARY', payload: { kind: 'artist' } }), {
+        type: 'RESET_LIBRARY',
+        payload: { kind: 'groupAlbums' },
+      });
+
+      expect(state.groups.artist.total).toBeUndefined();
+      expect(state.groups.genre).toBe(stored.groups.genre);
+      expect(state.groupAlbums.total).toBeUndefined();
+    });
+
+    it('marks the pages of all of them stale on a change of the library', () => {
+      const stored = reducer(storeGroups(storeGroups(undefined, 'albumArtist'), 'genre'), {
+        type: 'STORE_GROUP_ALBUM_PAGE',
+        payload: { page: 0, items: [createAlbum('one')], total: 1 },
+      });
+      const state = reducer(stored, { type: 'INVALIDATE_LIBRARY' });
+
+      expect(state.groups.albumArtist.stale).toEqual([0]);
+      expect(state.groups.genre.stale).toEqual([0]);
+      expect(state.groups.artist.stale).toEqual([]);
+      expect(state.groupAlbums.stale).toEqual([0]);
+    });
   });
 
   it('ignores unrelated actions', () => {

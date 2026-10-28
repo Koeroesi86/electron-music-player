@@ -12,7 +12,7 @@ import {
 } from '../types/library-query';
 import type { TrackSort } from '../types/library-query';
 import reducers from './redux/reducers';
-import { selectAlbumQuery, selectedFolders, selectTrackQuery } from './library-query';
+import { selectAlbumQuery, selectedFolders, selectGroupAlbumQuery, selectGroupQuery, selectTrackQuery } from './library-query';
 
 const folder = (path: string): Folder => ({ path, lastModified: 1 });
 
@@ -95,5 +95,23 @@ describe('the query of a list', () => {
     expect(selectAlbumQuery(searching('  halo '))).toMatchObject({ search: 'halo' });
     expect(selectTrackQuery(searching('   ')).search).toBeUndefined();
     expect(selectTrackQuery(state()).search).toBeUndefined();
+  });
+
+  it('has the sort, the folders and the filter of the artists, the album artists and the genres', () => {
+    const { uiState, ...rest } = state();
+    const query = { ...rest, uiState: { ...uiState, groupSort: { field: 'trackCount' as const, direction: 'desc' as const }, groupFilter: 'bj' } };
+
+    expect(selectGroupQuery(query)).toEqual({ sort: { field: 'trackCount', direction: 'desc' }, folders: ['/b'], filter: 'bj' });
+  });
+
+  it('has the albums of the open group, with the sort and the folders of the albums', () => {
+    const { uiState, ...rest } = state();
+    const open = {
+      ...rest,
+      uiState: { ...uiState, albumSort: { field: 'year' as const, direction: 'asc' as const }, openGroup: { kind: 'genre' as const, key: 'pop', name: 'Pop' } },
+    };
+
+    expect(selectGroupAlbumQuery(open)).toEqual({ sort: { field: 'year', direction: 'asc' }, folders: ['/b'], group: { kind: 'genre', key: 'pop' } });
+    expect(selectGroupAlbumQuery(state()).group).toBeUndefined();
   });
 });

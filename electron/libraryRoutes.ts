@@ -1,7 +1,7 @@
 import type { Database } from 'sqlite3';
-import { getAlbumPage, getAlbumTracks, getLibrary, getTrackPage } from './libraryRepository';
-import { parseAlbumSort, parseFolders, parseSearch, parseTrackSort } from '../types/library-query';
-import type { LibraryQuery } from '../types/library-query';
+import { getAlbumPage, getAlbumTracks, getGroupPage, getLibrary, getTrackPage } from './libraryRepository';
+import { parseAlbumSort, parseFolders, parseGroupKind, parseGroupSort, parseSearch, parseTrackSort } from '../types/library-query';
+import type { AlbumGroup, LibraryQuery } from '../types/library-query';
 
 const maxPageSize = 500;
 
@@ -18,6 +18,16 @@ const toLibraryQuery = <S>(params: URLSearchParams, parse: (field: unknown, dire
   const parsed = sort === null ? undefined : parse(sort, params.get('dir') ?? undefined);
 
   return sort !== null && !parsed ? undefined : { sort: parsed, folders: parseFolders(params.getAll('folder')), search: parseSearch(params.get('search')) };
+};
+
+/** The group the albums are limited to: both parameters or none, a kind that is not known is no query at all */
+const toAlbumGroup = (params: URLSearchParams): AlbumGroup | null | undefined => {
+  const kind = params.get('by');
+  const key = params.get('group');
+  if (kind === null && key === null) return undefined;
+
+  const parsed = parseGroupKind(kind);
+  return parsed && key !== null ? { kind: parsed, key } : null;
 };
 
 type Query = (database: Database, params: URLSearchParams) => Promise<unknown> | undefined;
@@ -50,7 +60,14 @@ export const libraryRoutes: Record<string, ReturnType<typeof fromLibrary>> = {
   '/library/albums': fromLibrary((database, params) => {
     const { offset, limit } = toWindow(params);
     const query = toLibraryQuery(params, parseAlbumSort);
-    return query && getAlbumPage(database, offset, limit, query);
+    const group = toAlbumGroup(params);
+    return query && group !== null ? getAlbumPage(database, offset, limit, { ...query, group }) : undefined;
+  }),
+  '/library/groups': fromLibrary((database, params) => {
+    const { offset, limit } = toWindow(params);
+    const query = toLibraryQuery(params, parseGroupSort);
+    const kind = parseGroupKind(params.get('by'));
+    return query && kind ? getGroupPage(database, kind, offset, limit, { ...query, filter: params.get('q') ?? '' }) : undefined;
   }),
   '/library/album': fromLibrary((database, params) => {
     const folder = params.get('path');

@@ -1,0 +1,165 @@
+import { useCallback, useEffect, useState } from 'react';
+import classNames from 'classnames';
+import { FaCaretDown, FaCaretUp, FaChevronLeft } from 'react-icons/fa';
+import type { Folder, GroupSummary } from '../../types/library';
+import { cycleSort } from '../../types/library-query';
+import type { GroupKind, GroupSort, GroupSortField } from '../../types/library-query';
+import { useTranslation } from '../../client/i18n';
+import { getCoverUrl } from '../../client/cover-url';
+import { useDelayedValue } from '../../client/hooks/use-delayed-value';
+import { usePageLoader } from '../../client/hooks/use-page-loader';
+import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
+import { useUpdateEffect } from '../../client/hooks/use-update-effect';
+import { useWindowedList } from '../../client/hooks/use-windowed-list';
+import { selectedFolders } from '../../client/library-query';
+import { getCachedItem } from '../../client/redux/library/pages';
+import type { PageCache } from '../../client/redux/library/pages';
+import type { OpenGroup } from '../../client/redux/types';
+import AlbumSort from '../album-sort';
+import GroupAlbums from '../group-albums';
+import style from './GroupView.scss';
+
+/** The height of a row in px, matching .group in GroupView.scss */
+const rowHeight = 40;
+
+/** How long the filter waits for the next key before the list is asked again */
+const filterDelay = 250;
+
+const ariaSorts = { asc: 'ascending', desc: 'descending' } as const;
+
+interface GroupViewProps {
+  kind: GroupKind;
+  groups: PageCache<GroupSummary>;
+  /** The sort and the filter of the list, undefined is the default order and an empty text is all of the names */
+  sort: GroupSort | undefined;
+  filter: string;
+  /** The selected folders and the folders of the library, the selection can hold a folder the library no longer has */
+  selected: string[];
+  folders: Folder[];
+  /** The group whose albums are shown instead of the list */
+  open: OpenGroup | undefined;
+  loadPage: (page: number) => void;
+  setSort: (sort: GroupSort | undefined) => void;
+  setFilter: (filter: string) => void;
+  openGroup: (group: OpenGroup) => void;
+  closeGroup: () => void;
+}
+
+interface HeaderFieldProps {
+  field: GroupSortField;
+  className: string;
+  label: string;
+  sort: GroupSort | undefined;
+  onSort: (field: GroupSortField) => void;
+}
+
+/** A column header that sorts by its column when it is clicked, and shows the direction while it is the sorted column */
+const HeaderField = ({ field, className, label, sort, onSort }: HeaderFieldProps) => {
+  const active = sort?.field === field ? sort : undefined;
+
+  return (
+    <div role="columnheader" aria-sort={active ? ariaSorts[active.direction] : 'none'} className={classNames(style.field, className)}>
+      <button type="button" onClick={() => onSort(field)}>
+        {label}
+        {active?.direction === 'asc' && <FaCaretUp aria-hidden />}
+        {active?.direction === 'desc' && <FaCaretDown aria-hidden />}
+      </button>
+    </div>
+  );
+};
+
+const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPage, setSort, setFilter, openGroup, closeGroup }: GroupViewProps) => {
+  const { t } = useTranslation();
+  const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
+  const { listing, firstIndex, lastIndex, offsetTop, height } = useWindowedList({ itemCount: groups.total ?? 0, rowHeight });
+  usePageLoader(groups, firstIndex, lastIndex, loadPage);
+
+  // the text is shown as it is typed, the list is asked for it once the typing pauses
+  const [text, setText] = useState(filter);
+  const typed = useDelayedValue(text, filterDelay);
+  useUpdateEffect(() => setFilter(typed), [typed, setFilter]);
+
+  const queryKey = JSON.stringify([sort, filter, selectedFolders(selected, folders)]);
+  // another sort, filter or other folders are another list, which starts from its top
+  useEffect(() => {
+    if (listing.current) listing.current.scrollTop = 0;
+  }, [listing, queryKey]);
+
+  const setListing = useCallback(
+    (element: HTMLDivElement | null) => {
+      listing.current = element;
+      scrolled.current = element;
+    },
+    [listing, scrolled]
+  );
+
+  const sortBy = (field: GroupSortField) => setSort(cycleSort(sort, field));
+  const nameOf = (name: string) => name || t(`groups.unknown.${kind}`);
+
+  if (open) {
+    const openName = nameOf(open.name);
+
+    return (
+      <GroupAlbums
+        toolbar={
+          <div className={style.albumsBar}>
+            <button type="button" className={style.back} onClick={closeGroup} aria-label={t('groups.back')} title={t('groups.back')}>
+              <FaChevronLeft aria-hidden />
+            </button>
+            <span className={style.openName} title={openName}>
+              {openName}
+            </span>
+            <AlbumSort />
+          </div>
+        }
+      />
+    );
+  }
+
+  return (
+    <div className={style.groups}>
+      <div className={style.toolbar}>
+        <input
+          type="search"
+          className={style.filter}
+          value={text}
+          placeholder={t('groups.filter')}
+          aria-label={t('groups.filter')}
+          onChange={(event) => setText(event.target.value)}
+        />
+      </div>
+      <div role="row" className={style.header}>
+        <div className={classNames(style.field, style.cover)} />
+        <HeaderField field="name" className={style.name} label={t('groups.name')} sort={sort} onSort={sortBy} />
+        <HeaderField field="albumCount" className={style.count} label={t('groups.albums')} sort={sort} onSort={sortBy} />
+        <HeaderField field="trackCount" className={style.count} label={t('groups.tracks')} sort={sort} onSort={sortBy} />
+      </div>
+      <div ref={separator} className={style.separator} />
+      <div className={style.listing} ref={setListing}>
+        <div className={style.window} style={{ height, paddingTop: offsetTop }}>
+          {Array.from({ length: lastIndex - firstIndex }, (_, offset) => {
+            const group = getCachedItem(groups, firstIndex + offset);
+            return group ? (
+              <button key={group.key} type="button" className={style.group} onClick={() => openGroup({ kind, key: group.key, name: group.name })}>
+                <span
+                  className={classNames(style.field, style.cover)}
+                  style={group.cover ? { backgroundImage: `url("${getCoverUrl(group.cover)}")` } : undefined}
+                />
+                <span className={classNames(style.field, style.name, { [style.unknown]: !group.name })} title={nameOf(group.name)}>
+                  {nameOf(group.name)}
+                </span>
+                <span className={classNames(style.field, style.count)}>{group.albumCount}</span>
+                <span className={classNames(style.field, style.count)}>{group.trackCount}</span>
+              </button>
+            ) : (
+              <div key={firstIndex + offset} className={style.placeholder} />
+            );
+          })}
+        </div>
+      </div>
+      <div className={style.footer}>{t(`groups.count.${kind}`, { count: groups.total ?? 0 })}</div>
+    </div>
+  );
+};
+
+export default GroupView;
