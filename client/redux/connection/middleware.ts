@@ -1,6 +1,8 @@
 import type { Middleware } from 'redux';
 import type { Folder, Track } from '../../../types/library';
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
+import type { GroupSummary } from '../../../types/library';
+import type { GroupKind } from '../../../types/library-query';
 import type { UpdateState } from '../../../types/update';
 import { electronAPI } from '../../electron-api';
 import { debounce } from '../../utils/debounce';
@@ -11,11 +13,11 @@ import { isFavourite, stationFavourite, trackFavourite } from '../../favourites'
 import { isHistoryItem } from '../../history';
 import { toPlaylist } from '../../playlists';
 import { radioUuidOf } from '../../radio-track';
-import { fetchAlbumPage, fetchTrackPage } from '../../library-api';
-import { selectAlbumQuery, selectTrackQuery } from '../../library-query';
+import { fetchAlbumPage, fetchGroupPage, fetchTrackPage } from '../../library-api';
+import { selectAlbumQuery, selectGroupAlbumQuery, selectGroupQuery, selectTrackQuery } from '../../library-query';
 import { actionMiddleware, onAction } from '../on-action';
 import type { Store } from '../on-action';
-import type { PersistedSettings, PlaylistItem, UiState } from '../types';
+import type { PageKind, PersistedSettings, PlaylistItem, UiState } from '../types';
 
 type EmptyPayload = Record<string, never>;
 
@@ -25,6 +27,7 @@ function addListeners(store: Store) {
   electronAPI.on<EmptyPayload>('RESCAN_COMPLETE', (payload) => store.dispatch({ type: 'RESCAN_COMPLETE', payload }));
   electronAPI.on<{ folders: Folder[] }>('FOLDERS_ADDED_TO_LIBRARY', (payload) => store.dispatch({ type: 'FOLDERS_ADDED_TO_LIBRARY', payload }));
   electronAPI.on<EmptyPayload>('FOLDER_REMOVED_FROM_LIBRARY', (payload) => store.dispatch({ type: 'FOLDER_REMOVED_FROM_LIBRARY', payload }));
+  electronAPI.on<EmptyPayload>('ARTIST_PHOTOS_READY', (payload) => store.dispatch({ type: 'ARTIST_PHOTOS_READY', payload }));
   electronAPI.on<EmptyPayload>('TRACKS_ADDED_TO_LIBRARY', (payload) => store.dispatch({ type: 'TRACKS_ADDED_TO_LIBRARY', payload }));
   electronAPI.on<{ maximized: boolean }>('MAXIMIZED_APP', (payload) => store.dispatch({ type: 'MAXIMIZED_APP', payload }));
   electronAPI.on<{ playlist: PlaylistItem[]; url: string }>('CLICKED_URL', (payload) => store.dispatch({ type: 'CLICKED_URL', payload }));
@@ -66,6 +69,12 @@ const appLoaded = debounce(() => {
   electronAPI.send('APP_LOADED', {});
 }, 500);
 
+const groupFetcher = (kind: GroupKind) => (state: RootState, page: number) =>
+  fetchGroupPage(kind, page, selectGroupQuery(state)).then((result) => ({
+    type: 'STORE_GROUP_PAGE' as const,
+    payload: { kind, page, ...result },
+  }));
+
 const pageFetchers = {
   tracks: ({ uiState, folders }: RootState, page: number) =>
     fetchTrackPage(page, selectTrackQuery({ uiState, folders })).then((result) => ({
@@ -77,13 +86,21 @@ const pageFetchers = {
       type: 'STORE_ALBUM_PAGE' as const,
       payload: { page, ...result },
     })),
-};
+  groupAlbums: ({ uiState, folders }: RootState, page: number) =>
+    fetchAlbumPage(page, selectGroupAlbumQuery({ uiState, folders })).then((result) => ({
+      type: 'STORE_GROUP_ALBUM_PAGE' as const,
+      payload: { page, ...result },
+    })),
+  artist: groupFetcher('artist'),
+  albumArtist: groupFetcher('albumArtist'),
+  genre: groupFetcher('genre'),
+} satisfies Record<PageKind, unknown>;
 
 const loading = new Set<string>();
 let generation = 0;
 
 /** Fetch a page once at a time; a page that was requested before the library changed is fetched again instead of stored */
-const loadPage = (store: Store, kind: keyof typeof pageFetchers, page: number): Promise<void> => {
+const loadPage = (store: Store, kind: PageKind, page: number): Promise<void> => {
   const key = `${kind}:${page}`;
   if (loading.has(key)) return Promise.resolve();
 
@@ -99,6 +116,14 @@ const loadPage = (store: Store, kind: keyof typeof pageFetchers, page: number): 
       loading.delete(key);
       console.error(err);
     });
+};
+
+/** The artists and album artists that have their photos looked up; the main process knows which names it has an answer for */
+const photoKinds: GroupKind[] = ['artist', 'albumArtist'];
+
+const requestPhotos = (groups: GroupSummary[]) => {
+  const artists = groups.filter(({ name }) => name).map(({ key, name }) => ({ key, name }));
+  if (artists.length > 0) electronAPI.send('ARTIST_PHOTOS_WANTED', { artists });
 };
 
 const rescanInterval = 1000 * 60 * 60;
@@ -123,6 +148,8 @@ const persistedKeys = [
   'theme',
   'trackSort',
   'albumSort',
+  'groupSort',
+  'artistPhotos',
   'libraryFolders',
   'radioQuery',
 ] satisfies (keyof PersistedSettings)[];
@@ -189,6 +216,18 @@ const handleActions = actionMiddleware((store) => [
   onAction('PICK_FOLDERS', () => electronAPI.send('PICK_FOLDERS')),
   onAction('REMOVE_FOLDER', ({ payload }) => electronAPI.send('REMOVE_FOLDER_FROM_LIBRARY', payload.path)),
   onAction('RESCAN_LIBRARY', () => rescanLibrary(true)),
+  // a page of names that arrives asks for their photos, unless that is turned off
+  onAction('STORE_GROUP_PAGE', ({ payload }) => {
+    if (store.getState().uiState.artistPhotos && photoKinds.includes(payload.kind)) requestPhotos(payload.items);
+  }),
+  // turned on, the names that are shown already have their photos looked up
+  onAction('SET_ARTIST_PHOTOS', ({ payload }) => {
+    const { uiState, library } = store.getState();
+    saveSettings({ ...uiState, artistPhotos: payload.enabled });
+    if (!payload.enabled) return;
+
+    photoKinds.forEach((kind) => Object.values(library.groups[kind].pages).forEach(requestPhotos));
+  }),
   onAction('LOAD_LIBRARY_PAGE', ({ payload }) => void loadPage(store, payload.kind, payload.page)),
   // the cached pages are fetched again when they are shown, not all at once
   ...(['RESCAN_COMPLETE', 'TRACKS_ADDED_TO_LIBRARY', 'FOLDER_REMOVED_FROM_LIBRARY'] as const).map((type) =>
@@ -252,7 +291,20 @@ const handleActions = actionMiddleware((store) => [
   onAction('SAVE_SETTINGS', () => saveSettings(store.getState().uiState)),
 ]);
 
-const queryKeys = (state: RootState) => ({ tracks: JSON.stringify(selectTrackQuery(state)), albums: JSON.stringify(selectAlbumQuery(state)) });
+const pageKinds: PageKind[] = ['tracks', 'albums', 'groupAlbums', 'artist', 'albumArtist', 'genre'];
+
+const queryKeys = (state: RootState): Record<PageKind, string> => {
+  const groups = JSON.stringify(selectGroupQuery(state));
+
+  return {
+    tracks: JSON.stringify(selectTrackQuery(state)),
+    albums: JSON.stringify(selectAlbumQuery(state)),
+    groupAlbums: JSON.stringify(selectGroupAlbumQuery(state)),
+    artist: groups,
+    albumArtist: groups,
+    genre: groups,
+  };
+};
 
 /**
  * A list whose sort or folders changed (picked, restored, or a selected folder left the library) is another list: its pages are dropped,
@@ -263,7 +315,7 @@ const createQueryWatcher = (store: Store) => {
 
   return () => {
     const next = queryKeys(store.getState());
-    const changed = (['tracks', 'albums'] as const).filter((kind) => next[kind] !== keys[kind]);
+    const changed = pageKinds.filter((kind) => next[kind] !== keys[kind]);
     keys = next;
     changed.forEach((kind) => {
       generation += 1;

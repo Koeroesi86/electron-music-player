@@ -1,5 +1,5 @@
 import type { Folder } from '../types/library';
-import type { AlbumSort, LibraryQuery, TrackSort } from '../types/library-query';
+import type { AlbumQuery, GroupQuery, LibraryQuery, TrackSort } from '../types/library-query';
 import { knownFolders, parseSearch } from '../types/library-query';
 import type { RootState } from './redux/reducers';
 
@@ -22,8 +22,21 @@ export const selectTrackQuery = (state: QueryState): LibraryQuery<TrackSort> => 
   search: selectSearch(state),
 });
 
-export const selectAlbumQuery = (state: QueryState): LibraryQuery<AlbumSort> => ({
+export const selectAlbumQuery = (state: QueryState): AlbumQuery => ({
   sort: state.uiState.albumSort,
   folders: selectedFolders(state.uiState.libraryFolders, state.folders),
   search: selectSearch(state),
+});
+
+/** What the albums of the open artist, album artist or genre are asked for: the album sort and folders, and the group */
+export const selectGroupAlbumQuery = (state: QueryState): AlbumQuery => ({
+  ...selectAlbumQuery(state),
+  group: state.uiState.openGroup && { kind: state.uiState.openGroup.kind, key: state.uiState.openGroup.key },
+});
+
+/** What the artists, the album artists and the genres are asked for: the sort, the selected folders and the text of the filter */
+export const selectGroupQuery = (state: QueryState): GroupQuery => ({
+  sort: state.uiState.groupSort,
+  folders: selectedFolders(state.uiState.libraryFolders, state.folders),
+  filter: state.uiState.groupFilter,
 });

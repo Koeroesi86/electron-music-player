@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { FaSyncAlt } from 'react-icons/fa';
 import type { LibraryView } from '../../client/redux/types';
 import AlbumView from '../album-view';
+import GroupView from '../group-view';
 import TrackView from '../track-view';
 import style from './LocalCollection.scss';
 import FolderManagement from '../folder-management';
@@ -31,6 +32,10 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFile
 
   const views: ViewItem<LibraryView>[] = [
     { view: 'albums', label: t('library.albums'), panel: <AlbumView /> },
+    // the lists of names are fetched only while they are shown
+    { view: 'artists', label: t('library.artists'), panel: view === 'artists' && <GroupView kind="artist" /> },
+    { view: 'albumArtists', label: t('library.albumArtists'), panel: view === 'albumArtists' && <GroupView kind="albumArtist" /> },
+    { view: 'genres', label: t('library.genres'), panel: view === 'genres' && <GroupView kind="genre" /> },
     { view: 'tracks', label: t('library.songs'), panel: <TrackView /> },
     { view: 'folders', label: t('library.folders'), panel: <FolderManagement /> },
   ];

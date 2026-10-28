@@ -16,7 +16,8 @@ describe('toSortKey', () => {
     expect(toSortKey(undefined)).toBe('');
   });
 
-  it('gives the keys of the title, the artist and the album in the order of their columns', () => {
-    expect(toSortKeys({ title: 'Á', artist: 'B', album: 'C' })).toEqual(['a', 'b', 'c']);
+  it('gives the keys of the title, the artist, the album, the album artist and the genre in the order of their columns', () => {
+    expect(toSortKeys({ title: 'Á', artist: 'B', album: 'C', albumArtist: 'É', genre: ' Pop ' })).toEqual(['a', 'b', 'c', 'e', 'pop']);
+    expect(toSortKeys({ title: '', artist: '', album: '', genre: '' })).toEqual(['', '', '', '', '']);
   });
 });

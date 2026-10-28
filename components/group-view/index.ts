@@ -1,0 +1,29 @@
+import { connect } from 'react-redux';
+import type { Dispatch } from 'redux';
+import type { GroupKind, GroupSort } from '../../types/library-query';
+import type { RootState } from '../../client/redux/reducers';
+import type { AppAction, OpenGroup } from '../../client/redux/types';
+import GroupView from './GroupView';
+
+interface OwnProps {
+  kind: GroupKind;
+}
+
+const mapState = (state: RootState, { kind }: OwnProps) => ({
+  groups: state.library.groups[kind],
+  sort: state.uiState.groupSort,
+  filter: state.uiState.groupFilter,
+  selected: state.uiState.libraryFolders,
+  folders: state.folders,
+  open: state.uiState.openGroup?.kind === kind ? state.uiState.openGroup : undefined,
+});
+
+const mapDispatch = (dispatch: Dispatch<AppAction>, { kind }: OwnProps) => ({
+  loadPage: (page: number) => dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind, page } }),
+  setSort: (sort: GroupSort | undefined) => dispatch({ type: 'SET_GROUP_SORT', payload: { sort } }),
+  setFilter: (filter: string) => dispatch({ type: 'SET_GROUP_FILTER', payload: { filter } }),
+  openGroup: (group: OpenGroup) => dispatch({ type: 'OPEN_GROUP', payload: { group } }),
+  closeGroup: () => dispatch({ type: 'CLOSE_GROUP', payload: {} }),
+});
+
+export default connect(mapState, mapDispatch)(GroupView);

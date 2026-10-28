@@ -4,10 +4,18 @@ export const trackSortFields = ['title', 'artist', 'album', 'year', 'duration', 
 /** The fields the albums can be sorted by, artist and year are the ones of the first track of the album */
 export const albumSortFields = ['title', 'artist', 'year', 'trackCount', 'duration'] as const;
 
+/** What the library can be browsed by: the artist of the tracks, the album artist and the genre */
+export const groupKinds = ['artist', 'albumArtist', 'genre'] as const;
+
+/** The fields the artists, the album artists and the genres can be sorted by */
+export const groupSortFields = ['name', 'albumCount', 'trackCount'] as const;
+
 export const sortDirections = ['asc', 'desc'] as const;
 
 export type TrackSortField = (typeof trackSortFields)[number];
 export type AlbumSortField = (typeof albumSortFields)[number];
+export type GroupKind = (typeof groupKinds)[number];
+export type GroupSortField = (typeof groupSortFields)[number];
 export type SortDirection = (typeof sortDirections)[number];
 
 export interface Sort<F extends string> {
@@ -17,6 +25,7 @@ export interface Sort<F extends string> {
 
 export type TrackSort = Sort<TrackSortField>;
 export type AlbumSort = Sort<AlbumSortField>;
+export type GroupSort = Sort<GroupSortField>;
 
 /** What a window of the library is asked for: a sort (undefined is the default order), the library folders to limit it to (none is all of them) and the text to find (none is everything) */
 export interface LibraryQuery<S> {
@@ -24,6 +33,22 @@ export interface LibraryQuery<S> {
   folders: string[];
   /** Matched in the artist, the album and the title, without case and accents */
   search?: string;
+}
+
+/** The albums of one artist, album artist or genre: key is the name as the library compares it, empty for the tracks that have none */
+export interface AlbumGroup {
+  kind: GroupKind;
+  key: string;
+}
+
+/** The albums of a query, limited to the albums of a group when there is one */
+export interface AlbumQuery extends LibraryQuery<AlbumSort> {
+  group?: AlbumGroup;
+}
+
+/** The artists, album artists or genres of a query, limited to the ones that have the text in their name (no text is all of them) */
+export interface GroupQuery extends LibraryQuery<GroupSort> {
+  filter: string;
 }
 
 const findOf = <T extends string>(allowed: readonly T[], value: unknown) => allowed.find((item) => item === value);
@@ -48,9 +73,15 @@ export const parseTrackSort = (field: unknown, direction: unknown) => parseSort(
 
 export const parseAlbumSort = (field: unknown, direction: unknown) => parseSort(albumSortFields, field, direction);
 
+export const parseGroupSort = (field: unknown, direction: unknown) => parseSort(groupSortFields, field, direction);
+
+export const parseGroupKind = (value: unknown) => findOf(groupKinds, value);
+
 export const restoreTrackSort = (value: unknown) => parseSortObject(trackSortFields, value);
 
 export const restoreAlbumSort = (value: unknown) => parseSortObject(albumSortFields, value);
+
+export const restoreGroupSort = (value: unknown) => parseSortObject(groupSortFields, value);
 
 /** The folders of a saved or requested selection: the strings in it, once each */
 export const parseFolders = (value: unknown): string[] => [

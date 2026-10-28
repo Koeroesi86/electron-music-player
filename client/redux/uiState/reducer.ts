@@ -1,5 +1,5 @@
 import type { Reducer } from 'redux';
-import { knownFolders, parseFolders, restoreAlbumSort, restoreTrackSort } from '../../../types/library-query';
+import { knownFolders, parseFolders, restoreAlbumSort, restoreGroupSort, restoreTrackSort } from '../../../types/library-query';
 import { parseRadioQuery } from '../../../types/radio-query';
 import { isAppAction } from '../types';
 import type { OnlineView, UiState } from '../types';
@@ -35,6 +35,10 @@ const initialState: UiState = {
   theme: { ...defaultTheme, accent: autoAccent },
   trackSort: undefined,
   albumSort: undefined,
+  groupSort: undefined,
+  artistPhotos: true,
+  openGroup: undefined,
+  groupFilter: '',
   libraryFolders: [],
   radioQuery: {},
   librarySearch: '',
@@ -49,8 +53,9 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
   if (!isAppAction(action)) return state;
 
   switch (action.type) {
+    // another view starts with its list, not the open artist or genre of the previous one, and without the filter of its names
     case 'SET_VIEW':
-      return { ...state, view: action.payload.view, librarySearch: '' };
+      return { ...state, view: action.payload.view, librarySearch: '', openGroup: undefined, groupFilter: '' };
     case 'SET_ONLINE_VIEW':
       return { ...state, onlineView: action.payload.view };
     case 'SET_TRACK_SORT':
@@ -59,6 +64,16 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, albumSort: action.payload.sort };
     case 'SET_LIBRARY_SEARCH':
       return { ...state, librarySearch: action.payload.search };
+    case 'SET_ARTIST_PHOTOS':
+      return { ...state, artistPhotos: action.payload.enabled };
+    case 'SET_GROUP_SORT':
+      return { ...state, groupSort: action.payload.sort };
+    case 'SET_GROUP_FILTER':
+      return { ...state, groupFilter: action.payload.filter };
+    case 'OPEN_GROUP':
+      return { ...state, openGroup: action.payload.group };
+    case 'CLOSE_GROUP':
+      return { ...state, openGroup: undefined };
     case 'SET_LIBRARY_FOLDERS':
       return { ...state, libraryFolders: parseFolders(action.payload.folders) };
     // a folder that is not in the library any more is dropped from the selection
@@ -153,6 +168,9 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
         // a saved value that is not valid gives the default order and all folders
         ...('trackSort' in settings && { trackSort: restoreTrackSort(settings.trackSort) }),
         ...('albumSort' in settings && { albumSort: restoreAlbumSort(settings.albumSort) }),
+        // only a saved off turns the photos off
+        ...('artistPhotos' in settings && { artistPhotos: settings.artistPhotos !== false }),
+        ...('groupSort' in settings && { groupSort: restoreGroupSort(settings.groupSort) }),
         ...('libraryFolders' in settings && { libraryFolders: parseFolders(settings.libraryFolders) }),
         // a saved filter or sort that is not valid is dropped
         ...('radioQuery' in settings && { radioQuery: parseRadioQuery(settings.radioQuery) }),

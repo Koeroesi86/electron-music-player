@@ -8,15 +8,17 @@ import {
   getFolders,
   getAlbumPage,
   getAlbumTracks,
+  getGroupPage,
   getFoldersInside,
   getLibrary,
   getTrackPage,
   saveFolders,
 } from './libraryRepository';
 import addTrack from './addTrack';
+import executeQuery from './executeQuery';
 import { createTestDatabase } from './test-database';
 import type { Track } from '../types/library';
-import type { AlbumSort, LibraryQuery, TrackSort } from '../types/library-query';
+import type { AlbumSort, GroupQuery, GroupSortField, LibraryQuery, TrackSort } from '../types/library-query';
 
 const unsorted = { sort: undefined, folders: [] };
 
@@ -350,6 +352,100 @@ describe('libraryRepository', () => {
 
         expect(page.items.map(({ title, trackCount }) => [title, trackCount])).toEqual([['Win', 2]]);
       });
+    });
+  });
+
+  describe('browsing by artist, album artist and genre', () => {
+    const withValues = (file: string, values: Partial<Track>): Track => ({ ...track(file), ...values });
+    const save = (tracks: Track[]) => Promise.all(tracks.map((item) => addTrack(database, item)));
+    const everything: GroupQuery = { sort: undefined, folders: [], filter: '' };
+    const sortedBy = (field: GroupSortField, direction: 'asc' | 'desc' = 'asc'): GroupQuery => ({ ...everything, sort: { field, direction } });
+    const names = async (kind: 'artist' | 'albumArtist' | 'genre', query: GroupQuery = everything) =>
+      (await getGroupPage(database, kind, 0, 10, query)).items.map((item) => item.name);
+
+    beforeEach(() =>
+      save([
+        withValues('/m/a/1.flac', { artist: 'Björk', albumArtist: 'Björk', album: 'One', genre: 'Pop', picture: 'one.jpg' }),
+        withValues('/m/a/2.flac', { artist: ' bjork ', albumArtist: 'Björk', album: 'One', genre: 'pop' }),
+        withValues('/m/b/1.flac', { artist: 'Adam', albumArtist: 'Various', album: 'Mix', genre: 'Rock' }),
+        withValues('/m/c/1.flac', { artist: 'Adam', albumArtist: 'Various', album: 'Mix', genre: 'Rock' }),
+        withValues('/m/c/2.flac', { artist: 'Adam', album: 'Solo', genre: '' }),
+        withValues('/m/d/1.flac', { artist: '', album: '' }),
+      ])
+    );
+
+    it('groups the tracks that differ in case, accents and the space around the name, and counts the albums and the tracks', async () => {
+      const page = await getGroupPage(database, 'artist', 0, 10, everything);
+
+      expect(page.total).toBe(3);
+      expect(page.items).toEqual([
+        { key: 'adam', name: 'Adam', albumCount: 3, trackCount: 3, cover: null },
+        { key: 'bjork', name: 'Björk', albumCount: 1, trackCount: 2, cover: 'one.jpg' },
+        { key: '', name: '', albumCount: 1, trackCount: 1, cover: null },
+      ]);
+    });
+
+    it('shows the photo of an artist or album artist instead of the cover of an album, and no cover for a genre', async () => {
+      await executeQuery(database, {
+        query: `INSERT INTO artist_photos (key, picture, checkedAt) VALUES ('adam', 'artist-adam.jpg', 1), ('pop', 'artist-pop.jpg', 1), ('various', NULL, 1)`,
+        variables: [],
+      });
+
+      const covers = async (kind: 'artist' | 'albumArtist' | 'genre') =>
+        (await getGroupPage(database, kind, 0, 10, everything)).items.map((item) => item.cover);
+
+      expect(await covers('artist')).toEqual(['artist-adam.jpg', 'one.jpg', null]);
+      // Various has a lookup without a photo and Björk none, no album of Various has a cover
+      expect(await covers('albumArtist')).toEqual(['one.jpg', null, null]);
+      expect(await covers('genre')).toEqual([null, null, null]);
+    });
+
+    it('lists the album artists and the genres, the tracks without one last', async () => {
+      expect(await names('albumArtist')).toEqual(['Björk', 'Various', '']);
+      expect(await names('genre')).toEqual(['Pop', 'Rock', '']);
+    });
+
+    it('sorts by the name, the albums and the tracks, in both directions, the nameless last and equal ones by name', async () => {
+      expect(await names('artist', sortedBy('name', 'desc'))).toEqual(['Björk', 'Adam', '']);
+      expect(await names('artist', sortedBy('trackCount', 'desc'))).toEqual(['Adam', 'Björk', '']);
+      expect(await names('artist', sortedBy('trackCount'))).toEqual(['', 'Björk', 'Adam']);
+      expect(await names('artist', sortedBy('albumCount', 'desc'))).toEqual(['Adam', 'Björk', '']);
+      // Rock and the tracks without a genre have two albums each
+      expect(await names('genre', sortedBy('albumCount'))).toEqual(['Pop', 'Rock', '']);
+    });
+
+    it('filters by the text in the name without case and accents, with % and _ matching themselves', async () => {
+      expect(await names('artist', { ...everything, filter: 'BJÖ' })).toEqual(['Björk']);
+      expect(await names('artist', { ...everything, filter: '%' })).toEqual([]);
+      expect(await names('artist', { ...everything, filter: '_' })).toEqual([]);
+      expect((await getGroupPage(database, 'artist', 0, 10, { ...everything, filter: 'a' })).total).toBe(1);
+    });
+
+    it('counts and pages the groups, limited to the folders', async () => {
+      const page = await getGroupPage(database, 'artist', 1, 1, { ...everything, folders: ['/m/c', '/m/d'] });
+
+      expect(page.total).toBe(2);
+      expect(page.items.map((item) => [item.name, item.trackCount])).toEqual([['', 1]]);
+    });
+
+    it('lists the albums of a group, the albums of the nameless one with its key empty', async () => {
+      const titles = async (kind: 'artist' | 'albumArtist' | 'genre', key: string) =>
+        (await getAlbumPage(database, 0, 10, { sort: undefined, folders: [], group: { kind, key } })).items.map((item) => [
+          item.path,
+          item.title,
+          item.trackCount,
+        ]);
+
+      expect(await titles('artist', 'bjork')).toEqual([['/m/a', 'One', 2]]);
+      expect(await titles('albumArtist', 'various')).toEqual([
+        ['/m/b', 'Mix', 1],
+        ['/m/c', 'Mix', 1],
+      ]);
+      expect(await titles('genre', '')).toEqual([
+        ['/m/c', 'Solo', 1],
+        ['/m/d', '', 1],
+      ]);
+      expect((await getAlbumPage(database, 0, 1, { sort: undefined, folders: ['/m/b'], group: { kind: 'artist', key: 'adam' } })).total).toBe(1);
     });
   });
 });

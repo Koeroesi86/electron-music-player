@@ -20,6 +20,8 @@ export interface Track extends Partial<AudioFormat> {
   genre: string;
   picture: string | null;
   duration: number | null;
+  /** The artist the album is listed under, a row from before it was read has none */
+  albumArtist?: string | null;
 }
 
 export interface Album {
@@ -36,6 +38,17 @@ export interface Album {
 /** An album as listed in a window of the library, its tracks are fetched when the album is opened or played */
 export interface AlbumSummary extends Omit<Album, 'tracks'> {
   trackCount: number;
+}
+
+/** An artist, an album artist or a genre as listed in a window of the library: the tracks that have the same name (without case, accents and the space around it) */
+export interface GroupSummary {
+  /** The name as the library compares it, empty for the tracks that have none */
+  key: string;
+  /** The name as it is written on a track, empty for the tracks that have none */
+  name: string;
+  albumCount: number;
+  trackCount: number;
+  cover: string | null;
 }
 
 /** One page of a list, together with the length of the whole list */

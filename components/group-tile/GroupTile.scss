@@ -1,0 +1,55 @@
+.groupTile {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 100px;
+  margin-right: 12px;
+  margin-bottom: 16px;
+  padding: 0;
+  font: inherit;
+  color: var(--art-text);
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  vertical-align: top;
+
+  .cover {
+    display: block;
+    width: 100px;
+    height: 100px;
+    background: var(--art-placeholder) url(../../assets/album-placeholder.svg) no-repeat center center;
+    background-size: cover;
+    border-radius: 3px;
+    box-shadow: 0 0 3px var(--art-shadow), inset 0 0 0 2px var(--art-edge);
+    transition: box-shadow .2s ease-in-out;
+  }
+
+  &:hover .cover {
+    box-shadow: 0 0 5px var(--art-glow);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+
+  .name,
+  .counts {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 0 3px var(--art-text-shadow);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .name {
+    margin-top: 3px;
+    line-height: 16px;
+    font-size: 12px;
+  }
+
+  .counts {
+    font-size: 10px;
+  }
+}
