@@ -18,10 +18,12 @@ export interface Sort<F extends string> {
 export type TrackSort = Sort<TrackSortField>;
 export type AlbumSort = Sort<AlbumSortField>;
 
-/** What a window of the library is asked for: a sort (undefined is the default order) and the library folders to limit it to (none is all of them) */
+/** What a window of the library is asked for: a sort (undefined is the default order), the library folders to limit it to (none is all of them) and the text to find (none is everything) */
 export interface LibraryQuery<S> {
   sort: S | undefined;
   folders: string[];
+  /** Matched in the artist, the album and the title, without case and accents */
+  search?: string;
 }
 
 const findOf = <T extends string>(allowed: readonly T[], value: unknown) => allowed.find((item) => item === value);
@@ -64,3 +66,6 @@ export const cycleSort = <F extends string>(current: Sort<F> | undefined, field:
 
 /** The selected folders that the library still has, a folder that was removed from it is dropped */
 export const knownFolders = (selected: string[], known: string[]) => selected.filter((folder) => known.includes(folder));
+
+/** The text of a search, undefined when there is nothing to look for */
+export const parseSearch = (value: unknown) => (typeof value === 'string' && value.trim() ? value.trim() : undefined);

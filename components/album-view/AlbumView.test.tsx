@@ -18,14 +18,38 @@ const album = (index: number): AlbumSummary => ({
   trackCount: 1,
 });
 
+const baseProps = {
+  sort: undefined,
+  selected: [],
+  folders: [],
+  search: undefined,
+  playTracks: vi.fn(),
+  selectAlbum: vi.fn(),
+  loadPage: vi.fn(),
+};
+
 describe('AlbumView', () => {
   afterEach(cleanup);
+
+  const empty = storePage(createPageCache<AlbumSummary>(), 0, [], 0);
+  const nothing = /Nothing in the library/;
 
   it('tells how many albums the whole list has', () => {
     const albums = storePage(createPageCache<AlbumSummary>(), 0, [album(1), album(2)], 420);
 
-    render(<AlbumView albums={albums} sort={undefined} selected={[]} folders={[]} playTracks={vi.fn()} selectAlbum={vi.fn()} loadPage={vi.fn()} />);
+    render(<AlbumView {...baseProps} albums={albums} />);
 
     expect(screen.getByText('420 albums')).toBeTruthy();
+  });
+
+  it('says that nothing matches the search', () => {
+    render(<AlbumView {...baseProps} albums={empty} search="halo" />);
+
+    expect(screen.getByText('Nothing in the library matches “halo”')).toBeTruthy();
+  });
+
+  it('says nothing while the first page is on its way, or with no search', () => {
+    expect(render(<AlbumView {...baseProps} albums={createPageCache<AlbumSummary>()} search="halo" />).queryByText(nothing)).toBeNull();
+    expect(render(<AlbumView {...baseProps} albums={empty} />).queryByText(nothing)).toBeNull();
   });
 });

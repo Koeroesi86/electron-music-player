@@ -244,6 +244,14 @@ describe('uiState reducer', () => {
       expect(run({ type: 'SET_ALBUM_SORT', payload: { sort: { field: 'title', direction: 'asc' } } }).albumSort).toEqual({ field: 'title', direction: 'asc' });
     });
 
+    it('starts without a search, sets it, and clears it with the view', () => {
+      const searching = run({ type: 'SET_LIBRARY_SEARCH', payload: { search: 'halo' } });
+
+      expect(initial.librarySearch).toBe('');
+      expect(searching.librarySearch).toBe('halo');
+      expect(run({ type: 'SET_VIEW', payload: { view: 'tracks' } }, searching).librarySearch).toBe('');
+    });
+
     it('sets the folders once each', () => {
       expect(run({ type: 'SET_LIBRARY_FOLDERS', payload: { folders: ['/a', '/b', '/a'] } }).libraryFolders).toEqual(['/a', '/b']);
     });

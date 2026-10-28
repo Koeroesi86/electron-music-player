@@ -3,6 +3,7 @@ import type { Dispatch } from 'redux';
 import type { Album, Track } from '../../types/library';
 import type { RootState } from '../../client/redux/reducers';
 import type { AppAction } from '../../client/redux/types';
+import { selectSearch } from '../../client/library-query';
 import AlbumView from './AlbumView';
 
 const mapState = (state: RootState) => ({
@@ -10,6 +11,7 @@ const mapState = (state: RootState) => ({
   sort: state.uiState.albumSort,
   selected: state.uiState.libraryFolders,
   folders: state.folders,
+  search: selectSearch(state),
 });
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({

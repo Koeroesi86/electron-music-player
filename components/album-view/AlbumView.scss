@@ -52,6 +52,17 @@
     border-top: 1px solid var(--overlay);
   }
 
+  .empty {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 100%;
+    padding: 24px 12px;
+    box-sizing: border-box;
+    text-align: center;
+    color: var(--text-soft);
+  }
+
   .listing {
     position: absolute;
     top: 40px;

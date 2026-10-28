@@ -28,6 +28,7 @@ const baseProps = {
   sort: undefined,
   selected: [],
   folders: [],
+  search: undefined,
   playTracks: vi.fn(),
   loadPage: vi.fn(),
   setSort: vi.fn(),
@@ -156,6 +157,35 @@ describe('TrackView', () => {
         />
       );
       expect(listing.scrollTop).toBe(0);
+    });
+
+    it('starts from the top when the search changes', () => {
+      const { container, rerender } = render(<TrackView {...baseProps} tracks={firstPage} />);
+      const listing = container.querySelector<HTMLElement>('.listing');
+      if (!listing) throw new Error('no listing');
+
+      listing.scrollTop = 300;
+      rerender(<TrackView {...baseProps} tracks={firstPage} search="halo" />);
+
+      expect(listing.scrollTop).toBe(0);
+    });
+  });
+
+  describe('searching', () => {
+    const empty = storePage(createPageCache<Track>(), 0, [], 0);
+
+    it('says that nothing matches the search', () => {
+      const { getByText } = render(<TrackView {...baseProps} tracks={empty} search="halo" />);
+
+      expect(getByText('Nothing in the library matches “halo”')).toBeTruthy();
+    });
+
+    it('says nothing while the first page is on its way, with no search, or when something matches', () => {
+      const pending = createPageCache<Track>();
+
+      expect(render(<TrackView {...baseProps} tracks={pending} search="halo" />).queryByText(/Nothing in the library/)).toBeNull();
+      expect(render(<TrackView {...baseProps} tracks={empty} />).queryByText(/Nothing in the library/)).toBeNull();
+      expect(render(<TrackView {...baseProps} tracks={firstPage} search="halo" />).queryByText(/Nothing in the library/)).toBeNull();
     });
   });
 });

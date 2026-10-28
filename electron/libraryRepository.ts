@@ -4,6 +4,7 @@ import type { AlbumSummary, AudioFormat, Folder, LibraryPage, Track } from '../t
 import type { AlbumSort, AlbumSortField, LibraryQuery, SortDirection, TrackSort, TrackSortField } from '../types/library-query';
 import executeQuery from './executeQuery';
 import executeQueries from './executeQueries';
+import { toSortKey } from './sortKey';
 
 // ! is the escape character of the LIKE below, so % and _ in a folder name match themselves
 const escapeLike = (value: string) => value.replace(/[!%_]/g, '!$&');
@@ -103,33 +104,52 @@ const toOrderBy = <F extends string>(orders: Record<F, FieldOrder>, sort: { fiel
   return order && direction ? `${order.empty} ASC, ${order.value} ${direction}, ${tieBreaker} ASC` : `${tieBreaker} ASC`;
 };
 
-/** The library folders as the bound conditions on a path; no folder is no condition, the tracks of every folder */
-const toFolderFilter = (folders: string[]) => {
+/** The library folders as a bound condition on a path; no folder is no condition, the tracks of every folder */
+const toFolderCondition = (folders: string[]) => {
   const prefixes = folders.flatMap((folder) => ['/', '\\'].map((separator) => `${escapeLike(folder.replace(/[\\/]+$/, '') + separator)}%`));
 
   return {
-    where: prefixes.length ? `WHERE ${prefixes.map(() => `path LIKE ? ESCAPE '!'`).join(' OR ')}` : '',
+    condition: prefixes.length ? `(${prefixes.map(() => `path LIKE ? ESCAPE '!'`).join(' OR ')})` : '',
     variables: prefixes,
   };
 };
 
+/** A search as a bound condition on the sort keys of the artist, the album and the title, which hold the text without case and accents */
+const toSearchCondition = (search: string | undefined) => {
+  const key = toSortKey(search);
+  const pattern = `%${escapeLike(key)}%`;
+  const condition = `(title_key LIKE ? ESCAPE '!' OR artist_key LIKE ? ESCAPE '!' OR album_key LIKE ? ESCAPE '!')`;
+
+  return { condition: key ? condition : '', variables: key ? [pattern, pattern, pattern] : [] };
+};
+
+/** The WHERE for the tracks that are in the folders and match the search */
+const toTrackFilter = ({ folders, search }: Pick<LibraryQuery<unknown>, 'folders' | 'search'>) => {
+  const conditions = [toFolderCondition(folders), toSearchCondition(search)].filter(({ condition }) => condition);
+
+  return {
+    where: conditions.length ? `WHERE ${conditions.map(({ condition }) => condition).join(' AND ')}` : '',
+    variables: conditions.flatMap(({ variables }) => variables),
+  };
+};
+
 /** The tracks in the order of the sort, in the default order (by path) when there is none, limited to the tracks below the folders when there are any */
-export const getLibrary = (database: Database, { sort, folders }: LibraryQuery<TrackSort> = { sort: undefined, folders: [] }) => {
-  const filter = toFolderFilter(folders);
+export const getLibrary = (database: Database, query: LibraryQuery<TrackSort> = { sort: undefined, folders: [] }) => {
+  const filter = toTrackFilter(query);
 
   return executeQuery<Track>(database, {
-    query: `SELECT * FROM library ${filter.where} ORDER BY ${toOrderBy(trackOrders, sort, 'path')}`,
+    query: `SELECT * FROM library ${filter.where} ORDER BY ${toOrderBy(trackOrders, query.sort, 'path')}`,
     variables: filter.variables,
   });
 };
 
 /** A page of the tracks in the order of getLibrary, with the number of tracks it has */
-export const getTrackPage = (database: Database, offset: number, limit: number, { sort, folders }: LibraryQuery<TrackSort>): Promise<LibraryPage<Track>> => {
-  const filter = toFolderFilter(folders);
+export const getTrackPage = (database: Database, offset: number, limit: number, query: LibraryQuery<TrackSort>): Promise<LibraryPage<Track>> => {
+  const filter = toTrackFilter(query);
 
   return Promise.all([
     executeQuery<Track>(database, {
-      query: `SELECT * FROM library ${filter.where} ORDER BY ${toOrderBy(trackOrders, sort, 'path')} LIMIT ? OFFSET ?`,
+      query: `SELECT * FROM library ${filter.where} ORDER BY ${toOrderBy(trackOrders, query.sort, 'path')} LIMIT ? OFFSET ?`,
       variables: [...filter.variables, limit, offset],
     }),
     countTotal(database, `SELECT COUNT(*) AS total FROM library ${filter.where}`, filter.variables),
@@ -139,28 +159,33 @@ export const getTrackPage = (database: Database, offset: number, limit: number, 
 /**
  * A page of the albums, a folder and an album title make one album. The default order is the first track of the album;
  * a sort by the artist or the year takes the value of that first track, and the albums that are equal keep the default order.
- * Limited to the albums of the tracks below the folders when there are any, with the number of albums
+ * Limited to the albums of the tracks below the folders when there are any, and to the albums that have a track matching the search
+ * (the album keeps all its tracks in its count and its duration), with the number of albums
  */
 export const getAlbumPage = (
   database: Database,
   offset: number,
   limit: number,
-  { sort, folders }: LibraryQuery<AlbumSort>
+  { sort, folders, search }: LibraryQuery<AlbumSort>
 ): Promise<LibraryPage<AlbumSummary>> => {
-  const filter = toFolderFilter(folders);
+  const folder = toFolderCondition(folders);
+  const match = toSearchCondition(search);
+  const where = folder.condition ? `WHERE ${folder.condition}` : '';
+  const having = match.condition ? `HAVING MAX(${match.condition}) = 1` : '';
+  const variables = [...folder.variables, ...match.variables];
 
   return Promise.all([
     executeQuery<Omit<AlbumSummary, 'id' | 'path'> & { firstPath: string }>(database, {
       // the bare columns come from the row of MIN(path), the first track of the album
       query: `SELECT COALESCE(album, '') AS title, artist, picture AS cover, year, SUM(duration) AS duration, COUNT(*) AS trackCount, MIN(path) AS firstPath
-        FROM (SELECT *, ${folderOf} AS folder FROM library ${filter.where}) GROUP BY folder, COALESCE(album, '')
+        FROM (SELECT *, ${folderOf} AS folder FROM library ${where}) GROUP BY folder, COALESCE(album, '') ${having}
         ORDER BY ${toOrderBy(albumOrders, sort, 'MIN(path)')} LIMIT ? OFFSET ?`,
-      variables: [...filter.variables, limit, offset],
+      variables: [...variables, limit, offset],
     }),
     countTotal(
       database,
-      `SELECT COUNT(*) AS total FROM (SELECT 1 FROM (SELECT album, ${folderOf} AS folder FROM library ${filter.where}) GROUP BY folder, COALESCE(album, ''))`,
-      filter.variables
+      `SELECT COUNT(*) AS total FROM (SELECT 1 FROM (SELECT album, title_key, artist_key, album_key, ${folderOf} AS folder FROM library ${where}) GROUP BY folder, COALESCE(album, '') ${having})`,
+      variables
     ),
   ]).then(([albums, total]) => ({
     items: albums.map(({ firstPath, ...album }) => ({ ...album, path: path.dirname(firstPath), id: `${path.dirname(firstPath)} - ${album.title}` })),

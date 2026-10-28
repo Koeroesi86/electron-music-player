@@ -271,6 +271,24 @@ describe('emusic protocol', () => {
       expect(await (await get(`/library?sort=year&dir=asc&${elsewhere}`)).json()).toEqual([]);
     });
 
+    it('searches the library for the text of the request', async () => {
+      const file = path.join(folder, 'searched.flac');
+      await new Promise<void>((resolve, reject) =>
+        database.run('INSERT INTO library (path, title_key) VALUES (?, ?)', [file, 'needle'], (err) => (err ? reject(err) : resolve()))
+      );
+
+      const { items, total } = await (await get('/library/tracks?search=NEEDLE')).json();
+      const albums = await (await get('/library/albums?search=needle')).json();
+      const library = await (await get('/library?search=needle')).json();
+      const nothing = await (await get('/library/tracks?search=haystack')).json();
+      await new Promise<void>((resolve) => database.run('DELETE FROM library WHERE path = ?', [file], () => resolve()));
+
+      expect([total, items[0].path]).toEqual([1, file]);
+      expect(albums.total).toBe(1);
+      expect(library).toHaveLength(1);
+      expect(nothing.total).toBe(0);
+    });
+
     it.each([
       '/library/tracks?sort=nope&dir=asc',
       '/library/tracks?sort=title&dir=up',

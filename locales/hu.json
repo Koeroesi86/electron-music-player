@@ -17,6 +17,8 @@
   "library.songs": "Dalok",
   "library.folders": "Mappák",
   "library.rescan": "Újraolvasás",
+  "library.search": "Keresés a könyvtárban",
+  "library.noResults": "A könyvtárban nincs találat erre: „{search}”",
   "online.radio": "Rádió",
   "folders.title": "Mappák",
   "folders.remove": "Eltávolítás",

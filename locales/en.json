@@ -17,6 +17,8 @@
   "library.songs": "Songs",
   "library.folders": "Folders",
   "library.rescan": "Rescan",
+  "library.search": "Search the library",
+  "library.noResults": "Nothing in the library matches “{search}”",
   "online.radio": "Radio",
   "folders.title": "Folders",
   "folders.remove": "Remove",

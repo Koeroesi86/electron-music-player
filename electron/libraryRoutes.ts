@@ -1,6 +1,6 @@
 import type { Database } from 'sqlite3';
 import { getAlbumPage, getAlbumTracks, getLibrary, getTrackPage } from './libraryRepository';
-import { parseAlbumSort, parseFolders, parseTrackSort } from '../types/library-query';
+import { parseAlbumSort, parseFolders, parseSearch, parseTrackSort } from '../types/library-query';
 import type { LibraryQuery } from '../types/library-query';
 
 const maxPageSize = 500;
@@ -12,12 +12,12 @@ const toWindow = (params: URLSearchParams) => ({
   limit: Math.min(Math.max(toInteger(params.get('limit'), 100), 1), maxPageSize),
 });
 
-/** The sort and the folders of a request; a sort that is not a known field with a known direction is no query at all */
+/** The sort, the folders and the search of a request; a sort that is not a known field with a known direction is no query at all */
 const toLibraryQuery = <S>(params: URLSearchParams, parse: (field: unknown, direction: unknown) => S | undefined): LibraryQuery<S> | undefined => {
   const sort = params.get('sort');
   const parsed = sort === null ? undefined : parse(sort, params.get('dir') ?? undefined);
 
-  return sort !== null && !parsed ? undefined : { sort: parsed, folders: parseFolders(params.getAll('folder')) };
+  return sort !== null && !parsed ? undefined : { sort: parsed, folders: parseFolders(params.getAll('folder')), search: parseSearch(params.get('search')) };
 };
 
 type Query = (database: Database, params: URLSearchParams) => Promise<unknown> | undefined;

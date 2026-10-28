@@ -87,4 +87,13 @@ describe('the query of a list', () => {
     expect(selectTrackQuery(state())).toEqual({ sort: { field: 'year', direction: 'asc' }, folders: ['/b'] });
     expect(selectAlbumQuery(state())).toEqual({ sort: undefined, folders: ['/b'] });
   });
+
+  it('has the search without the space around it, and none for an empty one', () => {
+    const searching = (librarySearch: string) => ({ ...state(), uiState: { ...state().uiState, librarySearch } });
+
+    expect(selectTrackQuery(searching('  halo '))).toMatchObject({ search: 'halo' });
+    expect(selectAlbumQuery(searching('  halo '))).toMatchObject({ search: 'halo' });
+    expect(selectTrackQuery(searching('   ')).search).toBeUndefined();
+    expect(selectTrackQuery(state()).search).toBeUndefined();
+  });
 });

@@ -59,6 +59,28 @@ describe('library api', () => {
     ]);
   });
 
+  it('asks for the search, with its characters escaped, and for none when there is none', async () => {
+    respond({ items: [], total: 0 });
+
+    await fetchTrackPage(0, { sort: undefined, folders: [], search: 'a&b é' });
+    await fetchAlbumPage(0, { sort: undefined, folders: ['/m'], search: 'halo' });
+    await fetchAlbumPage(0, { sort: undefined, folders: [], search: undefined });
+
+    expect(vi.mocked(fetch).mock.calls.map(([url]) => url)).toEqual([
+      'emusic://app/library/tracks?offset=0&limit=100&search=a%26b%20%C3%A9',
+      'emusic://app/library/albums?offset=0&limit=100&folder=%2Fm&search=halo',
+      'emusic://app/library/albums?offset=0&limit=100',
+    ]);
+  });
+
+  it('fetches the library of the search', async () => {
+    respond([]);
+
+    await fetchLibrary({ sort: undefined, folders: [], search: 'halo' });
+
+    expect(fetch).toHaveBeenCalledWith('emusic://app/library?search=halo');
+  });
+
   it('fetches the library in the order and the folders of the query', async () => {
     respond([]);
 

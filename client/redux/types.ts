@@ -45,6 +45,8 @@ export interface PersistedSettings {
 }
 
 export interface UiState extends PersistedSettings {
+  /** The text the albums and the tracks are searched for, it is not saved and starts empty with every view */
+  librarySearch: string;
   /** The app opens on the home screen, the tab is not saved */
   tab: Tab;
   /** The playlist the playlist tab shows */
@@ -126,6 +128,7 @@ export type AppAction =
   | PayloadAction<'SET_TRACK_SORT', { sort: TrackSort | undefined }>
   | PayloadAction<'SET_ALBUM_SORT', { sort: AlbumSort | undefined }>
   | PayloadAction<'SET_LIBRARY_FOLDERS', { folders: string[] }>
+  | PayloadAction<'SET_LIBRARY_SEARCH', { search: string }>
   | PayloadAction<'STORE_ALBUM_PAGE', { page: number; items: AlbumSummary[]; total: number }>
   | PayloadAction<'FILES_ADDED', { fileList: FileList }>
   | PayloadAction<'REMOVE_FOLDER', { path: string }>

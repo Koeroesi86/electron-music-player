@@ -242,6 +242,57 @@ describe('libraryRepository', () => {
       expect((await getAlbumPage(database, 0, 3, albumSort('title', 'desc'))).items.map(({ path: folder }) => folder)).toEqual(['/m/a', '/m/b', '/m/c']);
     });
 
+    describe('search', () => {
+      const searched = (search: string | undefined) => ({ sort: undefined, folders: [], search });
+
+      beforeEach(() =>
+        save([
+          withValues('/m/a/1.flac', { title: 'Halo', artist: 'Beyoncé', album: 'I Am' }),
+          withValues('/m/a/2.flac', { title: 'Sandcastles', artist: 'Beyoncé', album: 'Lemonade' }),
+          withValues('/m/b/1.flac', { title: 'Hello', artist: 'Adele', album: '25' }),
+          withValues('/m/b/2.flac', { title: '100% _pure', artist: 'Adele', album: '25' }),
+        ])
+      );
+
+      it('finds the tracks by the artist, the album and the title, without case and accents', async () => {
+        const paths = async (search: string) => (await getTrackPage(database, 0, 10, searched(search))).items.map((item) => item.path);
+
+        expect(await paths('BEYONCE')).toEqual(['/m/a/1.flac', '/m/a/2.flac']);
+        expect(await paths('lemon')).toEqual(['/m/a/2.flac']);
+        expect(await paths('  hel ')).toEqual(['/m/b/1.flac']);
+      });
+
+      it('takes % and _ as they are, and no text as no search', async () => {
+        const total = async (search: string | undefined) => (await getTrackPage(database, 0, 10, searched(search))).total;
+
+        expect(await total('100% _')).toBe(1);
+        expect(await total('%')).toBe(1);
+        expect(await total('_')).toBe(1);
+        expect(await total('   ')).toBe(4);
+        expect(await total(undefined)).toBe(4);
+        expect(await total('nothing like it')).toBe(0);
+      });
+
+      it('limits the whole library the same way as the pages, and works together with the folders and the sort', async () => {
+        expect((await getLibrary(database, { sort: { field: 'title', direction: 'desc' }, folders: [], search: 'adele' })).map((item) => item.path)).toEqual([
+          '/m/b/1.flac',
+          '/m/b/2.flac',
+        ]);
+        expect((await getTrackPage(database, 0, 10, { sort: undefined, folders: ['/m/a'], search: 'a' })).total).toBe(2);
+        expect((await getTrackPage(database, 0, 10, { sort: undefined, folders: ['/m/b'], search: 'beyonce' })).total).toBe(0);
+      });
+
+      it('finds the albums with a matching track, and counts all the tracks of the album', async () => {
+        const page = await getAlbumPage(database, 0, 10, searched('pure'));
+
+        expect(page.total).toBe(1);
+        expect(page.items.map(({ title, trackCount }) => [title, trackCount])).toEqual([['25', 2]]);
+        expect((await getAlbumPage(database, 0, 10, searched('beyonce'))).items.map(({ title }) => title)).toEqual(['I Am', 'Lemonade']);
+        expect((await getAlbumPage(database, 0, 10, { sort: undefined, folders: ['/m/a'], search: 'adele' })).total).toBe(0);
+        expect((await getAlbumPage(database, 0, 10, searched(undefined))).total).toBe(3);
+      });
+    });
+
     describe('folders', () => {
       const music = path.resolve('music');
       const folderA = path.join(music, 'a');

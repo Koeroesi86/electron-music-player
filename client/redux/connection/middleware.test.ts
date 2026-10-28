@@ -245,6 +245,29 @@ describe('connection middleware', () => {
       await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/tracks?offset=0&limit=100&sort=title&dir=desc'));
     });
 
+    it('drops the pages of both lists when the search changes, and fetches the first page of the search', async () => {
+      const { store, fetchMock } = await setup(emptyPage);
+      store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 500 } });
+      store.dispatch({ type: 'STORE_ALBUM_PAGE', payload: { page: 0, items: [], total: 5 } });
+
+      store.dispatch({ type: 'SET_LIBRARY_SEARCH', payload: { search: ' halo ' } });
+
+      expect(store.getState().library.tracks.total).toBeUndefined();
+      expect(store.getState().library.albums.total).toBeUndefined();
+      store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'albums', page: 0 } });
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/albums?offset=0&limit=100&search=halo'));
+    });
+
+    it('keeps the pages when the search only gains space around it', async () => {
+      const { store } = await setup(emptyPage);
+      store.dispatch({ type: 'SET_LIBRARY_SEARCH', payload: { search: 'halo' } });
+      store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 500 } });
+
+      store.dispatch({ type: 'SET_LIBRARY_SEARCH', payload: { search: 'halo ' } });
+
+      expect(store.getState().library.tracks.total).toBe(500);
+    });
+
     it('drops the albums when their sort changes, and not the tracks', async () => {
       const { store } = await setup(emptyPage);
       store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 500 } });
