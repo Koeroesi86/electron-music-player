@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/install-dependencies
       - run: npm run lint
       - run: npm run fallow
       - run: npm run typecheck
