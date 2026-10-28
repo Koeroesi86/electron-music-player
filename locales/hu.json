@@ -131,7 +131,6 @@
   "radio.loading": "Állomások betöltése…",
   "radio.empty": "Nincs találat",
   "radio.error": "Az állomáskatalógus nem érhető el: {error}",
-  "radio.bitrate": "{bitrate} kbps",
   "radio.bitrateUnknown": "Ismeretlen bitráta",
   "radio.genre": "Műfaj",
   "radio.filters": "Szűrők",

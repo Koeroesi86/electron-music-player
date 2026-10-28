@@ -131,7 +131,6 @@
   "radio.loading": "Loading stations…",
   "radio.empty": "No stations found",
   "radio.error": "The station directory is not available: {error}",
-  "radio.bitrate": "{bitrate} kbps",
   "radio.bitrateUnknown": "Unknown bitrate",
   "radio.genre": "Genre",
   "radio.filters": "Filters",
