@@ -173,5 +173,10 @@
     .trackTitle {
       flex-grow: 1;
     }
+
+    // the badge and the duration after it
+    .trackTitle + span {
+      margin-right: 12px;
+    }
   }
 }

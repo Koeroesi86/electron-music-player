@@ -1,5 +1,6 @@
 import { parseFile } from 'music-metadata';
 import type { IAudioMetadata, IPicture } from 'music-metadata';
+import readAudioFormat from './readAudioFormat';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
@@ -49,6 +50,7 @@ const transformMeta = ({ common: metadata, format }: IAudioMetadata, fileName: s
   genre: (metadata.genre && metadata.genre[0]) || '',
   picture: metadata.picture && metadata.picture[0] ? parsePicture(metadata.picture[0], metadata.album || '', appDataPath) : null,
   duration: format.duration ?? null,
+  ...readAudioFormat(format),
 });
 
 const isEqual = (a: Track, b: Track) => (Object.keys(a) as (keyof Track)[]).every((key) => `${a[key]}` === `${b[key]}`);

@@ -36,6 +36,18 @@ describe('FavouritesView', () => {
     return { playTracks, playStation };
   };
 
+  it('shows the format of a track and of a station, and none of an album', () => {
+    renderView([
+      stored(trackFavourite({ ...track, codec: 'FLAC', lossless: 1, bitDepth: 16, sampleRate: 44100 })),
+      stored(stationFavourite(station)),
+      stored(albumFavourite(album)),
+    ]);
+
+    expect(screen.getByText('FLAC 16/44.1')).toBeTruthy();
+    expect(screen.getByText('MP3 128')).toBeTruthy();
+    expect(document.querySelectorAll('.badge')).toHaveLength(2);
+  });
+
   it('tells that nothing is marked yet', () => {
     renderView([]);
 

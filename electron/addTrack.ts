@@ -5,8 +5,8 @@ import { toSortKeys } from './sortKey';
 
 function addTrack(database: Database, track: Track) {
   return executeQuery(database, {
-    query: `INSERT OR REPLACE INTO library (path, artist, album, title, year, track, disk, genre, picture, duration, title_key, artist_key, album_key)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    query: `INSERT OR REPLACE INTO library (path, artist, album, title, year, track, disk, genre, picture, duration, title_key, artist_key, album_key, codec, bitDepth, sampleRate, bitrate, vbr, lossless)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     variables: [
       track.path,
       track.artist,
@@ -19,6 +19,12 @@ function addTrack(database: Database, track: Track) {
       track.picture,
       track.duration,
       ...toSortKeys(track),
+      track.codec ?? null,
+      track.bitDepth ?? null,
+      track.sampleRate ?? null,
+      track.bitrate ?? null,
+      track.vbr ?? null,
+      track.lossless ?? null,
     ],
   });
 }

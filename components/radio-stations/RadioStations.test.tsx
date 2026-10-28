@@ -54,8 +54,15 @@ describe('RadioStations', () => {
     renderPanel();
 
     expect(screen.getByText('Jazz FM')).toBeTruthy();
-    expect(screen.getByText('Hungary · MP3 · 128 kbps')).toBeTruthy();
-    expect(screen.getByText('AAC · Unknown bitrate')).toBeTruthy();
+    expect(screen.getByText('Hungary')).toBeTruthy();
+    expect(screen.getByText('Unknown bitrate')).toBeTruthy();
+  });
+
+  it('shows the format of a station that has one', () => {
+    renderPanel();
+
+    expect(screen.getByText('MP3 128')).toBeTruthy();
+    expect(screen.getByText('AAC')).toBeTruthy();
   });
 
   it('plays a station on double click', () => {

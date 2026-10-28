@@ -1,7 +1,7 @@
 import type { Database } from 'sqlite3';
 import type { FavouriteKey } from '../types/favourites';
 import type { RadioBrowser } from './radioBrowser';
-import { findTrackPath, getAlbumTracks } from './libraryRepository';
+import { findTrackFormat, findTrackPath, getAlbumTracks } from './libraryRepository';
 
 /** What tells whether an item is available: where it comes from and what it looked like */
 type Keyed = FavouriteKey & { snapshot: unknown };
@@ -45,6 +45,10 @@ const missingFinders: Record<string, MissingFinder> = {
 
 const typeOf = ({ source, kind }: Keyed) => `${source}/${kind}`;
 
+/** The snapshot of a track with the format the library reads of it now, as the snapshot was saved before the format was read; any other snapshot is as it was */
+const withFormat = async ({ source, kind, id, snapshot }: Keyed, { database }: AvailabilityContext) =>
+  source === 'local' && kind === 'track' && isRecord(snapshot) ? { ...snapshot, ...(await findTrackFormat(database, id)) } : snapshot;
+
 /** The favourites or the history items, each with whether its source still has it */
 export const withAvailability = async <T extends Keyed>(favourites: T[], context: AvailabilityContext) => {
   const missing = (
@@ -59,5 +63,11 @@ export const withAvailability = async <T extends Keyed>(favourites: T[], context
     )
   ).flat();
 
-  return favourites.map((favourite) => ({ ...favourite, available: !missing.includes(favourite) }));
+  return Promise.all(
+    favourites.map(async (favourite) => ({
+      ...favourite,
+      snapshot: await withFormat(favourite, context),
+      available: !missing.includes(favourite),
+    }))
+  );
 };

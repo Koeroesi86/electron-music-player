@@ -41,6 +41,27 @@ describe('withAvailability', () => {
     expect(await availabilityOf([favourite('local', 'track', track.path), favourite('local', 'track', '/music/moved.flac')])).toEqual([true, false]);
   });
 
+  it('shows the format the library reads of a local track in its snapshot, and leaves the other snapshots as they are', async () => {
+    const database = await createTestDatabase();
+    await addTrack(database, { ...track, codec: 'FLAC', lossless: 1 });
+    const album = { path: albumFolder, title: 'Album' };
+
+    const result = await withAvailability(
+      [
+        favourite('local', 'track', track.path, { title: 'One' }),
+        favourite('local', 'track', '/music/moved.flac', { title: 'Gone' }),
+        favourite('local', 'album', 'a', album),
+      ],
+      { database, radio: { findStations: async () => [] } }
+    );
+
+    expect(result.map(({ snapshot }) => snapshot)).toEqual([
+      { title: 'One', codec: 'FLAC', lossless: 1, bitDepth: null, sampleRate: null, bitrate: null, vbr: null },
+      { title: 'Gone' },
+      album,
+    ]);
+  });
+
   it('marks a local album available while the library has tracks of it', async () => {
     const album = { path: albumFolder, title: 'Album' };
 

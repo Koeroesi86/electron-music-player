@@ -57,6 +57,21 @@ describe('addTrack', () => {
     expect(stored).toEqual({ title_key: 'ekes', artist_key: 'ors', album_key: '' });
   });
 
+  it('stores the audio format of the track', async () => {
+    const format = { codec: 'FLAC', bitDepth: 24, sampleRate: 96000, bitrate: 2800000, vbr: null, lossless: 1 };
+    await addTrack(database, { ...track, ...format });
+
+    const [stored] = await selectLibrary(database);
+    expect(stored).toMatchObject(format);
+  });
+
+  it('leaves the audio format empty for a track without one', async () => {
+    await addTrack(database, track);
+
+    const [stored] = await selectLibrary(database);
+    expect(stored).toMatchObject({ codec: null, bitDepth: null, sampleRate: null, bitrate: null, vbr: null, lossless: null });
+  });
+
   it('replaces an existing track with the same path', async () => {
     await addTrack(database, track);
     await addTrack(database, { ...track, title: 'Renamed' });

@@ -9,6 +9,8 @@ import { getFavouriteTracks } from '../../client/favourite-tracks';
 import { isPlayingItem } from '../../client/history';
 import { useTranslation } from '../../client/i18n';
 import style from './HomeView.scss';
+import { toRadioTrack } from '../../client/radio-track';
+import AudioFormatBadge from '../audio-format-badge';
 import Confirm from '../confirm';
 import FavouriteButton from '../favourite-button';
 import Time from '../time';
@@ -53,6 +55,10 @@ const HomeView = ({ history, currentSong, playTracks, playStation, clearHistory 
             <span className={style.name} title={nameOf(item)}>
               {nameOf(item)}
             </span>
+            <AudioFormatBadge
+              track={item.kind === 'station' ? toRadioTrack(item.snapshot) : item.kind === 'track' ? item.snapshot : undefined}
+              className={style.format}
+            />
             {item.kind === 'track' && <span className={style.artist}>{item.snapshot.artist}</span>}
             <span className={style.album}>{!item.available ? t('home.unavailable') : item.kind === 'track' ? item.snapshot.album : t('home.station')}</span>
             <span className={style.duration}>{item.kind === 'track' && item.snapshot.duration ? <Time seconds={item.snapshot.duration} /> : null}</span>

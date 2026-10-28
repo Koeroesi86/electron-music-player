@@ -51,6 +51,13 @@ describe('HomeView', () => {
     expect(screen.getByText('00:01:05')).toBeTruthy();
   });
 
+  it('shows the format of a track and of a station', () => {
+    renderView([played(stationFavourite(station)), played(trackFavourite({ ...track, codec: 'FLAC', lossless: 1, bitDepth: 24, sampleRate: 96000 }))]);
+
+    expect(screen.getByText('MP3 128')).toBeTruthy();
+    expect(screen.getByText('FLAC 24/96')).toBeTruthy();
+  });
+
   it('highlights the row that plays, the station among them', () => {
     renderView([played(stationFavourite(station)), played(trackFavourite(track))], toRadioTrack(station));
 

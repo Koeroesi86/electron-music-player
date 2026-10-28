@@ -7,6 +7,7 @@ import { getPlaylistTracks } from '../../client/playlists';
 import { useDragReorder } from '../../client/hooks/use-drag-reorder';
 import { useTranslation } from '../../client/i18n';
 import style from './PlaylistView.scss';
+import AudioFormatBadge from '../audio-format-badge';
 import NameField from '../name-field';
 
 interface PlaylistViewProps {
@@ -99,6 +100,7 @@ const PlaylistView = ({ playlist, playTracks, rename, remove, removeEntry, moveE
             <span className={style.title} title={track.title}>
               {track.title}
             </span>
+            <AudioFormatBadge className={style.format} track={track} />
             <span className={style.details}>{available ? [track.artist, track.album].filter(Boolean).join(' · ') : t('playlists.unavailable')}</span>
             <button
               type="button"

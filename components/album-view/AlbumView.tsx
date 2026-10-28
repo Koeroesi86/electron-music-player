@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { AlbumSort as AlbumSortValue } from '../../types/library-query';
+import { useTranslation } from '../../client/i18n';
 import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
 import { usePageLoader } from '../../client/hooks/use-page-loader';
 import { useWindowedList } from '../../client/hooks/use-windowed-list';
@@ -28,6 +29,7 @@ interface AlbumViewProps {
 }
 
 const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, loadPage }: AlbumViewProps) => {
+  const { t } = useTranslation();
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
   const { listing, columns, firstIndex, lastIndex, offsetTop, height } = useWindowedList({ itemCount: albums.total ?? 0, rowHeight, itemWidth });
   usePageLoader(albums, firstIndex, lastIndex, loadPage);
@@ -82,6 +84,7 @@ const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, l
           ))}
         </div>
       </div>
+      <div className={style.footer}>{t('albums.count', { count: albums.total ?? 0 })}</div>
     </div>
   );
 };

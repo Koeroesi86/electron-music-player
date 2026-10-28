@@ -36,6 +36,12 @@ describe('PlaylistView', () => {
   };
   const rows = () => Array.from(document.querySelectorAll<HTMLElement>('.entry'));
 
+  it('shows the format of a track', () => {
+    renderView({ ...playlist, entries: [{ id: 1, track: { ...track('One'), codec: 'FLAC', lossless: 1, bitDepth: 24, sampleRate: 96000 }, available: true }] });
+
+    expect(screen.getByText('FLAC 24/96')).toBeTruthy();
+  });
+
   it('says so when the playlist is not there', () => {
     renderView(null);
 

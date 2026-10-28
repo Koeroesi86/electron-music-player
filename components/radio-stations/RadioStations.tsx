@@ -9,6 +9,8 @@ import { useDelayedValue } from '../../client/hooks/use-delayed-value';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { stationFavourite } from '../../client/favourites';
 import type { Translator } from '../../locales/translate';
+import { toRadioTrack } from '../../client/radio-track';
+import AudioFormatBadge from '../audio-format-badge';
 import FavouriteButton from '../favourite-button';
 import style from './RadioStations.scss';
 
@@ -23,9 +25,8 @@ interface RadioStationsProps {
 
 const searchDelay = 400;
 
-// a bitrate of 0 is one the directory does not know
-const describe = ({ country, codec, bitrate }: RadioStation, { t, formatNumber }: Translator) =>
-  [country, codec, bitrate ? t('radio.bitrate', { bitrate: formatNumber(bitrate) }) : t('radio.bitrateUnknown')].filter(Boolean).join(' · ');
+// the codec and the bitrate are in the badge; a bitrate of 0 is one the directory does not know
+const describe = ({ country, bitrate }: RadioStation, { t }: Translator) => [country, bitrate ? '' : t('radio.bitrateUnknown')].filter(Boolean).join(' · ');
 
 interface FilterSelectProps {
   label: string;
@@ -173,6 +174,7 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
               <PlayIcon size={'12px'} />
             </span>
             <span className={style.name}>{station.name}</span>
+            <AudioFormatBadge track={toRadioTrack(station)} className={style.format} />
             <span className={style.details}>{describe(station, translator)}</span>
             <FavouriteButton item={stationFavourite(station)} className={style.favourite} />
           </div>

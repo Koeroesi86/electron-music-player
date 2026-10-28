@@ -3,7 +3,7 @@ import type { WebContents } from 'electron';
 import type { PlaylistMessage, StoredPlaylist } from '../types/playlists';
 import type { ListenerContext } from './listenerContext';
 import { addEntries, createPlaylist, deletePlaylist, getPlaylists, moveEntry, movePlaylist, removeEntry, renamePlaylist } from './playlistRepository';
-import { findTrackPath } from './libraryRepository';
+import { findTrackFormat } from './libraryRepository';
 import { isRecord } from './keyPayload';
 
 const maxNameLength = 200;
@@ -21,13 +21,17 @@ const toTracks = (value: unknown) =>
 const withAvailability = (database: ListenerContext['database'], playlists: StoredPlaylist[]) =>
   Promise.all(
     playlists.map(async ({ id, name, entries }): Promise<PlaylistMessage> => {
-      const found = await Promise.all(entries.map(({ path }) => findTrackPath(database, path)));
+      const formats = await Promise.all(entries.map(({ path }) => findTrackFormat(database, path)));
 
       return {
         id,
         name,
-        // a track the library does not have is kept, shown from its snapshot and not played
-        entries: entries.map(({ id: entryId, snapshot }, index) => ({ id: entryId, track: snapshot, available: found[index] !== undefined })),
+        // a track the library does not have is kept, shown from its snapshot and not played; one it has shows the format the library reads of it now
+        entries: entries.map(({ id: entryId, snapshot }, index) => ({
+          id: entryId,
+          track: isRecord(snapshot) ? { ...snapshot, ...formats[index] } : snapshot,
+          available: formats[index] !== undefined,
+        })),
       };
     })
   );

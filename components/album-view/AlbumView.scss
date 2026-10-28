@@ -37,12 +37,27 @@
     }
   }
 
+  // below the list, not over its last rows
+  .footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 40px;
+    padding: 0 20px;
+    font-size: 12px;
+    line-height: 40px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--overlay);
+  }
+
   .listing {
     position: absolute;
     top: 40px;
     left: 0;
     width: 100%;
-    height: calc(100% - 40px);
+    height: calc(100% - 40px - 40px);
     text-align: center;
     padding: 12px;
     overflow-y: auto;
