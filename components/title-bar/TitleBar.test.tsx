@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import TitleBar from './TitleBar';
 
 describe('TitleBar', () => {
@@ -12,12 +12,9 @@ describe('TitleBar', () => {
     expect(container.querySelectorAll('img')).toHaveLength(1);
   });
 
-  it('closes from the first button', () => {
-    const close = vi.fn();
-    const { container } = render(<TitleBar close={close} />);
+  it('has no buttons of its own', () => {
+    render(<TitleBar />);
 
-    fireEvent.click(container.querySelectorAll('span')[0]);
-
-    expect(close).toHaveBeenCalledOnce();
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
 });

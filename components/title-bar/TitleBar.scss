@@ -1,36 +1,6 @@
 .titleBar {
   flex: 0;
 
-  .buttons {
-    height: 56px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding-left: 22px;
-    background-color: var(--bar-background);
-    box-shadow: 0 0 3px var(--shadow);
-
-    .button {
-      -webkit-app-region: no-drag;
-      display: inline-block;
-      margin-right: 16px;
-      cursor: pointer;
-      transition: color .2s ease-in-out;
-
-      // TODO: find a better way
-      svg * {
-        will-change: stroke;
-        transition: stroke .2s ease-in-out;
-      }
-
-      &:hover {
-        svg * {
-          stroke: var(--accent);
-        }
-      }
-    }
-  }
-
   .title {
     display: flex;
     align-items: center;

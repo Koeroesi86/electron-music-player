@@ -10,6 +10,7 @@ import Confirm from '../confirm';
 import PlayerControls from '../player-controls';
 import AudioComponent from '../audio-component';
 import TitleBar from '../title-bar';
+import WindowControls from '../window-controls';
 import Navigation from '../navigation';
 import AudioSpectrum from '../audio-spectrum';
 import PlayerTabs from '../player-tabs';
@@ -82,6 +83,7 @@ const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, fol
         </div>
         <PlayerControls />
       </div>
+      <WindowControls />
       <AlbumDetails />
       <Confirm
         message={confirmation?.message ?? null}

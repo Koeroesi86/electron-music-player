@@ -1,0 +1,34 @@
+.windowControls {
+  position: absolute;
+  top: 15px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  gap: 6px;
+
+  .button {
+    -webkit-app-region: no-drag;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    color: var(--text);
+    background: var(--overlay-strong);
+    transition: background-color .15s ease-in-out, color .15s ease-in-out;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--accent-contrast);
+      background: var(--accent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  }
+}

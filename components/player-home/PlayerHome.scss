@@ -59,6 +59,9 @@ html, body {
   color: var(--text);
   background: var(--app-background);
 
+  // the room the window buttons (components/window-controls) take at the right of a header: the two edges, three buttons and two gaps, and a gap to what is next to them
+  --window-controls-inset: 114px;
+
   // the panels let the blur through only when there is one (see windowBackdrop.ts)
   --panel-background: var(--panel-solid);
 
