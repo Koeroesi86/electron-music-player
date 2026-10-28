@@ -47,10 +47,19 @@
   .count {
     position: absolute;
     bottom: 0;
-    left: 12px;
+    left: 20px;
     padding: 12px;
-    font-size: 12px;
-    color: var(--text-muted);
+
+    // the same pill as the buttons on the other side, so it reads on top of the rows
+    span {
+      display: inline-block;
+      line-height: 26px;
+      padding: 0 12px;
+      font-size: 12px;
+      color: var(--control-text);
+      background: var(--control-background);
+      border-radius: 3px;
+    }
   }
 
   .controls {
