@@ -133,6 +133,8 @@ const offlineRecheckInterval = 1000 * 30;
 const persistedKeys = [
   'view',
   'onlineView',
+  'libraryOpen',
+  'playlistsOpen',
   'nowPlaying',
   'played',
   'currentSong',
@@ -156,7 +158,8 @@ const persistedKeys = [
 
 const saveSettings = (uiState: UiState) => electronAPI.send('SAVE_SETTINGS', Object.fromEntries(persistedKeys.map((key) => [key, uiState[key]])));
 
-const saveAccent = debounce((store: Store) => saveSettings(store.getState().uiState), 500);
+/** The state is saved a moment after the last change, as the handlers run before the reducer */
+const saveLater = debounce((store: Store) => saveSettings(store.getState().uiState), 500);
 
 const toPlaylistTrack = ({ file, title }: PlaylistItem): Track => ({
   path: file,
@@ -287,7 +290,8 @@ const handleActions = actionMiddleware((store) => [
     saveSettings({ ...uiState, theme: { ...uiState.theme, mode: payload.mode } });
   }),
   // the colour input fires while it is dragged, the main process does not need the accent before it is saved
-  onAction('SET_ACCENT', () => saveAccent(store)),
+  onAction('SET_ACCENT', () => saveLater(store)),
+  onAction('SET_NAVIGATION_GROUP', () => saveLater(store)),
   onAction('SAVE_SETTINGS', () => saveSettings(store.getState().uiState)),
 ]);
 

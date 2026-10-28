@@ -23,6 +23,8 @@ describe('uiState reducer', () => {
   it('provides sensible defaults', () => {
     expect(initial).toMatchObject({
       view: 'albums',
+      libraryOpen: true,
+      playlistsOpen: true,
       tab: 'home',
       volume: 0.5,
       isPlaying: false,
@@ -416,6 +418,33 @@ describe('uiState reducer', () => {
 
       expect(run({ type: 'DELETE_PLAYLIST', payload: { id: 4 } }, open)).toBe(open);
       expect(run({ type: 'DELETE_PLAYLIST', payload: { id: 3 } }, elsewhere)).toMatchObject({ tab: 'settings', playlistId: null });
+    });
+  });
+  describe('sidebar groups', () => {
+    it('opens and closes each group on its own', () => {
+      const closedLibrary = run({ type: 'SET_NAVIGATION_GROUP', payload: { group: 'library', open: false } });
+      const closed = run({ type: 'SET_NAVIGATION_GROUP', payload: { group: 'playlists', open: false } }, closedLibrary);
+      const reopened = run({ type: 'SET_NAVIGATION_GROUP', payload: { group: 'library', open: true } }, closed);
+
+      expect(closedLibrary).toMatchObject({ libraryOpen: false, playlistsOpen: true });
+      expect(closed).toMatchObject({ libraryOpen: false, playlistsOpen: false });
+      expect(reopened).toMatchObject({ libraryOpen: true, playlistsOpen: false });
+    });
+
+    it('restores the saved state of the groups', () => {
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { libraryOpen: false, playlistsOpen: false } } })).toMatchObject({
+        libraryOpen: false,
+        playlistsOpen: false,
+      });
+    });
+
+    it('starts with both groups open for settings saved before the groups, and for a value that is not valid', () => {
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { view: 'tracks' } } })).toMatchObject({ libraryOpen: true, playlistsOpen: true });
+      // only a saved closed group closes it
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { libraryOpen: 'no' as never, playlistsOpen: 0 as never } } })).toMatchObject({
+        libraryOpen: true,
+        playlistsOpen: true,
+      });
     });
   });
 });

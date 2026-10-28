@@ -73,8 +73,7 @@ const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, fol
               <div className={style.manageLibraryPanel}>
                 <TitleBar />
                 <div className={style.navigationContainer}>
-                  <AudioSpectrum width={180} height={80} capHeight={1} meterCount={45} meterWidth={2} gap={2} />
-                  <Navigation />
+                  <Navigation spectrum={<AudioSpectrum width={180} height={32} capHeight={1} meterCount={45} meterWidth={2} gap={2} />} />
                 </div>
               </div>
             </div>
