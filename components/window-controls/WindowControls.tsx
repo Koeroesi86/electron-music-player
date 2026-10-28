@@ -9,7 +9,7 @@ interface WindowControlsProps {
   close: () => void;
 }
 
-/** The minimize, maximize and close buttons where there are no traffic lights, in the top right corner over the drag region */
+/** The minimize, maximize and close buttons on every platform, in the top right corner over the drag region */
 function WindowControls({ maximized, minimize, maximize, close }: WindowControlsProps) {
   const { t } = useTranslation();
 

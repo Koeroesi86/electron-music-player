@@ -6,6 +6,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
   // a sandboxed preload cannot import windowBackdrop.ts, so the argument is spelled out here
   blurred: process.argv.includes('--window-blur'),
-  // same here, the argument of windowControls.ts
-  nativeControls: process.argv.includes('--native-window-controls'),
 });

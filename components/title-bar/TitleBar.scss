@@ -1,12 +1,6 @@
 .titleBar {
   flex: 0;
 
-  .trafficLights {
-    height: 56px;
-    background-color: var(--bar-background);
-    box-shadow: 0 0 3px var(--shadow);
-  }
-
   .title {
     display: flex;
     align-items: center;

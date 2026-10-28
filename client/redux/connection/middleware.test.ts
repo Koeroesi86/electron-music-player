@@ -7,7 +7,7 @@ const setup = async (fetchImpl: (url: string) => Promise<unknown> = () => Promis
   vi.resetModules();
   const fetchMock = vi.fn(fetchImpl);
   vi.stubGlobal('fetch', fetchMock);
-  window.electronAPI = { send, on, getPathForFile: () => '', blurred: false, nativeControls: false };
+  window.electronAPI = { send, on, getPathForFile: () => '', blurred: false };
 
   const { default: reducers } = await import('../reducers');
   const { default: middleware } = await import('./middleware');

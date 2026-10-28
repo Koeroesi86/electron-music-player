@@ -17,15 +17,4 @@ describe('TitleBar', () => {
 
     expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
-
-  it('leaves room for the traffic lights only where the window has them', () => {
-    const { container, rerender } = render(<TitleBar />);
-    const children = () => container.firstElementChild?.children.length;
-
-    expect(children()).toBe(1);
-
-    rerender(<TitleBar nativeControls />);
-
-    expect(children()).toBe(2);
-  });
 });

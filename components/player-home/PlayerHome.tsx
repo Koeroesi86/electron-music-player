@@ -20,7 +20,6 @@ interface PlayerHomeProps {
   maximized: boolean;
   enableTransparency?: boolean;
   blurred: boolean;
-  nativeControls: boolean;
   loaded: boolean;
   folders: Folder[];
   addFiles: (files: FileList) => void;
@@ -38,7 +37,7 @@ const findContainedPath = (files: FileList, folders: Folder[]) =>
     .map((file) => electronAPI.getPathForFile(file))
     .findLast((filePath) => folders.some((folder) => folder.path.startsWith(filePath) || filePath.startsWith(folder.path)));
 
-const PlayerHome = ({ maximized, enableTransparency = true, blurred, nativeControls, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
+const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
   const { t } = useTranslation();
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const latestOnUnload = useLatest(onUnload);
@@ -72,7 +71,7 @@ const PlayerHome = ({ maximized, enableTransparency = true, blurred, nativeContr
           <div className={style.library}>
             <div className={style.manageLibrary}>
               <div className={style.manageLibraryPanel}>
-                <TitleBar nativeControls={nativeControls} />
+                <TitleBar />
                 <div className={style.navigationContainer}>
                   <AudioSpectrum width={180} height={80} capHeight={1} meterCount={45} meterWidth={2} gap={2} />
                   <Navigation />
@@ -84,7 +83,7 @@ const PlayerHome = ({ maximized, enableTransparency = true, blurred, nativeContr
         </div>
         <PlayerControls />
       </div>
-      {!nativeControls && <WindowControls />}
+      <WindowControls />
       <AlbumDetails />
       <Confirm
         message={confirmation?.message ?? null}

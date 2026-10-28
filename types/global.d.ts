@@ -7,8 +7,6 @@ export interface ElectronApi {
   getPathForFile: (file: File) => string;
   /** Something blurs behind the translucent parts of the window (see windowBackdrop.ts) */
   blurred: boolean;
-  /** The window has traffic lights of its own, so the page draws no window buttons (see windowControls.ts) */
-  nativeControls: boolean;
 }
 
 export interface AppWindows {
