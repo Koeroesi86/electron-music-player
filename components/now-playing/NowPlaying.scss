@@ -60,6 +60,10 @@
         margin-bottom: 3px;
       }
 
+      .format {
+        margin-bottom: 3px;
+      }
+
       .trackNo {
         margin-right: 6px;
       }
@@ -119,6 +123,10 @@
 
       &:hover {
         background-color: var(--overlay);
+      }
+
+      .format {
+        margin-left: 8px;
       }
 
       .trackNo {

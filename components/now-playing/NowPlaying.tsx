@@ -7,6 +7,7 @@ import type { RadioStation } from '../../types/radio';
 import { useTranslation } from '../../client/i18n';
 import { trackFavourite } from '../../client/favourites';
 import style from './NowPlaying.scss';
+import AudioFormatBadge from '../audio-format-badge';
 import FavouriteButton from '../favourite-button';
 
 interface NowPlayingProps {
@@ -37,6 +38,9 @@ const NowPlaying = ({ nowPlaying, currentSong, streamTitle, streamArt, station, 
               </div>
               <div className={style.album}>{shown.track.album}</div>
               <div className={style.artist}>{shown.track.artist}</div>
+              <div className={style.format}>
+                <AudioFormatBadge track={shown.track} />
+              </div>
               <FavouriteButton item={trackFavourite(currentSong, station)} className={style.favourite} />
             </div>
           </div>
@@ -56,6 +60,9 @@ const NowPlaying = ({ nowPlaying, currentSong, streamTitle, streamArt, station, 
               </span>
               {track.track ? <span className={style.trackNo}>#{track.track}</span> : ''}
               {track.title}
+              <span className={style.format}>
+                <AudioFormatBadge track={track} />
+              </span>
             </div>
           ))}
         </div>

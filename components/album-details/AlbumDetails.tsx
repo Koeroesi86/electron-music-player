@@ -11,6 +11,7 @@ import { albumFavourite } from '../../client/favourites';
 import style from './AlbumDetails.scss';
 import FavouriteButton from '../favourite-button';
 import AddToPlaylist from '../add-to-playlist';
+import AudioFormatBadge from '../audio-format-badge';
 import Time from '../time';
 
 interface AlbumDetailsProps {
@@ -73,6 +74,7 @@ const AlbumDetails = ({ album, playTracks, close }: AlbumDetailsProps) => {
           <div key={track.path} className={style.track}>
             <span className={style.number}>{track.track}</span>
             <span className={style.trackTitle}>{track.title}</span>
+            <AudioFormatBadge track={track} />
             {track.duration ? <Time seconds={track.duration} /> : null}
           </div>
         ))}

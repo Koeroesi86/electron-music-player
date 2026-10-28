@@ -1,12 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { Track } from '../../types/library';
+import { toRadioTrack } from '../../client/radio-track';
 import PlayerControls from './PlayerControls';
 
 vi.mock('../scan-progress', () => ({ default: () => null }));
 
-const renderControls = (volume: number) => {
+const renderControls = (volume: number, currentSong: Track | null = null) => {
   const props = {
-    currentSong: null,
+    currentSong,
     streamTitle: null,
     streamArt: null,
     currentTime: 0,
@@ -34,6 +36,12 @@ const renderControls = (volume: number) => {
 
 describe('PlayerControls', () => {
   afterEach(cleanup);
+
+  it('shows the format of a station', () => {
+    renderControls(0.5, toRadioTrack({ uuid: 'u1', name: 'Jazz FM', country: '', tags: [], codec: 'MP3', bitrate: 128 }));
+
+    expect(screen.getByText('MP3 128')).toBeTruthy();
+  });
 
   it('mutes and restores the previous volume', () => {
     const { props, rerenderWithVolume } = renderControls(0.7);
