@@ -1,6 +1,6 @@
 import type { Folder } from '../types/library';
 import type { AlbumSort, LibraryQuery, TrackSort } from '../types/library-query';
-import { knownFolders } from '../types/library-query';
+import { knownFolders, parseSearch } from '../types/library-query';
 import type { RootState } from './redux/reducers';
 
 type QueryState = Pick<RootState, 'folders' | 'uiState'>;
@@ -12,13 +12,18 @@ export const selectedFolders = (selected: string[], folders: Folder[]) =>
     folders.map(({ path }) => path)
   );
 
-/** What the tracks are asked for: the sort and the selected folders the library still has */
+/** The text to search for, undefined when the search is empty */
+export const selectSearch = (state: Pick<RootState, 'uiState'>) => parseSearch(state.uiState.librarySearch);
+
+/** What the tracks are asked for: the sort, the selected folders the library still has and the search */
 export const selectTrackQuery = (state: QueryState): LibraryQuery<TrackSort> => ({
   sort: state.uiState.trackSort,
   folders: selectedFolders(state.uiState.libraryFolders, state.folders),
+  search: selectSearch(state),
 });
 
 export const selectAlbumQuery = (state: QueryState): LibraryQuery<AlbumSort> => ({
   sort: state.uiState.albumSort,
   folders: selectedFolders(state.uiState.libraryFolders, state.folders),
+  search: selectSearch(state),
 });

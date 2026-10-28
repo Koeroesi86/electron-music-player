@@ -16,9 +16,13 @@ const toTrack = (track: Track): Track => ({ ...track, picture: withoutFileProtoc
 
 const toWindowQuery = (page: number) => `offset=${page * pageSize}&limit=${pageSize}`;
 
-/** The sort and the folders as the parameters of a request, the folders once each */
-const toQuery = ({ sort, folders }: LibraryQuery<TrackSort | AlbumSort>) =>
-  [...(sort ? [`sort=${sort.field}`, `dir=${sort.direction}`] : []), ...folders.map((folder) => `folder=${encodeURIComponent(folder)}`)].join('&');
+/** The sort, the folders and the search as the parameters of a request, the folders once each */
+const toQuery = ({ sort, folders, search }: LibraryQuery<TrackSort | AlbumSort>) =>
+  [
+    ...(sort ? [`sort=${sort.field}`, `dir=${sort.direction}`] : []),
+    ...folders.map((folder) => `folder=${encodeURIComponent(folder)}`),
+    ...(search ? [`search=${encodeURIComponent(search)}`] : []),
+  ].join('&');
 
 const withQuery = (route: string, query: LibraryQuery<TrackSort | AlbumSort>) => [route, toQuery(query)].filter(Boolean).join(route.includes('?') ? '&' : '?');
 

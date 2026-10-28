@@ -37,6 +37,7 @@ const initialState: UiState = {
   albumSort: undefined,
   libraryFolders: [],
   radioQuery: {},
+  librarySearch: '',
 };
 
 // the Shoutcast page and the Spotify page are gone, any other saved view shows the radio
@@ -49,13 +50,15 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
 
   switch (action.type) {
     case 'SET_VIEW':
-      return { ...state, view: action.payload.view };
+      return { ...state, view: action.payload.view, librarySearch: '' };
     case 'SET_ONLINE_VIEW':
       return { ...state, onlineView: action.payload.view };
     case 'SET_TRACK_SORT':
       return { ...state, trackSort: action.payload.sort };
     case 'SET_ALBUM_SORT':
       return { ...state, albumSort: action.payload.sort };
+    case 'SET_LIBRARY_SEARCH':
+      return { ...state, librarySearch: action.payload.search };
     case 'SET_LIBRARY_FOLDERS':
       return { ...state, libraryFolders: parseFolders(action.payload.folders) };
     // a folder that is not in the library any more is dropped from the selection

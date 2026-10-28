@@ -4,6 +4,7 @@ import type { Track } from '../../types/library';
 import type { TrackSort } from '../../types/library-query';
 import type { RootState } from '../../client/redux/reducers';
 import type { AppAction } from '../../client/redux/types';
+import { selectSearch } from '../../client/library-query';
 import TrackView from './TrackView';
 
 const mapState = (state: RootState) => ({
@@ -13,6 +14,7 @@ const mapState = (state: RootState) => ({
   sort: state.uiState.trackSort,
   selected: state.uiState.libraryFolders,
   folders: state.folders,
+  search: selectSearch(state),
 });
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({

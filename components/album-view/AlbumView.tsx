@@ -23,19 +23,21 @@ interface AlbumViewProps {
   sort: AlbumSortValue | undefined;
   selected: string[];
   folders: Folder[];
+  /** The text the albums are searched for, undefined is no search */
+  search: string | undefined;
   playTracks: (tracks: Track[]) => void;
   selectAlbum: (album: Album | null) => void;
   loadPage: (page: number) => void;
 }
 
-const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, loadPage }: AlbumViewProps) => {
+const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, search, loadPage }: AlbumViewProps) => {
   const { t } = useTranslation();
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
   const { listing, columns, firstIndex, lastIndex, offsetTop, height } = useWindowedList({ itemCount: albums.total ?? 0, rowHeight, itemWidth });
   usePageLoader(albums, firstIndex, lastIndex, loadPage);
 
-  const queryKey = JSON.stringify([sort, selectedFolders(selected, folders)]);
-  // another sort or other folders are another list, which starts from its top
+  const queryKey = JSON.stringify([sort, selectedFolders(selected, folders), search]);
+  // another sort, other folders or another search are another list, which starts from its top
   useEffect(() => {
     if (listing.current) listing.current.scrollTop = 0;
   }, [listing, queryKey]);
@@ -68,6 +70,7 @@ const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, l
         <AlbumSort />
       </div>
       <div ref={separator} className={style.separator} />
+      {search && albums.total === 0 && <div className={style.empty}>{t('library.noResults', { search })}</div>}
       <div className={style.listing} ref={setListing}>
         <div className={style.window} style={{ height, paddingTop: offsetTop }}>
           {rows.map((indexes) => (

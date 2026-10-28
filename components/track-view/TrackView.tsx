@@ -27,12 +27,14 @@ interface TrackViewProps {
   /** The selected folders and the folders of the library, the selection can hold a folder the library no longer has */
   selected: string[];
   folders: Folder[];
+  /** The text the tracks are searched for, undefined is no search */
+  search: string | undefined;
   playTracks: (tracks: Track[]) => void;
   loadPage: (page: number) => void;
   setSort: (sort: TrackSort | undefined) => void;
 }
 
-const TrackView = ({ currentSong, playTracks, tracks, offlineFolders, sort, selected, folders, loadPage, setSort }: TrackViewProps) => {
+const TrackView = ({ currentSong, playTracks, tracks, offlineFolders, sort, selected, folders, search, loadPage, setSort }: TrackViewProps) => {
   const { t } = useTranslation();
   const headerLabels = useMemo<TrackLabels>(
     () => ({
@@ -58,9 +60,9 @@ const TrackView = ({ currentSong, playTracks, tracks, offlineFolders, sort, sele
   usePageLoader(tracks, firstIndex, lastIndex, loadPage);
 
   const folderSelection = selectedFolders(selected, folders);
-  const query = { sort, folders: folderSelection };
+  const query = { sort, folders: folderSelection, search };
   const queryKey = JSON.stringify(query);
-  // another sort or other folders are another list, which starts from its top
+  // another sort, other folders or another search are another list, which starts from its top
   useEffect(() => {
     if (listing.current) listing.current.scrollTop = 0;
   }, [listing, queryKey]);
@@ -95,6 +97,7 @@ const TrackView = ({ currentSong, playTracks, tracks, offlineFolders, sort, sele
     <div className={style.tracks}>
       <TrackViewItem track={headerLabels} isHeader sort={sort} onSort={sortBy} />
       <div ref={separator} className={style.separator} />
+      {search && tracks.total === 0 && <div className={style.empty}>{t('library.noResults', { search })}</div>}
       <div className={style.listing} ref={setListing}>
         <div className={style.window} style={{ height, paddingTop: offsetTop }}>
           {Array.from({ length: lastIndex - firstIndex }, (_, offset) => {
