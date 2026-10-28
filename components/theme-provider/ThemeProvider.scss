@@ -109,9 +109,9 @@
   --favourite: #ff6b81;
 
   // the shades of the accent
+  --accent-glow: color-mix(in srgb, var(--accent) 35%, transparent);
   --accent-soft: color-mix(in srgb, var(--accent) 60%, transparent);
   --accent-muted: color-mix(in srgb, var(--accent) 75%, var(--panel-solid));
-  --thumb-gradient: linear-gradient(to bottom, #ffffff 0%, color-mix(in srgb, var(--accent) 55%, #ffffff) 47%, color-mix(in srgb, var(--accent) 76%, #000000) 100%);
   // what the canvases draw with, they read it from the computed style
   --spectrum-meter: var(--accent-soft);
   --spectrum-cap: var(--accent);
