@@ -83,26 +83,12 @@ jobs:
           path: ~/apt-archives
           key: apt-flatpak-${{ matrix.arch }}-${{ github.run_id }}
       # electron-builder bundles the flatpak from the runtime, the sdk and the base app, which it does not download itself
-      # the download takes 40 to 50 seconds; the key names the runtime, so a new one downloads once and is kept
-      - name: Restore the Flatpak runtime
-        if: runner.os == 'Linux'
-        id: flatpak-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.local/share/flatpak
-          key: flatpak-runtime-${{ matrix.arch }}-25.08
       - name: Install the Flatpak runtime
         if: runner.os == 'Linux'
         timeout-minutes: 15
         run: |
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user --noninteractive flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08 org.electronjs.Electron2.BaseApp//25.08
-      - name: Keep the Flatpak runtime
-        if: runner.os == 'Linux' && steps.flatpak-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.local/share/flatpak
-          key: flatpak-runtime-${{ matrix.arch }}-25.08
       - uses: ./.github/actions/install-dependencies
         with:
           fresh: ${{ inputs.version != '' }}
