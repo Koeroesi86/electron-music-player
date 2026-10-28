@@ -17,10 +17,19 @@ import type { PageCache } from '../../client/redux/library/pages';
 import type { OpenGroup } from '../../client/redux/types';
 import AlbumSort from '../album-sort';
 import GroupAlbums from '../group-albums';
+import GroupSortSelect from '../group-sort';
+import GroupTile from '../group-tile';
 import style from './GroupView.scss';
 
-/** The height of a row in px, matching .group in GroupView.scss */
-const rowHeight = 40;
+/** The height of a row of the list in px, matching .group in GroupView.scss */
+const listRowHeight = 40;
+
+/** The size of a tile with its margin in px, matching .groupTile in GroupTile.scss */
+const tileWidth = 112;
+const tileRowHeight = 160;
+
+/** The artists and the album artists are tiles like the albums, the genres have no covers of their own and stay a list */
+const tiledKinds: GroupKind[] = ['artist', 'albumArtist'];
 
 /** How long the filter waits for the next key before the list is asked again */
 const filterDelay = 250;
@@ -71,7 +80,12 @@ const HeaderField = ({ field, className, label, sort, onSort }: HeaderFieldProps
 const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPage, setSort, setFilter, openGroup, closeGroup }: GroupViewProps) => {
   const { t } = useTranslation();
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
-  const { listing, firstIndex, lastIndex, offsetTop, height } = useWindowedList({ itemCount: groups.total ?? 0, rowHeight });
+  const tiled = tiledKinds.includes(kind);
+  const { listing, columns, firstIndex, lastIndex, offsetTop, height } = useWindowedList({
+    itemCount: groups.total ?? 0,
+    rowHeight: tiled ? tileRowHeight : listRowHeight,
+    itemWidth: tiled ? tileWidth : undefined,
+  });
   usePageLoader(groups, firstIndex, lastIndex, loadPage);
 
   // the text is shown as it is typed, the list is asked for it once the typing pauses
@@ -95,6 +109,10 @@ const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPa
 
   const sortBy = (field: GroupSortField) => setSort(cycleSort(sort, field));
   const nameOf = (name: string) => name || t(`groups.unknown.${kind}`);
+  const openOne = (group: GroupSummary) => openGroup({ kind, key: group.key, name: group.name });
+  const rows = Array.from({ length: Math.ceil((lastIndex - firstIndex) / columns) }, (_, row) =>
+    Array.from({ length: Math.min(columns, lastIndex - firstIndex - row * columns) }, (__, column) => firstIndex + row * columns + column)
+  );
 
   if (open) {
     const openName = nameOf(open.name);
@@ -116,8 +134,37 @@ const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPa
     );
   }
 
+  const tiles = rows.map((indexes) => (
+    <div key={indexes[0]} className={style.tileRow}>
+      {indexes.map((index) => {
+        const group = getCachedItem(groups, index);
+        return group ? (
+          <GroupTile key={group.key} group={group} unknownName={nameOf('')} open={openOne} />
+        ) : (
+          <div key={index} className={style.tilePlaceholder} />
+        );
+      })}
+    </div>
+  ));
+
+  const list = Array.from({ length: lastIndex - firstIndex }, (_, offset) => {
+    const group = getCachedItem(groups, firstIndex + offset);
+    return group ? (
+      <button key={group.key} type="button" className={style.group} onClick={() => openOne(group)}>
+        <span className={classNames(style.field, style.cover)} style={group.cover ? { backgroundImage: `url("${getCoverUrl(group.cover)}")` } : undefined} />
+        <span className={classNames(style.field, style.name, { [style.unknown]: !group.name })} title={nameOf(group.name)}>
+          {nameOf(group.name)}
+        </span>
+        <span className={classNames(style.field, style.count)}>{group.albumCount}</span>
+        <span className={classNames(style.field, style.count)}>{group.trackCount}</span>
+      </button>
+    ) : (
+      <div key={firstIndex + offset} className={style.placeholder} />
+    );
+  });
+
   return (
-    <div className={style.groups}>
+    <div className={classNames(style.groups, { [style.tiled]: tiled })}>
       <div className={style.toolbar}>
         <input
           type="search"
@@ -127,34 +174,20 @@ const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPa
           aria-label={t('groups.filter')}
           onChange={(event) => setText(event.target.value)}
         />
+        {tiled && <GroupSortSelect />}
       </div>
-      <div role="row" className={style.header}>
-        <div className={classNames(style.field, style.cover)} />
-        <HeaderField field="name" className={style.name} label={t('groups.name')} sort={sort} onSort={sortBy} />
-        <HeaderField field="albumCount" className={style.count} label={t('groups.albums')} sort={sort} onSort={sortBy} />
-        <HeaderField field="trackCount" className={style.count} label={t('groups.tracks')} sort={sort} onSort={sortBy} />
-      </div>
+      {!tiled && (
+        <div role="row" className={style.header}>
+          <div className={classNames(style.field, style.cover)} />
+          <HeaderField field="name" className={style.name} label={t('groups.name')} sort={sort} onSort={sortBy} />
+          <HeaderField field="albumCount" className={style.count} label={t('groups.albums')} sort={sort} onSort={sortBy} />
+          <HeaderField field="trackCount" className={style.count} label={t('groups.tracks')} sort={sort} onSort={sortBy} />
+        </div>
+      )}
       <div ref={separator} className={style.separator} />
       <div className={style.listing} ref={setListing}>
         <div className={style.window} style={{ height, paddingTop: offsetTop }}>
-          {Array.from({ length: lastIndex - firstIndex }, (_, offset) => {
-            const group = getCachedItem(groups, firstIndex + offset);
-            return group ? (
-              <button key={group.key} type="button" className={style.group} onClick={() => openGroup({ kind, key: group.key, name: group.name })}>
-                <span
-                  className={classNames(style.field, style.cover)}
-                  style={group.cover ? { backgroundImage: `url("${getCoverUrl(group.cover)}")` } : undefined}
-                />
-                <span className={classNames(style.field, style.name, { [style.unknown]: !group.name })} title={nameOf(group.name)}>
-                  {nameOf(group.name)}
-                </span>
-                <span className={classNames(style.field, style.count)}>{group.albumCount}</span>
-                <span className={classNames(style.field, style.count)}>{group.trackCount}</span>
-              </button>
-            ) : (
-              <div key={firstIndex + offset} className={style.placeholder} />
-            );
-          })}
+          {tiled ? tiles : list}
         </div>
       </div>
       <div className={style.footer}>{t(`groups.count.${kind}`, { count: groups.total ?? 0 })}</div>

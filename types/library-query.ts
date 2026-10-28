@@ -8,7 +8,7 @@ export const albumSortFields = ['title', 'artist', 'year', 'trackCount', 'durati
 export const groupKinds = ['artist', 'albumArtist', 'genre'] as const;
 
 /** The fields the artists, the album artists and the genres can be sorted by */
-const groupSortFields = ['name', 'albumCount', 'trackCount'] as const;
+export const groupSortFields = ['name', 'albumCount', 'trackCount'] as const;
 
 export const sortDirections = ['asc', 'desc'] as const;
 
