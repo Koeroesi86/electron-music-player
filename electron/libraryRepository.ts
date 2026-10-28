@@ -167,11 +167,14 @@ export const getTrackPage = (database: Database, offset: number, limit: number, 
   ]).then(([items, total]) => ({ items, total }));
 };
 
+const withPhoto = (key: string) => `COALESCE((SELECT picture FROM artist_photos WHERE artist_photos.key = ${key}), MAX(picture))`;
+
 // the column the tracks of an artist, an album artist or a genre share, and the one that holds the name as it is written; the keys have an index
-const groupColumns: Record<GroupKind, { key: string; name: string }> = {
-  artist: { key: 'artist_key', name: 'artist' },
-  albumArtist: { key: 'album_artist_key', name: 'albumArtist' },
-  genre: { key: 'genre_key', name: 'genre' },
+// and the cover: the photo of the name when it has one (the artists and the album artists), else the cover of one of its albums; a genre has none
+const groupColumns: Record<GroupKind, { key: string; name: string; cover: (key: string) => string }> = {
+  artist: { key: 'artist_key', name: 'artist', cover: withPhoto },
+  albumArtist: { key: 'album_artist_key', name: 'albumArtist', cover: withPhoto },
+  genre: { key: 'genre_key', name: 'genre', cover: () => 'NULL' },
 };
 
 // a folder and an album title make one album
@@ -194,14 +197,14 @@ export const getGroupPage = (
   limit: number,
   { sort, folders, filter }: GroupQuery
 ): Promise<LibraryPage<GroupSummary>> => {
-  const { key, name } = groupColumns[kind];
+  const { key, name, cover } = groupColumns[kind];
   const folderFilter = toTrackFilter({ folders });
   const source = `FROM (SELECT *, ${folderOf} AS folder FROM library ${folderFilter.where}) WHERE ${key} LIKE ? ESCAPE '!'`;
   const variables = [...folderFilter.variables, `%${escapeLike(toSortKey(filter))}%`];
 
   return Promise.all([
     executeQuery<GroupSummary>(database, {
-      query: `SELECT ${key} AS "key", MIN(TRIM(COALESCE(${name}, ''))) AS name, COUNT(DISTINCT ${albumIdentity}) AS albumCount, COUNT(*) AS trackCount, MAX(picture) AS cover
+      query: `SELECT ${key} AS "key", MIN(TRIM(COALESCE(${name}, ''))) AS name, COUNT(DISTINCT ${albumIdentity}) AS albumCount, COUNT(*) AS trackCount, ${cover(key)} AS cover
         ${source} GROUP BY ${key} ORDER BY ${toOrderBy(groupOrders(key), sort, `(${key} = '') ASC, ${key}`)} LIMIT ? OFFSET ?`,
       variables: [...variables, limit, offset],
     }),

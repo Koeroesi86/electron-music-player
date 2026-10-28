@@ -15,6 +15,7 @@ import {
   saveFolders,
 } from './libraryRepository';
 import addTrack from './addTrack';
+import executeQuery from './executeQuery';
 import { createTestDatabase } from './test-database';
 import type { Track } from '../types/library';
 import type { AlbumSort, GroupQuery, GroupSortField, LibraryQuery, TrackSort } from '../types/library-query';
@@ -382,6 +383,21 @@ describe('libraryRepository', () => {
         { key: 'bjork', name: 'Björk', albumCount: 1, trackCount: 2, cover: 'one.jpg' },
         { key: '', name: '', albumCount: 1, trackCount: 1, cover: null },
       ]);
+    });
+
+    it('shows the photo of an artist or album artist instead of the cover of an album, and no cover for a genre', async () => {
+      await executeQuery(database, {
+        query: `INSERT INTO artist_photos (key, picture, checkedAt) VALUES ('adam', 'artist-adam.jpg', 1), ('pop', 'artist-pop.jpg', 1), ('various', NULL, 1)`,
+        variables: [],
+      });
+
+      const covers = async (kind: 'artist' | 'albumArtist' | 'genre') =>
+        (await getGroupPage(database, kind, 0, 10, everything)).items.map((item) => item.cover);
+
+      expect(await covers('artist')).toEqual(['artist-adam.jpg', 'one.jpg', null]);
+      // Various has a lookup without a photo and Björk none, no album of Various has a cover
+      expect(await covers('albumArtist')).toEqual(['one.jpg', null, null]);
+      expect(await covers('genre')).toEqual([null, null, null]);
     });
 
     it('lists the album artists and the genres, the tracks without one last', async () => {

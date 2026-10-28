@@ -275,6 +275,17 @@ describe('uiState reducer', () => {
       expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.1 } } }, saved).groupSort).toEqual({ field: 'name', direction: 'desc' });
     });
 
+    it('looks up the photos of the artists unless it is turned off, and keeps what was saved', () => {
+      const off = run({ type: 'SET_ARTIST_PHOTOS', payload: { enabled: false } });
+
+      expect(initial.artistPhotos).toBe(true);
+      expect(off.artistPhotos).toBe(false);
+      expect(run({ type: 'SET_ARTIST_PHOTOS', payload: { enabled: true } }, off).artistPhotos).toBe(true);
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { artistPhotos: false } } }).artistPhotos).toBe(false);
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { artistPhotos: 'x' as never } } }, off).artistPhotos).toBe(true);
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.1 } } }, off).artistPhotos).toBe(false);
+    });
+
     it('opens and closes an artist, album artist or genre, and filters the names', () => {
       const group = { kind: 'genre', key: 'pop', name: 'Pop' } as const;
       const open = run({ type: 'OPEN_GROUP', payload: { group } });

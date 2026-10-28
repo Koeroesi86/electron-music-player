@@ -51,6 +51,9 @@ const reducer: Reducer<LibraryState> = (state = initialState, action) => {
       const { kind } = action.payload;
       return isGroupKind(kind) ? { ...state, groups: { ...state.groups, [kind]: createPageCache() } } : { ...state, [kind]: createPageCache() };
     }
+    // the covers of the artists and the album artists changed: the pages are fetched again when they are shown
+    case 'ARTIST_PHOTOS_READY':
+      return { ...state, groups: { ...state.groups, artist: markStale(state.groups.artist), albumArtist: markStale(state.groups.albumArtist) } };
     case 'INVALIDATE_LIBRARY':
       return {
         ...state,

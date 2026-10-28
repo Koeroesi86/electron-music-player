@@ -13,6 +13,7 @@ import registerHistoryListeners from './registerHistoryListeners';
 import registerPlaylistListeners from './registerPlaylistListeners';
 import registerLauncherListeners from './registerLauncherListeners';
 import registerUpdateListeners from './registerUpdateListeners';
+import registerArtistPhotoListeners from './registerArtistPhotoListeners';
 
 const registrars: ((context: ListenerContext) => void)[] = [
   registerWindowListeners,
@@ -25,6 +26,7 @@ const registrars: ((context: ListenerContext) => void)[] = [
   registerPlaylistListeners,
   registerLauncherListeners,
   registerUpdateListeners,
+  registerArtistPhotoListeners,
 ];
 
 function setupListeners(database: Database, windows: AppWindows, radio: RadioBrowser, updates: UpdateManager) {

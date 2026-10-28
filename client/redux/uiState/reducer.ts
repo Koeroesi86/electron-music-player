@@ -36,6 +36,7 @@ const initialState: UiState = {
   trackSort: undefined,
   albumSort: undefined,
   groupSort: undefined,
+  artistPhotos: true,
   openGroup: undefined,
   groupFilter: '',
   libraryFolders: [],
@@ -63,6 +64,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, albumSort: action.payload.sort };
     case 'SET_LIBRARY_SEARCH':
       return { ...state, librarySearch: action.payload.search };
+    case 'SET_ARTIST_PHOTOS':
+      return { ...state, artistPhotos: action.payload.enabled };
     case 'SET_GROUP_SORT':
       return { ...state, groupSort: action.payload.sort };
     case 'SET_GROUP_FILTER':
@@ -165,6 +168,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
         // a saved value that is not valid gives the default order and all folders
         ...('trackSort' in settings && { trackSort: restoreTrackSort(settings.trackSort) }),
         ...('albumSort' in settings && { albumSort: restoreAlbumSort(settings.albumSort) }),
+        // only a saved off turns the photos off
+        ...('artistPhotos' in settings && { artistPhotos: settings.artistPhotos !== false }),
         ...('groupSort' in settings && { groupSort: restoreGroupSort(settings.groupSort) }),
         ...('libraryFolders' in settings && { libraryFolders: parseFolders(settings.libraryFolders) }),
         // a saved filter or sort that is not valid is dropped

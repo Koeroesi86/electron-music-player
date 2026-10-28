@@ -1,6 +1,7 @@
 import type { Middleware } from 'redux';
 import type { Folder, Track } from '../../../types/library';
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
+import type { GroupSummary } from '../../../types/library';
 import type { GroupKind } from '../../../types/library-query';
 import type { UpdateState } from '../../../types/update';
 import { electronAPI } from '../../electron-api';
@@ -26,6 +27,7 @@ function addListeners(store: Store) {
   electronAPI.on<EmptyPayload>('RESCAN_COMPLETE', (payload) => store.dispatch({ type: 'RESCAN_COMPLETE', payload }));
   electronAPI.on<{ folders: Folder[] }>('FOLDERS_ADDED_TO_LIBRARY', (payload) => store.dispatch({ type: 'FOLDERS_ADDED_TO_LIBRARY', payload }));
   electronAPI.on<EmptyPayload>('FOLDER_REMOVED_FROM_LIBRARY', (payload) => store.dispatch({ type: 'FOLDER_REMOVED_FROM_LIBRARY', payload }));
+  electronAPI.on<EmptyPayload>('ARTIST_PHOTOS_READY', (payload) => store.dispatch({ type: 'ARTIST_PHOTOS_READY', payload }));
   electronAPI.on<EmptyPayload>('TRACKS_ADDED_TO_LIBRARY', (payload) => store.dispatch({ type: 'TRACKS_ADDED_TO_LIBRARY', payload }));
   electronAPI.on<{ maximized: boolean }>('MAXIMIZED_APP', (payload) => store.dispatch({ type: 'MAXIMIZED_APP', payload }));
   electronAPI.on<{ playlist: PlaylistItem[]; url: string }>('CLICKED_URL', (payload) => store.dispatch({ type: 'CLICKED_URL', payload }));
@@ -116,6 +118,14 @@ const loadPage = (store: Store, kind: PageKind, page: number): Promise<void> => 
     });
 };
 
+/** The artists and album artists that have their photos looked up; the main process knows which names it has an answer for */
+const photoKinds: GroupKind[] = ['artist', 'albumArtist'];
+
+const requestPhotos = (groups: GroupSummary[]) => {
+  const artists = groups.filter(({ name }) => name).map(({ key, name }) => ({ key, name }));
+  if (artists.length > 0) electronAPI.send('ARTIST_PHOTOS_WANTED', { artists });
+};
+
 const rescanInterval = 1000 * 60 * 60;
 // a drive that is not there is looked for again at this pace, besides every time the window gets the focus
 const offlineRecheckInterval = 1000 * 30;
@@ -139,6 +149,7 @@ const persistedKeys = [
   'trackSort',
   'albumSort',
   'groupSort',
+  'artistPhotos',
   'libraryFolders',
   'radioQuery',
 ] satisfies (keyof PersistedSettings)[];
@@ -205,6 +216,18 @@ const handleActions = actionMiddleware((store) => [
   onAction('PICK_FOLDERS', () => electronAPI.send('PICK_FOLDERS')),
   onAction('REMOVE_FOLDER', ({ payload }) => electronAPI.send('REMOVE_FOLDER_FROM_LIBRARY', payload.path)),
   onAction('RESCAN_LIBRARY', () => rescanLibrary(true)),
+  // a page of names that arrives asks for their photos, unless that is turned off
+  onAction('STORE_GROUP_PAGE', ({ payload }) => {
+    if (store.getState().uiState.artistPhotos && photoKinds.includes(payload.kind)) requestPhotos(payload.items);
+  }),
+  // turned on, the names that are shown already have their photos looked up
+  onAction('SET_ARTIST_PHOTOS', ({ payload }) => {
+    const { uiState, library } = store.getState();
+    saveSettings({ ...uiState, artistPhotos: payload.enabled });
+    if (!payload.enabled) return;
+
+    photoKinds.forEach((kind) => Object.values(library.groups[kind].pages).forEach(requestPhotos));
+  }),
   onAction('LOAD_LIBRARY_PAGE', ({ payload }) => void loadPage(store, payload.kind, payload.page)),
   // the cached pages are fetched again when they are shown, not all at once
   ...(['RESCAN_COMPLETE', 'TRACKS_ADDED_TO_LIBRARY', 'FOLDER_REMOVED_FROM_LIBRARY'] as const).map((type) =>

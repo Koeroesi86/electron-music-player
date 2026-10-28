@@ -34,8 +34,8 @@ const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env
 // the flatpak finds its user installation through HOME and keeps the data of the app in its own folder, so it keeps them too
 const env =
   process.platform === 'win32' || flatpak
-    ? { ...inherited, NODE_ENV: 'production', EMUSIC_NO_UPDATE: '1' }
-    : { ...inherited, HOME: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production', EMUSIC_NO_UPDATE: '1' }
+    ? { ...inherited, NODE_ENV: 'production', EMUSIC_NO_UPDATE: '1', EMUSIC_NO_ARTIST_PHOTOS: '1' }
+    : { ...inherited, HOME: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production', EMUSIC_NO_UPDATE: '1', EMUSIC_NO_ARTIST_PHOTOS: '1' }
 
 const freePort = () =>
   new Promise((done, fail) => {

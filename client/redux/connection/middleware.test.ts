@@ -332,6 +332,57 @@ describe('connection middleware', () => {
       expect(store.getState().library.albums.total).toBeUndefined();
     });
 
+    describe('the photos of the artists', () => {
+      const adam = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 1, cover: null };
+      const nameless = { ...adam, key: '', name: '' };
+      const page = (kind: 'artist' | 'albumArtist' | 'genre', items = [adam, nameless]) =>
+        ({ type: 'STORE_GROUP_PAGE', payload: { kind, page: 0, items, total: items.length } }) as const;
+
+      it('asks for the photos of the names of a page of artists or album artists, not for the ones without a name', async () => {
+        const { store, send } = await setup();
+
+        store.dispatch(page('artist'));
+        store.dispatch(page('albumArtist'));
+
+        expect(send.mock.calls.filter(([channel]) => channel === 'ARTIST_PHOTOS_WANTED')).toEqual([
+          ['ARTIST_PHOTOS_WANTED', { artists: [{ key: 'adam', name: 'Adam' }] }],
+          ['ARTIST_PHOTOS_WANTED', { artists: [{ key: 'adam', name: 'Adam' }] }],
+        ]);
+      });
+
+      it('asks for nothing for genres, for a page without names, or when it is turned off', async () => {
+        const { store, send } = await setup();
+
+        store.dispatch(page('genre'));
+        store.dispatch(page('artist', [nameless]));
+        store.dispatch({ type: 'SET_ARTIST_PHOTOS', payload: { enabled: false } });
+        store.dispatch(page('artist'));
+
+        expect(send).not.toHaveBeenCalledWith('ARTIST_PHOTOS_WANTED', expect.anything());
+      });
+
+      it('saves the setting, and asks for the photos of the names that are shown when it is turned on', async () => {
+        const { store, send } = await setup();
+        store.dispatch({ type: 'SET_ARTIST_PHOTOS', payload: { enabled: false } });
+        store.dispatch(page('artist'));
+
+        store.dispatch({ type: 'SET_ARTIST_PHOTOS', payload: { enabled: true } });
+
+        expect(send).toHaveBeenCalledWith('SAVE_SETTINGS', expect.objectContaining({ artistPhotos: false }));
+        expect(send).toHaveBeenCalledWith('SAVE_SETTINGS', expect.objectContaining({ artistPhotos: true }));
+        expect(send).toHaveBeenLastCalledWith('ARTIST_PHOTOS_WANTED', { artists: [{ key: 'adam', name: 'Adam' }] });
+      });
+
+      it('fetches the covers again when the main process has stored photos', async () => {
+        const { store, listen } = await setup();
+        store.dispatch(page('artist'));
+
+        listen('ARTIST_PHOTOS_READY', {});
+
+        expect(store.getState().library.groups.artist.stale).toEqual([0]);
+      });
+    });
+
     it('saves the sort of the groups with the settings', async () => {
       const { store, send } = await setup();
 

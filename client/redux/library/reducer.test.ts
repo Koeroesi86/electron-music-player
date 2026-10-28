@@ -113,6 +113,15 @@ describe('library reducer', () => {
       expect(state.groupAlbums.total).toBeUndefined();
     });
 
+    it('marks the pages of the artists and the album artists stale when their photos arrive, and not the genres', () => {
+      const stored = storeGroups(storeGroups(storeGroups(undefined, 'artist'), 'albumArtist'), 'genre');
+      const state = reducer(stored, { type: 'ARTIST_PHOTOS_READY' });
+
+      expect(state.groups.artist.stale).toEqual([0]);
+      expect(state.groups.albumArtist.stale).toEqual([0]);
+      expect(state.groups.genre).toBe(stored.groups.genre);
+    });
+
     it('marks the pages of all of them stale on a change of the library', () => {
       const stored = reducer(storeGroups(storeGroups(undefined, 'albumArtist'), 'genre'), {
         type: 'STORE_GROUP_ALBUM_PAGE',

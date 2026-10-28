@@ -52,6 +52,8 @@ export interface PersistedSettings {
   albumSort: AlbumSort | undefined;
   /** The sort of the artists, the album artists and the genres */
   groupSort: GroupSort | undefined;
+  /** Whether the photos of the artists are looked up at Deezer, which gets the names of the artists */
+  artistPhotos: boolean;
   /** The library folders the local collection is limited to, none is all of them */
   libraryFolders: string[];
   /** The search of the radio stations: the filters and the sort, the page is not saved */
@@ -144,6 +146,8 @@ export type AppAction =
   | PayloadAction<'RESET_LIBRARY', { kind: PageKind }>
   | PayloadAction<'STORE_GROUP_PAGE', { kind: GroupKind; page: number; items: GroupSummary[]; total: number }>
   | PayloadAction<'STORE_GROUP_ALBUM_PAGE', { page: number; items: AlbumSummary[]; total: number }>
+  | PayloadAction<'SET_ARTIST_PHOTOS', { enabled: boolean }>
+  | EmptyAction<'ARTIST_PHOTOS_READY'>
   | PayloadAction<'SET_GROUP_SORT', { sort: GroupSort | undefined }>
   | PayloadAction<'SET_GROUP_FILTER', { filter: string }>
   | PayloadAction<'OPEN_GROUP', { group: OpenGroup }>
