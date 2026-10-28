@@ -101,4 +101,23 @@ describe('GroupView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(closeGroup).toHaveBeenCalled();
   });
+
+  it('listens to the scrolling of the list again when it comes back from the albums', () => {
+    const groups = storePage(createPageCache<GroupSummary>(), 0, [group('adam', 'Adam')], 1);
+    const handlers = { loadPage: vi.fn(), setSort: vi.fn(), setFilter: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn() };
+    const view = (open?: { kind: 'genre'; key: string; name: string }) => (
+      <GroupView kind="genre" groups={groups} sort={undefined} filter="" selected={[]} folders={[]} open={open} {...handlers} />
+    );
+    const listened = vi.spyOn(HTMLElement.prototype, 'addEventListener');
+    const { rerender } = render(view({ kind: 'genre', key: 'adam', name: 'Adam' }));
+
+    rerender(view());
+
+    const scrolled = listened.mock.contexts.filter(
+      (element, index) =>
+        listened.mock.calls[index][0] === 'scroll' && element instanceof HTMLElement && element.className.includes('listing') && document.body.contains(element)
+    );
+    listened.mockRestore();
+    expect(scrolled.length).toBeGreaterThan(0);
+  });
 });

@@ -76,7 +76,8 @@ const HeaderField = ({ field, className, label, sort, onSort }: HeaderFieldProps
   );
 };
 
-const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPage, setSort, setFilter, openGroup, closeGroup }: GroupViewProps) => {
+/** The list of the groups; it is its own component as its scroll and size listeners belong to the element, which is new each time the list comes back */
+const GroupList = ({ kind, groups, sort, filter, selected, folders, loadPage, setSort, setFilter, openGroup }: Omit<GroupViewProps, 'open' | 'closeGroup'>) => {
   const { t } = useTranslation();
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
   const tiled = tiledKinds.includes(kind);
@@ -112,26 +113,6 @@ const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPa
   const rows = Array.from({ length: Math.ceil((lastIndex - firstIndex) / columns) }, (_, row) =>
     Array.from({ length: Math.min(columns, lastIndex - firstIndex - row * columns) }, (__, column) => firstIndex + row * columns + column)
   );
-
-  if (open) {
-    const openName = nameOf(open.name);
-
-    return (
-      <GroupAlbums
-        toolbar={
-          <div className={style.albumsBar}>
-            <button type="button" className={style.back} onClick={closeGroup} aria-label={t('groups.back')} title={t('groups.back')}>
-              <FaChevronLeft aria-hidden />
-            </button>
-            <span className={style.openName} title={openName}>
-              {openName}
-            </span>
-            <AlbumSort />
-          </div>
-        }
-      />
-    );
-  }
 
   const tiles = rows.map((indexes) => (
     <div key={indexes[0]} className={style.tileRow}>
@@ -189,6 +170,29 @@ const GroupView = ({ kind, groups, sort, filter, selected, folders, open, loadPa
       </div>
       <div className={style.footer}>{t(`groups.count.${kind}`, { count: groups.total ?? 0 })}</div>
     </div>
+  );
+};
+
+const GroupView = ({ open, closeGroup, ...list }: GroupViewProps) => {
+  const { t } = useTranslation();
+  const openName = open && (open.name || t(`groups.unknown.${open.kind}`));
+
+  return open ? (
+    <GroupAlbums
+      toolbar={
+        <div className={style.albumsBar}>
+          <button type="button" className={style.back} onClick={closeGroup} aria-label={t('groups.back')} title={t('groups.back')}>
+            <FaChevronLeft aria-hidden />
+          </button>
+          <span className={style.openName} title={openName}>
+            {openName}
+          </span>
+          <AlbumSort />
+        </div>
+      }
+    />
+  ) : (
+    <GroupList {...list} />
   );
 };
 
