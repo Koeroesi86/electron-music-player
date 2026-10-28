@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import windowStateKeeper from 'electron-window-state';
 import lockNavigation from './lockNavigation';
 import { isDarkTheme } from './theme';
+import { getControlsArguments, getFrameOptions } from './windowControls';
 import { applyWindowBackdrop, getBackdropArguments, getWindowBackdrop } from './windowBackdrop';
 
 const createWindow = () => {
@@ -17,7 +18,7 @@ const createWindow = () => {
     y: mainWindowState.y,
     width: mainWindowState.width,
     height: mainWindowState.height,
-    frame: false,
+    ...getFrameOptions(process.platform),
     transparent: true,
     // the mode is on the native theme before the window opens (index.ts), so the first paint has the right theme; the window is transparent, so it has no background of its own
     darkTheme: isDarkTheme(),
@@ -26,7 +27,7 @@ const createWindow = () => {
     webPreferences: {
       backgroundThrottling: false,
       preload: resolve(__dirname, './preload.js'),
-      additionalArguments: getBackdropArguments(backdrop),
+      additionalArguments: [...getBackdropArguments(backdrop), ...getControlsArguments(process.platform)],
     },
   });
   applyWindowBackdrop(mainWindow, backdrop);

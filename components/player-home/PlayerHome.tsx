@@ -10,6 +10,7 @@ import Confirm from '../confirm';
 import PlayerControls from '../player-controls';
 import AudioComponent from '../audio-component';
 import TitleBar from '../title-bar';
+import WindowControls from '../window-controls';
 import Navigation from '../navigation';
 import AudioSpectrum from '../audio-spectrum';
 import PlayerTabs from '../player-tabs';
@@ -19,6 +20,7 @@ interface PlayerHomeProps {
   maximized: boolean;
   enableTransparency?: boolean;
   blurred: boolean;
+  nativeControls: boolean;
   loaded: boolean;
   folders: Folder[];
   addFiles: (files: FileList) => void;
@@ -36,7 +38,7 @@ const findContainedPath = (files: FileList, folders: Folder[]) =>
     .map((file) => electronAPI.getPathForFile(file))
     .findLast((filePath) => folders.some((folder) => folder.path.startsWith(filePath) || filePath.startsWith(folder.path)));
 
-const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
+const PlayerHome = ({ maximized, enableTransparency = true, blurred, nativeControls, loaded, folders, addFiles, onUnload }: PlayerHomeProps) => {
   const { t } = useTranslation();
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const latestOnUnload = useLatest(onUnload);
@@ -70,7 +72,7 @@ const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, fol
           <div className={style.library}>
             <div className={style.manageLibrary}>
               <div className={style.manageLibraryPanel}>
-                <TitleBar />
+                <TitleBar nativeControls={nativeControls} />
                 <div className={style.navigationContainer}>
                   <AudioSpectrum width={180} height={80} capHeight={1} meterCount={45} meterWidth={2} gap={2} />
                   <Navigation />
@@ -82,6 +84,7 @@ const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, fol
         </div>
         <PlayerControls />
       </div>
+      {!nativeControls && <WindowControls />}
       <AlbumDetails />
       <Confirm
         message={confirmation?.message ?? null}

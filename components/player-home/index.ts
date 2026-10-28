@@ -10,6 +10,7 @@ const mapState = (state: RootState) => ({
   maximized: state.uiState.maximized,
   blurred: electronAPI.blurred || state.uiState.desktopBlur,
   folders: state.folders,
+  nativeControls: electronAPI.nativeControls,
 });
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
   addFiles: (fileList: FileList) => dispatch({ type: 'FILES_ADDED', payload: { fileList } }),
