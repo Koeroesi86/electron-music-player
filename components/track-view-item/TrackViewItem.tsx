@@ -111,8 +111,8 @@ const TrackViewItem = ({
       {renderField('year', style.year, track.year || '-')}
       {renderField('album', style.album, track.album || '-')}
       {renderField('track', style.trackNo, track.track || '-')}
-      {renderField('title', style.title, track.title || '-')}
       <TrackViewItemField className={style.format}>{'path' in track && <AudioFormatBadge track={track} />}</TrackViewItemField>
+      {renderField('title', style.title, track.title || '-')}
     </div>
   );
 };
