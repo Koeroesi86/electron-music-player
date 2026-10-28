@@ -9,6 +9,8 @@ import { useDelayedValue } from '../../client/hooks/use-delayed-value';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { stationFavourite } from '../../client/favourites';
 import type { Translator } from '../../locales/translate';
+import { toRadioTrack } from '../../client/radio-track';
+import AudioFormatBadge from '../audio-format-badge';
 import FavouriteButton from '../favourite-button';
 import style from './RadioStations.scss';
 
@@ -173,6 +175,7 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
               <PlayIcon size={'12px'} />
             </span>
             <span className={style.name}>{station.name}</span>
+            <AudioFormatBadge track={toRadioTrack(station)} className={style.format} />
             <span className={style.details}>{describe(station, translator)}</span>
             <FavouriteButton item={stationFavourite(station)} className={style.favourite} />
           </div>

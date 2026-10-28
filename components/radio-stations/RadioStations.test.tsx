@@ -58,6 +58,13 @@ describe('RadioStations', () => {
     expect(screen.getByText('AAC · Unknown bitrate')).toBeTruthy();
   });
 
+  it('shows the format of a station that has one', () => {
+    renderPanel();
+
+    expect(screen.getByText('MP3 128')).toBeTruthy();
+    expect(screen.getByText('AAC')).toBeTruthy();
+  });
+
   it('plays a station on double click', () => {
     const { play } = renderPanel();
 
