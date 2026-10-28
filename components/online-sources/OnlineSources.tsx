@@ -13,7 +13,7 @@ const OnlineSources = ({ view, setView }: OnlineSourcesProps) => {
   const { t } = useTranslation();
   const views: ViewItem<OnlineView>[] = [{ view: 'radio', label: t('online.radio'), panel: <RadioStations /> }];
 
-  return <ViewSwitcher views={views} current={view} setView={setView} />;
+  return <ViewSwitcher views={views} current={view} setView={setView} tabs={false} />;
 };
 
 export default OnlineSources;

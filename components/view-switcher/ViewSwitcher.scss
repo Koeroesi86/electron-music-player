@@ -11,6 +11,11 @@
     align-items: center;
     padding: 12px var(--window-controls-inset) 12px 12px;
 
+    .title {
+      margin-right: 12px;
+      line-height: 32px;
+    }
+
     .view {
       -webkit-app-region: no-drag;
       margin-right: 12px;

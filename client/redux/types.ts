@@ -20,6 +20,9 @@ export interface OpenGroup {
   name: string;
 }
 export type OnlineView = 'radio';
+
+/** The groups of the sidebar that open and close */
+export type NavigationGroup = 'library' | 'playlists';
 export type Tab = 'home' | 'now-playing' | 'local' | 'online-sources' | 'favourites' | 'playlist' | 'equalizer' | 'settings';
 
 export interface PlaylistItem {
@@ -31,6 +34,9 @@ export interface PlaylistItem {
 export interface PersistedSettings {
   view: LibraryView;
   onlineView: OnlineView;
+  /** Whether the Library group of the sidebar shows its views, and whether the Playlists group shows the playlists, both start open */
+  libraryOpen: boolean;
+  playlistsOpen: boolean;
   nowPlaying: Track[];
   played: Track[];
   currentSong: Track | null;
@@ -174,6 +180,7 @@ export type AppAction =
   | PayloadAction<'SET_VIEW', { view: LibraryView }>
   | PayloadAction<'SET_ONLINE_VIEW', { view: OnlineView }>
   | PayloadAction<'SET_TAB', { tab: Tab }>
+  | PayloadAction<'SET_NAVIGATION_GROUP', { group: NavigationGroup; open: boolean }>
   | PayloadAction<'SET_VOLUME', { volume: number | string }>
   | PayloadAction<'SET_CURRENT_TIME', { currentTime: number | string }>
   | PayloadAction<'SET_GAIN', { value: number | string; index: number }>

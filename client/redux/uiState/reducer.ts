@@ -10,6 +10,8 @@ import { clampGain, defaultGains, restoreGains } from '../../audio/equalizer';
 const initialState: UiState = {
   view: 'albums',
   onlineView: 'radio',
+  libraryOpen: true,
+  playlistsOpen: true,
   tab: 'home',
   playlistId: null,
   nowPlaying: [],
@@ -128,6 +130,10 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, maximized: action.payload.maximized };
     case 'SET_TAB':
       return { ...state, tab: action.payload.tab };
+    case 'SET_NAVIGATION_GROUP': {
+      const { group, open } = action.payload;
+      return group === 'library' ? { ...state, libraryOpen: open } : { ...state, playlistsOpen: open };
+    }
     case 'OPEN_PLAYLIST':
       return { ...state, tab: 'playlist', playlistId: action.payload.id };
     // the tab of a playlist that is gone shows nothing
@@ -163,6 +169,9 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
         // a tab saved by an earlier version does not decide where the app opens
         tab: state.tab,
         ...(settings.onlineView && { onlineView: restoreOnlineView() }),
+        // the sidebar starts with both groups open, only a saved closed one closes it
+        ...('libraryOpen' in settings && { libraryOpen: settings.libraryOpen !== false }),
+        ...('playlistsOpen' in settings && { playlistsOpen: settings.playlistsOpen !== false }),
         ...(settings.equalizer && { equalizer: restoreGains(settings.equalizer) }),
         ...(settings.theme && { theme: restoreTheme(settings.theme) }),
         // a saved value that is not valid gives the default order and all folders

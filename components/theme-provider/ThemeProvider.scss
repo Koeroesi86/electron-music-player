@@ -82,6 +82,9 @@
 :root {
   @include dark;
 
+  // the accent as a light fill, for the row that is selected; it follows --accent wherever that is set on the root
+  --accent-tint: color-mix(in srgb, var(--accent) 14%, transparent);
+
   // on the cover art, which looks the same in every theme: white on translucent dark
   --art-placeholder: #efefef;
   --art-text: #ffffff;

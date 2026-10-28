@@ -46,6 +46,7 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFile
         views={views}
         current={view}
         setView={setView}
+        tabs={false}
         controls={
           <div className={style.libraryControls}>
             {view !== 'folders' && <LibrarySearch key={view} />}
