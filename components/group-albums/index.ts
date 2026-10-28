@@ -3,6 +3,7 @@ import type { Dispatch } from 'redux';
 import type { Album, Track } from '../../types/library';
 import type { RootState } from '../../client/redux/reducers';
 import type { AppAction } from '../../client/redux/types';
+import { selectSearch } from '../../client/library-query';
 import AlbumView from '../album-view/AlbumView';
 
 /** The albums of the open artist, album artist or genre: the list of the albums, fetched for the group */
@@ -11,6 +12,7 @@ const mapState = (state: RootState) => ({
   sort: state.uiState.albumSort,
   selected: state.uiState.libraryFolders,
   folders: state.folders,
+  search: selectSearch(state),
 });
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({

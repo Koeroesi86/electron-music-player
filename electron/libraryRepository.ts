@@ -224,7 +224,12 @@ const toGroupFilter = (group: AlbumGroup | undefined) => ({
  * Limited to the albums of the tracks below the folders when there are any, to the albums with a track of the group when there is one, and to the albums
  * that have a track matching the search (the album keeps all its tracks in its count and its duration), with the number of albums
  */
-export const getAlbumPage = (database: Database, offset: number, limit: number, { sort, folders, search, group }: AlbumQuery): Promise<LibraryPage<AlbumSummary>> => {
+export const getAlbumPage = (
+  database: Database,
+  offset: number,
+  limit: number,
+  { sort, folders, search, group }: AlbumQuery
+): Promise<LibraryPage<AlbumSummary>> => {
   const folder = toFolderCondition(folders);
   const match = toSearchCondition(search);
   const groupFilter = toGroupFilter(group);
