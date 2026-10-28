@@ -3,8 +3,9 @@ const { createServer } = require('net')
 const { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require('fs')
 const { createServer: createHttpServer } = require('http')
 const { tmpdir } = require('os')
-const { dirname, join, resolve } = require('path')
-const { packagedExecutable } = require('./dist-layout')
+const { join, resolve } = require('path')
+const { packagedExecutable, resourcesFolder } = require('./dist-layout')
+const { waitForPage } = require('./wait-for-page')
 
 // usage: node scripts/smoke.js [--packaged | --flatpak]
 // starts the built app (out/index.js), the packaged one from dist/, or the installed flatpak (flatpak install dist/eMusic-*.flatpak), and checks that the window opens
@@ -274,7 +275,7 @@ const stop = child => {
 
 // loads every dependency of the app from inside the package in the node mode of the executable: the one that does not load is the reason for an app that hangs on its error dialog
 const loadDependencies = () => {
-  const archive = join(dirname(executablePath), 'resources', 'app.asar')
+  const archive = join(resolve(root, resourcesFolder(process.platform, process.arch)), 'app.asar')
   const script = `const { dependencies } = require(${JSON.stringify(join(archive, 'package.json'))})
 for (const name of Object.keys(dependencies)) {
   try { require(require.resolve(name, { paths: [${JSON.stringify(archive)}] })); console.log('ok   ' + name) } catch (error) { console.log('FAIL ' + name + ': ' + error.message) }
@@ -296,18 +297,10 @@ const run = async () => {
   })
   try {
     const { url, webSocketDebuggerUrl } = await findWindowUrl(port, child)
+    // the window exists before the page has loaded, which a slow runner shows: the library is asked from the page
+    await waitForPage(expression => evaluateIn(webSocketDebuggerUrl, expression), Date.now() + timeout)
     const library = await evaluateIn(webSocketDebuggerUrl, `fetch('emusic://app/library').then(response => (response.ok ? response.json() : Promise.reject(new Error('/library answered ' + response.status))))`)
     if (!Array.isArray(library)) throw new Error('/library did not answer a list')
-    // the window exists before the script of the page has rendered, which a slow runner shows
-    const rendered = await evaluateIn(
-      webSocketDebuggerUrl,
-      `new Promise(done => {
-        const deadline = Date.now() + 15000
-        const check = () => (document.getElementById('root')?.childElementCount ? done(true) : Date.now() > deadline ? done(false) : setTimeout(check, 100))
-        check()
-      })`
-    )
-    if (!rendered) throw new Error('The page did not render')
     // the flatpak sandbox does not see the folder of the run
     if (!flatpak) await checkTracks(webSocketDebuggerUrl)
     if (!flatpak) await checkRadio(webSocketDebuggerUrl, station)
