@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>eMusic, a lossless audio player</title>
+    <meta name="description" content="eMusic is a free, open-source audio player for your own music: lossless files play exactly as recorded on Windows, macOS and Linux." />
+    <link rel="canonical" href="https://koeroesi86.github.io/electron-music-player/" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="eMusic, a lossless audio player" />
+    <meta property="og:description" content="Free, open-source player for your own music. Windows, macOS and Linux." />
+    <meta property="og:url" content="https://koeroesi86.github.io/electron-music-player/" />
+    <meta property="og:image" content="https://koeroesi86.github.io/electron-music-player/screenshots/album.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="top">
+      <a class="brand" href="#top"><img src="icon.svg" alt="" width="28" height="28" />eMusic</a>
+      <a href="#features">Features</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/Koeroesi86/electron-music-player">GitHub</a>
+    </nav>
+
+    <header class="hero" id="top">
+      <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <h1>Your music, <span class="gradient">exactly as recorded.</span></h1>
+      <p class="lead">eMusic is a free, open-source player for the music you own. Point it at your folders and it plays lossless files without touching the sound.</p>
+      <p class="actions">
+        <a class="button big" id="download-primary" href="#download" data-fallback="#download">Download eMusic</a>
+        <a class="ghost" href="#features">See what it does</a>
+      </p>
+      <p class="meta">Version {{version}} · Windows, macOS and Linux · <a href="https://github.com/Koeroesi86/electron-music-player/releases/latest">release notes</a></p>
+      <figure class="shot hero-shot">
+        <img src="screenshots/album.webp" width="1360" height="850" alt="The eMusic window with an album open: the cover, the track list and a FLAC 16/44.1 badge on every track." fetchpriority="high" />
+      </figure>
+    </header>
+
+    <ul class="chips" aria-label="At a glance">
+      <li>Free</li>
+      <li>Open source</li>
+      <li>No account</li>
+      <li>Lossless</li>
+      <li>Internet radio</li>
+      <li>Windows · macOS · Linux</li>
+    </ul>
+
+    <main>
+      <section aria-labelledby="features">
+        <h2 id="features">What you get</h2>
+        <ul class="cards">
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h16" /></svg>
+            <h3>Your library, sorted out</h3>
+            <p>Browse by album, artist, album artist and genre, or search by artist, album and title.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h3l2-6 4 12 3-9 2 3h4" /></svg>
+            <h3>Lossless, and you can see it</h3>
+            <p>Every track and station shows its audio format, so you know what you are listening to.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9a10 10 0 0 1 14 0M8 12.5a6 6 0 0 1 8 0M12 16h.01M3 6a14 14 0 0 1 18 0" /></svg>
+            <h3>Internet radio built in</h3>
+            <p>Tune in to stations from the open radio-browser.info directory, next to your own files. <a href="#radio">More about radio</a></p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2" /><path d="M8 21h8" /></svg>
+            <h3>Feels at home</h3>
+            <p>Window controls follow your system, and a translucent window blurs the desktop behind it where the system allows.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" /></svg>
+            <h3>Stays up to date</h3>
+            <p>The app updates itself on start. New releases come out twice a week.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" /></svg>
+            <h3>Free and open</h3>
+            <p>No price and no account. The source is public under the <a href="https://github.com/Koeroesi86/electron-music-player/blob/master/LICENSE.md">ISC licence</a>.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="tour" aria-labelledby="tour">
+        <h2 id="tour">A look around</h2>
+        <div class="row" id="radio">
+          <div class="copy">
+            <h3>Internet radio, next to your own music</h3>
+            <p>Search the station directory by name, genre, country, language, codec or bitrate, and sort by popularity. Each station shows its format, a live badge tells you it is a stream, and the player bar shows the song that is on right now.</p>
+            <p>Heart the stations you come back to and they wait in Liked, like your tracks.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/radio.webp" width="1360" height="850" loading="lazy" alt="The Radio page of eMusic: a list of stations with their format and country, filters for genre, country, language, codec and bitrate, and a live station playing in the player bar." /></figure>
+        </div>
+        <div class="row flip">
+          <div class="copy">
+            <h3>Everything you own, in one list</h3>
+            <p>Every file in your folders shows up with its artist, year, album, track number and format. Open a folder once and the library keeps itself in step with it.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/songs.webp" width="1360" height="850" loading="lazy" alt="The songs list of eMusic with a heart and an add to playlist button on every row and a FLAC badge on every track." /></figure>
+        </div>
+        <div class="row">
+          <div class="copy">
+            <h3>What is playing, and what is next</h3>
+            <p>The cover, the format and the whole queue sit on one page, and the player bar below keeps the controls, the position and the volume in reach.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/now.webp" width="1360" height="850" loading="lazy" alt="The Now playing page of eMusic: the large cover, the queue of four tracks and the player bar with the progress." /></figure>
+        </div>
+        <p class="meta">The music and the stations in the screenshots are made up for the pictures.</p>
+      </section>
+
+      <section id="download" aria-labelledby="download-title">
+        <h2 id="download-title">Download</h2>
+        <p>Pick your system. Not sure about the processor? Most computers made in the last years are the first choice of the list.</p>
+        <div class="systems">
+          <article data-system="windows">
+            <h3>Windows</h3>
+            <p><a class="button" href="{{asset:windows-x64}}">Installer (Intel / AMD)</a></p>
+            <p><a href="{{asset:windows-arm64}}">Installer (ARM)</a></p>
+          </article>
+          <article data-system="mac">
+            <h3>macOS</h3>
+            <p><a class="button" href="{{asset:mac-arm64}}">Disk image (Apple silicon)</a></p>
+            <p><a href="{{asset:mac-x64}}">Disk image (Intel)</a></p>
+          </article>
+          <article data-system="linux">
+            <h3>Linux</h3>
+            <p><a class="button" href="{{asset:linux-x64}}">AppImage (Intel / AMD)</a></p>
+            <p><a href="{{asset:linux-arm64}}">AppImage (ARM)</a></p>
+          </article>
+        </div>
+
+        <details class="help">
+          <summary>Linux: how to start the AppImage</summary>
+          <ol>
+            <li>Make the downloaded file executable: <code>chmod +x eMusic-&lt;version&gt;-&lt;arch&gt;.AppImage</code>, or tick "Allow executing as a program" in the file manager.</li>
+            <li>Start it with <code>./eMusic-&lt;version&gt;-&lt;arch&gt;.AppImage</code> or by double click.</li>
+            <li>It needs FUSE 3: the <code>fuse3</code> package gives the <code>fusermount3</code> helper, and desktop installs have it. Without FUSE, start it with <code>APPIMAGE_EXTRACT_AND_RUN=1 ./eMusic-&lt;version&gt;-&lt;arch&gt;.AppImage</code>.</li>
+            <li>Version 26.10.2 and older also need FUSE 2 (<code>sudo dnf install fuse-libs</code> on Fedora, <code>sudo apt install libfuse2t64</code> on Ubuntu 24.04).</li>
+          </ol>
+        </details>
+        <p class="meta">Every file of every release is on the <a href="https://github.com/Koeroesi86/electron-music-player/releases">releases page</a>.</p>
+      </section>
+
+      <section aria-labelledby="news">
+        <h2 id="news">What is new in {{version}}</h2>
+        <ul class="news">
+          {{notes}}
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <a href="https://github.com/Koeroesi86/electron-music-player">Source code</a>
+      <a href="https://github.com/Koeroesi86/electron-music-player/releases">Releases</a>
+      <a href="https://github.com/Koeroesi86/electron-music-player/issues">Report a problem</a>
+      <a href="https://github.com/Koeroesi86/electron-music-player/blob/master/LICENSE.md">Licence</a>
+    </footer>
+    <script src="download.js"></script>
+  </body>
+</html>
