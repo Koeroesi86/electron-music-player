@@ -4,7 +4,7 @@ import { parseRadioQuery } from '../../../types/radio-query';
 import { isAppAction } from '../types';
 import type { OnlineView, UiState } from '../types';
 import { radioUuidOf } from '../../radio-track';
-import { defaultTheme, parseAccent, restoreTheme } from '../../theme';
+import { autoAccent, defaultTheme, parseAccent, restoreTheme } from '../../theme';
 import { clampGain, defaultGains, restoreGains } from '../../audio/equalizer';
 
 const initialState: UiState = {
@@ -31,7 +31,8 @@ const initialState: UiState = {
   equalizer: defaultGains,
   desktopBlur: false,
   language: undefined,
-  theme: defaultTheme,
+  // a saved theme restores as it was, so the cover colour is only what a theme that was never picked starts with
+  theme: { ...defaultTheme, accent: autoAccent },
   trackSort: undefined,
   albumSort: undefined,
   libraryFolders: [],
