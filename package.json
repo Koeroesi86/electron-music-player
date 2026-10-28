@@ -20,6 +20,7 @@
     "lint": "eslint --cache --cache-strategy content --cache-location .cache/eslint/ .",
     "lint:fix": "eslint --fix .",
     "fallow": "fallow",
+    "site": "node scripts/serve-site.js",
     "security:electron": "node scripts/security-scan.js",
     "smoke": "node scripts/smoke.js",
     "smoke:packaged": "node scripts/smoke.js --packaged",
