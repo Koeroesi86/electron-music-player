@@ -5,13 +5,14 @@ import { toRadioTrack } from '../../client/radio-track';
 import PlayerControls from './PlayerControls';
 
 vi.mock('../scan-progress', () => ({ default: () => null }));
+vi.mock('../live-wave', () => ({ default: () => null }));
 
-const renderControls = (volume: number, currentSong: Track | null = null) => {
+const renderControls = (volume: number, currentSong: Track | null = null, currentTime = 0) => {
   const props = {
     currentSong,
     streamTitle: null,
     streamArt: null,
-    currentTime: 0,
+    currentTime,
     volume,
     shuffle: false,
     repeat: false,
@@ -41,6 +42,33 @@ describe('PlayerControls', () => {
     renderControls(0.5, toRadioTrack({ uuid: 'u1', name: 'Jazz FM', country: '', tags: [], codec: 'MP3', bitrate: 128 }));
 
     expect(screen.getByText('MP3 128')).toBeTruthy();
+  });
+
+  it('shows the elapsed and the total time at the two ends of the seek bar', () => {
+    const song: Track = {
+      ...toRadioTrack({ uuid: 'u2', name: 'Teardrop', country: '', tags: [], codec: 'FLAC', bitrate: 0 }),
+      path: '/music/teardrop.flac',
+      duration: 180,
+    };
+    const { container } = renderControls(0.5, song, 65);
+
+    const seek = container.querySelector('input[type="range"]')?.parentElement?.parentElement?.parentElement;
+    expect(seek?.firstElementChild?.textContent).toBe('00:01:05');
+    expect(seek?.lastElementChild?.textContent).toBe('00:03:00');
+  });
+
+  it('replaces the seek bar of a station with the live row', () => {
+    const { container } = renderControls(0.5, toRadioTrack({ uuid: 'u3', name: 'Jazz FM', country: '', tags: [], codec: 'MP3', bitrate: 128 }), 754);
+
+    expect(screen.getByText('Live')).toBeTruthy();
+    expect(container.querySelectorAll('input[type="range"]')).toHaveLength(1);
+    expect(screen.getByText('00:12:34')).toBeTruthy();
+  });
+
+  it('keeps the play button disabled until there is a track', () => {
+    renderControls(0.5);
+
+    expect((screen.getByRole('button', { name: 'Play' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('mutes and restores the previous volume', () => {

@@ -1,234 +1,264 @@
+// the dock: the track on the left, transport and seek bar in the middle, volume on the right
 .controls {
   position: relative;
-  height: 110px;
-  background: var(--panel-background);
-  box-shadow: 0 0 10px var(--shadow);
   z-index: 2;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+  height: var(--player-bar-height);
+  padding: 0 20px;
+  background: var(--panel-background);
+  border-top: 1px solid var(--overlay);
 
-  .controlsPanel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    padding: 12px 12px 16px 12px;
+  .meta,
+  .right {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
-  .controlsContainer {
-    flex: 1 1 auto;
+  .center {
+    flex: 1.5 1 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-  }
-
-  .progress {
-    padding: 0 12px;
-  }
-
-  .mainControlContainer {
-    margin-top: 12px;
-    padding-left: 6px;
-    padding-right: 6px;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-
-    .mainControlButtons {
-      flex: 1 0 auto;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      padding-left: 6px;
-    }
-
-    .playToggleButton {
-      position: relative;
-      width: 40px;
-      height: 40px;
-      padding: 0;
-      border: 0;
-      background: transparent;
-      opacity: .6;
-      transition: opacity .2s ease-in-out;
-      cursor: pointer;
-      color: var(--text);
-
-      &:focus {
-        outline: 0;
-      }
-
-      &:hover {
-        opacity: 1;
-      }
-
-      &[disabled] {
-        color: var(--text-disabled);
-      }
-
-      .playIcon,
-      .pauseIcon {
-        position: absolute;
-        top: 0;
-        left: 0;
-        backface-visibility: hidden;
-        transition: transform .2s ease-in-out, opacity .2s ease-in-out;
-        will-change: transform, opacity;
-      }
-
-      .pauseIcon {
-        opacity: 0;
-        transform: rotate(90deg);
-      }
-
-      .playIcon {
-        opacity: 1;
-        transform: none;
-      }
-
-      &.playing {
-        .playIcon {
-          opacity: 0;
-          transform: rotate(90deg);
-        }
-
-        .pauseIcon {
-          opacity: 1;
-          transform: none;
-        }
-      }
-    }
-
-    .controlButton {
-      cursor: pointer;
-      //margin: 0 12px;
-      color: var(--text);
-      border: 0;
-      background: transparent;
-      opacity: .3;
-      transition: opacity .2s ease-in-out;
-      will-change: opacity;
-
-      &:hover {
-        opacity: .6;
-      }
-
-      &:focus {
-        outline: 0;
-      }
-
-      &.active {
-        opacity: .6;
-
-        &:hover {
-          opacity: 1;
-        }
-      }
-    }
-
-    .volume {
-      flex: 0 0 auto;
-      width: 250px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-
-      .icon {
-        cursor: pointer;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        line-height: 0;
-        margin: 0 12px;
-        color: var(--text);
-        opacity: .3;
-        transition: opacity .2s ease-in-out;
-        will-change: opacity;
-
-        &:hover {
-          opacity: .6;
-        }
-      }
-
-      .slider {
-        width: 150px;
-      }
-    }
+    gap: 2px;
   }
 
   .meta {
-    position: relative;
-    width: 280px;
-
-    .contents {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      padding-left: 6px;
-      padding-right: 6px;
-      text-align: left;
-      font-size: 12px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      font-weight: 100;
-    }
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    font-size: 12px;
 
     .picture {
-      flex-grow: 0;
-      flex-shrink: 0;
-      height: 75px;
-      width: 75px;
+      flex: 0 0 auto;
+      height: 56px;
+      width: 56px;
       background: transparent url(../../assets/album-placeholder.svg) center center no-repeat;
       background-size: cover;
-      margin-right: 12px;
-      border-radius: 3px;
-      box-shadow: 0 0 6px var(--shadow), inset 0 0 0px 2px var(--art-edge);
+      border-radius: 6px;
+      box-shadow: 0 6px 16px -4px var(--shadow);
     }
 
     .details {
-      flex-grow: 0;
-      flex-shrink: 0;
+      flex: 1 1 auto;
+      min-width: 0;
       display: flex;
       flex-direction: column;
-      padding-right: 20px;
-      width: 200px;
     }
 
     .title,
     .artist,
-    .album,
-    .time {
+    .album {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .title {
-      font-size: 14px;
-      font-weight: 400;
-      margin-bottom: 3px;
+      font-size: 13px;
+      font-weight: 600;
     }
 
-    .artist {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
+    .artist,
     .album {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
-    }
-
-    .time {
-      flex-grow: 1;
-      margin-top: 3px;
     }
 
     .format {
-      margin-top: 3px;
+      margin-top: 4px;
     }
+  }
+
+  .mainControlButtons {
+    align-self: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .playToggleButton {
+    width: 38px;
+    height: 38px;
+    margin: 0 6px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    box-shadow: 0 0 16px var(--accent-glow);
+    cursor: pointer;
+    transition: transform .15s ease-in-out;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    &:hover:not([disabled]) {
+      transform: scale(1.06);
+    }
+
+    &[disabled] {
+      background: var(--overlay-strong);
+      color: var(--text-disabled);
+      box-shadow: none;
+      cursor: default;
+    }
+  }
+
+  .controlButton {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    opacity: .55;
+    transition: opacity .15s ease-in-out;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    &.active {
+      color: var(--accent);
+      opacity: 1;
+    }
+  }
+
+  .seek {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .live {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    height: 25px;
+  }
+
+  .live .progress {
+    position: relative;
+    align-self: stretch;
+  }
+
+  .liveLabel {
+    flex: 0 0 auto;
+    min-width: 56px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .liveDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent-glow);
+  }
+
+  .playing .liveDot {
+    animation: liveDot 1.6s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .playing .liveDot {
+      animation: none;
+    }
+  }
+
+  .progress {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .time {
+    flex: 0 0 auto;
+    min-width: 56px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+
+    &.total {
+      text-align: right;
+    }
+  }
+
+  .right {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .volume {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+
+    .icon {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s ease-in-out;
+
+      &:hover {
+        opacity: 1;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+    }
+
+    .slider {
+      width: 96px;
+    }
+  }
+}
+
+@keyframes liveDot {
+  50% {
+    opacity: .35;
   }
 }

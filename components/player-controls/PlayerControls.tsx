@@ -10,16 +10,18 @@ import {
   FiShuffle as ShuffleIcon,
   FiRepeat as RepeatIcon,
 } from 'react-icons/fi';
-import { MdPlayCircleOutline as PlayIcon, MdPauseCircleOutline as PauseIcon } from 'react-icons/md';
+import { MdPlayArrow as PlayIcon, MdPause as PauseIcon } from 'react-icons/md';
 import Slider from '../slider/Slider';
 import type { Track } from '../../types/library';
 import { toNowPlaying } from '../../client/now-playing';
+import { radioUuidOf } from '../../client/radio-track';
 import { useMediaSession } from '../../client/hooks/use-media-session';
 import { useAudioListener } from '../../client/hooks/use-audio-listener';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { useTranslation } from '../../client/i18n';
 import style from './PlayerControls.scss';
 import ScanProgress from '../scan-progress';
+import LiveWave from '../live-wave';
 import AudioFormatBadge from '../audio-format-badge';
 import Time from '../time';
 
@@ -62,12 +64,7 @@ const IconButton = ({ label, className = style.icon, onClick, children }: IconBu
   </button>
 );
 
-const TrackDetails = ({
-  currentSong,
-  streamTitle,
-  streamArt,
-  currentTime,
-}: Pick<PlayerControlsProps, 'currentSong' | 'streamTitle' | 'streamArt' | 'currentTime'>) => {
+const TrackDetails = ({ currentSong, streamTitle, streamArt }: Pick<PlayerControlsProps, 'currentSong' | 'streamTitle' | 'streamArt'>) => {
   const { t } = useTranslation();
   const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt) : undefined;
 
@@ -75,21 +72,16 @@ const TrackDetails = ({
 
   return (
     <div className={style.meta}>
-      <div className={style.contents}>
-        <div className={style.picture} style={shown?.cover ? { backgroundImage: `url("${shown.cover}")` } : {}} />
-        <div className={style.details}>
-          <div className={style.title}>{shown ? shown.track.title : t('player.none')}</div>
-          <div className={style.album}>{shown ? shown.track.album : t('player.none')}</div>
-          <div className={style.artist}>{shown ? shown.track.artist : t('player.none')}</div>
-          {shown && (
-            <div className={style.format}>
-              <AudioFormatBadge track={shown.track} />
-            </div>
-          )}
-          <div className={style.time}>
-            <Time seconds={currentTime} /> / <Time seconds={currentSong ? currentSong.duration : 0} />
+      <div className={style.picture} style={shown?.cover ? { backgroundImage: `url("${shown.cover}")` } : {}} />
+      <div className={style.details}>
+        <div className={style.title}>{shown ? shown.track.title : t('player.none')}</div>
+        <div className={style.album}>{shown ? shown.track.album : t('player.none')}</div>
+        <div className={style.artist}>{shown ? shown.track.artist : t('player.none')}</div>
+        {shown && (
+          <div className={style.format}>
+            <AudioFormatBadge track={shown.track} />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -121,12 +113,11 @@ const TransportButtons = ({
       </button>
       <button
         onClick={isPlaying ? pause : play}
-        className={classNames(style.playToggleButton, { [style.playing]: isPlaying })}
+        className={style.playToggleButton}
         disabled={!currentSong}
         title={isPlaying ? t('player.pause') : t('player.play')}
       >
-        <PauseIcon className={style.pauseIcon} size={'40px'} />
-        <PlayIcon className={style.playIcon} size={'40px'} />
+        {isPlaying ? <PauseIcon size={'22px'} /> : <PlayIcon size={'22px'} />}
       </button>
       <button className={style.controlButton} onClick={nextSong} title={t('player.next')}>
         <ForwardIcon size={'16px'} />
@@ -137,10 +128,43 @@ const TransportButtons = ({
       <button className={classNames(style.controlButton, { [style.active]: repeat })} onClick={toggleRepeat} title={t('player.repeat')}>
         <RepeatIcon size={'12px'} />
       </button>
-      <ScanProgress />
     </div>
   );
 };
+
+/** A station has no position to seek to: the label and the time listened keep the row of the seek bar, the wave takes its place */
+const LiveRow = ({ isPlaying, currentTime }: Pick<PlayerControlsProps, 'isPlaying' | 'currentTime'>) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className={classNames(style.live, { [style.playing]: isPlaying })}>
+      <span className={style.liveLabel}>
+        <i className={style.liveDot} />
+        {t('player.live')}
+      </span>
+      <div className={style.progress}>
+        <LiveWave isPlaying={isPlaying} />
+      </div>
+      <span className={classNames(style.time, style.total)}>
+        <Time seconds={currentTime} />
+      </span>
+    </div>
+  );
+};
+
+const SeekBar = ({ currentSong, currentTime, setCurrentTime }: Pick<PlayerControlsProps, 'currentSong' | 'currentTime' | 'setCurrentTime'>) => (
+  <div className={style.seek}>
+    <span className={style.time}>
+      <Time seconds={currentTime} />
+    </span>
+    <div className={style.progress}>
+      <Slider min={0} max={currentSong?.duration ?? 0} step={0.0001} value={currentTime} onInput={(e) => setCurrentTime(parseFloat(e.currentTarget.value))} />
+    </div>
+    <span className={classNames(style.time, style.total)}>
+      <Time seconds={currentSong ? currentSong.duration : 0} />
+    </span>
+  </div>
+);
 
 const VolumeControls = ({ volume, setVolume, openEqualizer }: Pick<PlayerControlsProps, 'volume' | 'setVolume' | 'openEqualizer'>) => {
   const { t } = useTranslation();
@@ -188,23 +212,18 @@ const PlayerControls = (props: PlayerControlsProps) => {
 
   return (
     <div className={style.controls}>
-      <div className={style.controlsPanel}>
-        <TrackDetails currentSong={currentSong} streamTitle={props.streamTitle} streamArt={props.streamArt} currentTime={currentTime} />
-        <div className={style.controlsContainer}>
-          <div className={style.progress}>
-            <Slider
-              min={0}
-              max={currentSong?.duration ?? 0}
-              step={0.0001}
-              value={currentTime}
-              onInput={(e) => setCurrentTime(parseFloat(e.currentTarget.value))}
-            />
-          </div>
-          <div className={style.mainControlContainer}>
-            <TransportButtons {...props} />
-            <VolumeControls volume={props.volume} setVolume={props.setVolume} openEqualizer={props.openEqualizer} />
-          </div>
-        </div>
+      <TrackDetails currentSong={currentSong} streamTitle={props.streamTitle} streamArt={props.streamArt} />
+      <div className={style.center}>
+        <TransportButtons {...props} />
+        {currentSong && radioUuidOf(currentSong.path) ? (
+          <LiveRow isPlaying={isPlaying} currentTime={currentTime} />
+        ) : (
+          <SeekBar currentSong={currentSong} currentTime={currentTime} setCurrentTime={setCurrentTime} />
+        )}
+      </div>
+      <div className={style.right}>
+        <ScanProgress />
+        <VolumeControls volume={props.volume} setVolume={props.setVolume} openEqualizer={props.openEqualizer} />
       </div>
     </div>
   );
