@@ -54,6 +54,26 @@ describe('registerPlaylistListeners', () => {
     expect(playlist.entries.map(({ available }: { available: boolean }) => available)).toEqual([true, false]);
   });
 
+  it('shows the format the library reads of a track, not the one of the snapshot that was saved before', async () => {
+    await addTrack(database, {
+      ...track,
+      artist: '',
+      album: '',
+      year: '',
+      track: '',
+      disk: '',
+      genre: '',
+      picture: null,
+      duration: 1,
+      codec: 'FLAC',
+      lossless: 1,
+    });
+
+    const [playlist] = await call('PLAYLIST_CREATE', { name: 'Road', tracks: [track] });
+
+    expect(playlist.entries[0].track).toMatchObject({ title: 'A', codec: 'FLAC', lossless: 1 });
+  });
+
   it('renames, moves entries and deletes', async () => {
     const [{ id }] = await call('PLAYLIST_CREATE', { name: 'Road', tracks: [track, { path: '/b' }] });
 

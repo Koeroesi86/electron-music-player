@@ -3,10 +3,12 @@ import { MdPlayArrow as PlayIcon } from 'react-icons/md';
 import type { Favourite } from '../../types/favourites';
 import type { Track } from '../../types/library';
 import type { RadioStation } from '../../types/radio';
+import { toRadioTrack } from '../../client/radio-track';
 import { getFavouriteTracks } from '../../client/favourite-tracks';
 import { useTranslation } from '../../client/i18n';
 import type { Translator } from '../../locales/translate';
 import style from './FavouritesView.scss';
+import AudioFormatBadge from '../audio-format-badge';
 import FavouriteButton from '../favourite-button';
 
 interface FavouritesViewProps {
@@ -23,6 +25,18 @@ const describe = (favourite: Favourite, { t }: Translator) => {
       return [favourite.snapshot.artist, t('favourites.album')].filter(Boolean).join(' · ');
     default:
       return [favourite.snapshot.country, ...favourite.snapshot.tags.slice(0, 3)].filter(Boolean).join(' · ');
+  }
+};
+
+/** What the badge of a favourite shows the format of: a track, or a station as the track it plays as; an album has none */
+const formatTrack = (favourite: Favourite) => {
+  switch (favourite.kind) {
+    case 'track':
+      return favourite.snapshot;
+    case 'station':
+      return toRadioTrack(favourite.snapshot);
+    default:
+      return undefined;
   }
 };
 
@@ -68,6 +82,7 @@ const Section = ({ title, note, favourites, play }: SectionProps) => {
           <span className={style.name} title={nameOf(favourite)}>
             {nameOf(favourite)}
           </span>
+          <AudioFormatBadge className={style.format} track={formatTrack(favourite)} />
           <span className={style.details}>{favourite.available ? describe(favourite, translator) : t('favourites.unavailable')}</span>
           <button className={style.playButton} disabled={!favourite.available} aria-label={t('player.play')} onClick={() => play([favourite])}>
             <PlayIcon size="12px" />

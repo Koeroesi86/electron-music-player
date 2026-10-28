@@ -1,6 +1,6 @@
 import path from 'path';
 import type { Database } from 'sqlite3';
-import type { AlbumSummary, Folder, LibraryPage, Track } from '../types/library';
+import type { AlbumSummary, AudioFormat, Folder, LibraryPage, Track } from '../types/library';
 import type { AlbumSort, AlbumSortField, LibraryQuery, SortDirection, TrackSort, TrackSortField } from '../types/library-query';
 import executeQuery from './executeQuery';
 import executeQueries from './executeQueries';
@@ -30,6 +30,13 @@ export const deleteFolders = (database: Database, folders: Pick<Folder, 'path'>[
   );
 
 /** Remove the tracks below a folder from the library, the files stay on disk */
+/** The format the library holds of a track, undefined for a track it does not have */
+export const findTrackFormat = (database: Database, trackPath: string) =>
+  executeQuery<AudioFormat>(database, {
+    query: `SELECT codec, bitDepth, sampleRate, bitrate, vbr, lossless FROM library WHERE path = ?`,
+    variables: [trackPath],
+  }).then(([format]) => format);
+
 export const deleteTracksInside = (database: Database, folderPath: string) =>
   executeQuery(database, {
     query: `DELETE FROM library WHERE path LIKE ? ESCAPE '!'`,
