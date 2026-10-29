@@ -4,7 +4,6 @@ import type { Track } from '../../types/library';
 import { toRadioTrack } from '../../client/radio-track';
 import PlayerControls from './PlayerControls';
 
-vi.mock('../scan-progress', () => ({ default: () => null }));
 vi.mock('../live-wave', () => ({ default: () => null }));
 
 const renderControls = (volume: number, currentSong: Track | null = null, currentTime = 0) => {
