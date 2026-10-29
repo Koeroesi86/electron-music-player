@@ -39,6 +39,8 @@
   --control-text-hover: #ffffff;
 
   --popup-header: #5b3d7a;
+
+  --warning: #e8b75a;
 }
 
 @mixin light {
@@ -77,6 +79,8 @@
   --control-text-hover: #000000;
 
   --popup-header: #dccdee;
+
+  --warning: #9a6200;
 }
 
 :root {
@@ -141,6 +145,7 @@
   --accent-glow: color-mix(in srgb, var(--accent) 35%, transparent);
   --accent-soft: color-mix(in srgb, var(--accent) 60%, transparent);
   --accent-muted: color-mix(in srgb, var(--accent) 75%, var(--panel-solid));
+  --accent-deep: color-mix(in srgb, var(--accent) 45%, var(--popup-header));
   // what the canvases draw with, they read it from the computed style
   --spectrum-meter: var(--accent-soft);
   --spectrum-cap: var(--accent);
