@@ -7,6 +7,15 @@ import { albumFavourite, stationFavourite, trackFavourite } from '../../client/f
 import FavouritesView from './FavouritesView';
 
 vi.mock('../favourite-button', () => ({ default: () => null }));
+const queued = vi.hoisted(() => vi.fn());
+vi.mock('../add-to-queue', async () => {
+  const { createElement } = await import('react');
+
+  return {
+    default: ({ getTracks }: { getTracks: () => Promise<unknown[]> }) =>
+      createElement('button', { 'aria-label': 'Add to the queue', onClick: () => void getTracks().then(queued) }),
+  };
+});
 
 const track: Track = {
   path: '/music/a.flac',
@@ -28,6 +37,7 @@ const stored = (item: ReturnType<typeof trackFavourite>, available = true): Favo
 describe('FavouritesView', () => {
   afterEach(() => {
     cleanup();
+    queued.mockReset();
     vi.unstubAllGlobals();
   });
 
@@ -46,6 +56,16 @@ describe('FavouritesView', () => {
     expect(screen.getByText('FLAC 16/44.1')).toBeTruthy();
     expect(screen.getByText('MP3 128')).toBeTruthy();
     expect(document.querySelectorAll('.badge')).toHaveLength(2);
+  });
+
+  it('adds the track of a favourite to the queue, and offers it for neither a station nor an unavailable one', async () => {
+    renderView([stored(trackFavourite(track)), stored(stationFavourite(station)), stored(trackFavourite({ ...track, path: '/music/b.flac' }), false)]);
+
+    const buttons = screen.getAllByRole('button', { name: 'Add to the queue' });
+    expect(buttons).toHaveLength(1);
+
+    fireEvent.click(buttons[0]);
+    await waitFor(() => expect(queued).toHaveBeenCalledWith([track]));
   });
 
   it('tells that nothing is marked yet', () => {

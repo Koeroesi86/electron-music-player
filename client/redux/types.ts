@@ -186,6 +186,10 @@ export type AppAction =
   | PayloadAction<'SET_GAIN', { value: number | string; index: number }>
   | PayloadAction<'SELECT_ALBUM', { album: Album | null }>
   | PayloadAction<'PLAY_TRACKS', { tracks: Track[] }>
+  | EmptyAction<'CLEAR_QUEUE'>
+  | PayloadAction<'ADD_TO_QUEUE', { tracks: Track[] }>
+  | PayloadAction<'MOVE_QUEUE_TRACK', { from: number; to: number }>
+  | PayloadAction<'REMOVE_FROM_QUEUE', { index: number }>
   | PayloadAction<'PLAY_TRACK', { track: Track | null }>
   | PayloadAction<'FORCE_PLAY_TRACK', { track: Track }>
   | PayloadAction<'ADD_PLAYED', { track: Track | null }>;

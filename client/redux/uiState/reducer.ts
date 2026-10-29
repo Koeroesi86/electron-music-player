@@ -91,6 +91,25 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, radioQuery: parseRadioQuery(action.payload.query) };
     case 'PLAY_TRACKS':
       return { ...state, nowPlaying: action.payload.tracks, played: [] };
+    // the song that plays stays, as the queue finds it by its path
+    case 'CLEAR_QUEUE':
+      return { ...state, nowPlaying: state.nowPlaying.filter(({ path }) => path === state.currentSong?.path), played: [] };
+    // a track that is in the queue already is not added a second time, the queue finds the song that plays by its path
+    case 'ADD_TO_QUEUE': {
+      const queued = new Set(state.nowPlaying.map(({ path }) => path));
+      const added = action.payload.tracks.filter(({ path }, index, all) => !queued.has(path) && all.findIndex((other) => other.path === path) === index);
+      return added.length ? { ...state, nowPlaying: [...state.nowPlaying, ...added] } : state;
+    }
+    case 'MOVE_QUEUE_TRACK': {
+      const { from, to } = action.payload;
+      const queue = [...state.nowPlaying];
+      if (from === to || !queue[from] || to < 0 || to >= queue.length) return state;
+
+      queue.splice(to, 0, ...queue.splice(from, 1));
+      return { ...state, nowPlaying: queue };
+    }
+    case 'REMOVE_FROM_QUEUE':
+      return state.nowPlaying[action.payload.index] ? { ...state, nowPlaying: state.nowPlaying.filter((_, index) => index !== action.payload.index) } : state;
     case 'PLAY_TRACK':
       // the position of the previous song would seek the new one to its end
       return { ...state, currentSong: action.payload.track || null, currentTime: 0, isPlaying: true, streamTitle: null, streamArt: null };

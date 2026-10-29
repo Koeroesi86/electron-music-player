@@ -5,6 +5,7 @@ import appIcon from '../../assets/icon.svg';
 import style from './TitleBar.scss';
 import AudioSpectrum from '../audio-spectrum';
 import WindowControls from '../window-controls';
+import CoverFade from '../cover-fade';
 
 interface TitleBarProps {
   title?: string;
@@ -27,7 +28,7 @@ function TitleBar({ title = 'eMusic', currentSong = null, streamTitle = null, st
       </div>
       {shown ? (
         <button type="button" className={style.track} title={t('nowPlaying.title')} onClick={openNowPlaying}>
-          <span className={style.cover} style={shown.cover ? { backgroundImage: `url("${shown.cover}")` } : undefined} />
+          <CoverFade className={style.cover} src={shown.cover} />
           <span className={style.name}>{shown.track.title}</span>
           {shown.track.artist && <span className={style.artist}>{shown.track.artist}</span>}
           <span className={style.spectrum}>

@@ -1,0 +1,39 @@
+.cover {
+  position: relative;
+  display: block;
+
+  // the edge of the art sits over the layers
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px var(--art-edge);
+    pointer-events: none;
+  }
+
+  .layer {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  .fadeIn {
+    animation: coverFadeIn 0.4s ease-in-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fadeIn {
+      animation-duration: 0.01s;
+    }
+  }
+}
+
+@keyframes coverFadeIn {
+  from {
+    opacity: 0;
+  }
+}

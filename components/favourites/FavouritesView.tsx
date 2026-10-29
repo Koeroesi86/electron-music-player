@@ -10,6 +10,7 @@ import type { Translator } from '../../locales/translate';
 import style from './FavouritesView.scss';
 import AudioFormatBadge from '../audio-format-badge';
 import FavouriteButton from '../favourite-button';
+import AddToQueue from '../add-to-queue';
 
 interface FavouritesViewProps {
   favourites: Favourite[];
@@ -84,6 +85,7 @@ const Section = ({ title, note, favourites, play }: SectionProps) => {
           </span>
           <AudioFormatBadge className={style.format} track={formatTrack(favourite)} />
           <span className={style.details}>{favourite.available ? describe(favourite, translator) : t('favourites.unavailable')}</span>
+          {favourite.available && favourite.kind !== 'station' && <AddToQueue className={style.playButton} getTracks={() => getFavouriteTracks([favourite])} />}
           <button className={style.playButton} disabled={!favourite.available} aria-label={t('player.play')} onClick={() => play([favourite])}>
             <PlayIcon size="12px" />
           </button>
