@@ -162,32 +162,36 @@ const HomeView = ({
                 {t('home.clear')}
               </button>
             </div>
-            {history.length === 0 && <div className={style.message}>{t('home.empty')}</div>}
-            {history.map((item) => (
-              <div
-                key={`${item.source}/${item.kind}/${item.id}`}
-                className={classNames(style.item, { [style.unavailable]: !item.available, [style.current]: isPlayingItem(item, currentSong) })}
-                onDoubleClick={() => item.available && play(item)}
-              >
+            <div className={style.recentList}>
+              {history.length === 0 && <div className={style.message}>{t('home.empty')}</div>}
+              {history.map((item) => (
                 <div
-                  className={style.cover}
-                  style={item.kind === 'track' && item.snapshot.picture ? { backgroundImage: `url("${getCoverUrl(item.snapshot.picture)}")` } : undefined}
-                />
-                <span className={style.name} title={nameOf(item)}>
-                  {nameOf(item)}
-                </span>
-                <span className={style.artist}>{item.kind === 'track' ? item.snapshot.artist : item.kind === 'station' ? item.snapshot.country : ''}</span>
-                <span className={style.album}>{!item.available ? t('home.unavailable') : item.kind === 'track' ? item.snapshot.album : t('home.station')}</span>
-                <span className={style.format}>
-                  <AudioFormatBadge track={item.kind === 'station' ? toRadioTrack(item.snapshot) : item.kind === 'track' ? item.snapshot : undefined} />
-                </span>
-                <span className={style.duration}>{item.kind === 'track' && item.snapshot.duration ? <Time seconds={item.snapshot.duration} /> : null}</span>
-                <FavouriteButton item={item} />
-                <button className={style.playButton} disabled={!item.available} aria-label={t('player.play')} onClick={() => play(item)}>
-                  <PlayIcon size="12px" />
-                </button>
-              </div>
-            ))}
+                  key={`${item.source}/${item.kind}/${item.id}`}
+                  className={classNames(style.item, { [style.unavailable]: !item.available, [style.current]: isPlayingItem(item, currentSong) })}
+                  onDoubleClick={() => item.available && play(item)}
+                >
+                  <div
+                    className={style.cover}
+                    style={item.kind === 'track' && item.snapshot.picture ? { backgroundImage: `url("${getCoverUrl(item.snapshot.picture)}")` } : undefined}
+                  />
+                  <span className={style.name} title={nameOf(item)}>
+                    {nameOf(item)}
+                  </span>
+                  <span className={style.artist}>{item.kind === 'track' ? item.snapshot.artist : item.kind === 'station' ? item.snapshot.country : ''}</span>
+                  <span className={style.album}>
+                    {!item.available ? t('home.unavailable') : item.kind === 'track' ? item.snapshot.album : t('home.station')}
+                  </span>
+                  <span className={style.format}>
+                    <AudioFormatBadge track={item.kind === 'station' ? toRadioTrack(item.snapshot) : item.kind === 'track' ? item.snapshot : undefined} />
+                  </span>
+                  <span className={style.duration}>{item.kind === 'track' && item.snapshot.duration ? <Time seconds={item.snapshot.duration} /> : null}</span>
+                  <FavouriteButton item={item} />
+                  <button className={style.playButton} disabled={!item.available} aria-label={t('player.play')} onClick={() => play(item)}>
+                    <PlayIcon size="12px" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
           {stations.length > 0 && (
             <div className={style.stations}>

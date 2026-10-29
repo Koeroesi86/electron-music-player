@@ -55,6 +55,16 @@ describe('HomeView', () => {
     expect(screen.getByRole('button', { name: 'Clear history' }).hasAttribute('disabled')).toBe(true);
   });
 
+  it('keeps the title and the clear button out of the list that scrolls', () => {
+    renderView([played(trackFavourite(track))]);
+
+    const list = screen.getByText('One').closest('div')?.parentElement;
+
+    expect(list?.contains(screen.getByText('One'))).toBe(true);
+    expect(list?.contains(screen.getByRole('button', { name: 'Clear history' }))).toBe(false);
+    expect(list?.contains(screen.getByText('Recently played'))).toBe(false);
+  });
+
   it('lists the tracks and the stations in the order of the history', () => {
     renderView([played(stationFavourite(station)), played(trackFavourite(track))]);
 
