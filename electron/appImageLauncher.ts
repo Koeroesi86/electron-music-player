@@ -1,5 +1,5 @@
 import { execFile } from 'child_process';
-import { copyFile, mkdir, readFile, rename, rm, stat, utimes, writeFile } from 'fs/promises';
+import { copyFile, mkdir, readFile, readlink, rename, rm, stat, symlink, utimes, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { catalog } from '../locales';
 
@@ -19,6 +19,8 @@ const updateDesktopDatabase = (applicationsPath: string) => new Promise<void>((d
 
 const getApplicationsPath = (dataHome: string) => join(dataHome, 'applications');
 const getDesktopFile = (dataHome: string) => join(getApplicationsPath(dataHome), `${launcherName}.desktop`);
+// the desktop shell keeps the entry it read first and fails every start of an old path, so the entry always starts this link and the link follows the AppImage
+export const getLauncherLink = (dataHome: string) => join(dataHome, launcherName, 'eMusic.AppImage');
 const getIconFile = (dataHome: string, size: number) => join(dataHome, 'icons/hicolor', `${size}x${size}`, 'apps', `${launcherName}.png`);
 
 // the characters that would need escaping in the Exec key of a desktop entry; such a path is not worth the risk of a broken launcher
@@ -52,6 +54,7 @@ export const buildDesktopEntry = (appImage: string) => {
 export const readLauncherTarget = (dataHome: string) =>
   readFile(getDesktopFile(dataHome), 'utf8')
     .then((entry) => entry.match(/^Exec="([^"]*)"/m)?.[1])
+    .then((exec) => (exec === getLauncherLink(dataHome) ? readlink(exec).catch(() => exec) : exec))
     .catch(() => undefined);
 
 export const isLauncherEnabled = (dataHome: string) => readLauncherTarget(dataHome).then((target) => target !== undefined);
@@ -68,26 +71,34 @@ const writeIcon = (size: number, { dataHome, iconsPath }: LauncherOptions) =>
     copyFile(join(iconsPath, `${size}x${size}.png`), getIconFile(dataHome, size))
   );
 
-// the desktop shell watches the folder for a new file and keeps the old entry when one is rewritten in place, which failed every start of the old AppImage after an update
-const writeDesktopFile = (dataHome: string, entry: string) => {
-  const temporary = join(getApplicationsPath(dataHome), `.${launcherName}.desktop.tmp`);
+// the link is replaced through a rename, so it never is missing while the desktop starts the app
+const writeLink = (appImage: string, dataHome: string) => {
+  const link = getLauncherLink(dataHome);
+  const temporary = `${link}.tmp`;
 
-  return writeFile(temporary, entry).then(() => rename(temporary, getDesktopFile(dataHome)));
+  return mkdir(join(link, '..'), { recursive: true })
+    .then(() => rm(temporary, { force: true }))
+    .then(() => symlink(appImage, temporary, 'file'))
+    .then(() => rename(temporary, link));
 };
 
 export const enableLauncher = async (appImage: string, options: LauncherOptions) => {
-  const entry = buildDesktopEntry(appImage);
   const { dataHome, refresh = updateDesktopDatabase } = options;
 
+  const entry = buildDesktopEntry(getLauncherLink(dataHome));
+
   await mkdir(getApplicationsPath(dataHome), { recursive: true });
+  await writeLink(appImage, dataHome);
   await Promise.all(iconSizes.map((size) => writeIcon(size, options)));
   await invalidateIconCache(dataHome);
-  await writeDesktopFile(dataHome, entry);
+  await writeFile(getDesktopFile(dataHome), entry);
   await refresh(getApplicationsPath(dataHome));
 };
 
 export const disableLauncher = ({ dataHome, refresh = updateDesktopDatabase }: LauncherOptions) =>
-  Promise.all([getDesktopFile(dataHome), ...iconSizes.map((size) => getIconFile(dataHome, size))].map((file) => rm(file, { force: true })))
+  Promise.all(
+    [getDesktopFile(dataHome), getLauncherLink(dataHome), ...iconSizes.map((size) => getIconFile(dataHome, size))].map((file) => rm(file, { force: true }))
+  )
     .then(() => invalidateIconCache(dataHome))
     .then(() => refresh(getApplicationsPath(dataHome)));
 
@@ -101,6 +112,7 @@ const readIfThere = (path: string) => readFile(path).catch(() => undefined);
 
 /** Whether the installed entry and icons are what a fresh `enableLauncher` would write */
 const isCurrent = async (appImage: string, { dataHome, iconsPath }: LauncherOptions) => {
+  const target = await readLauncherTarget(dataHome);
   const entry = await readIfThere(getDesktopFile(dataHome));
   const icons = await Promise.all(
     iconSizes.map((size) =>
@@ -110,7 +122,7 @@ const isCurrent = async (appImage: string, { dataHome, iconsPath }: LauncherOpti
     )
   );
 
-  return entry?.toString() === buildDesktopEntry(appImage) && icons.every(Boolean);
+  return target === appImage && entry?.toString() === buildDesktopEntry(getLauncherLink(dataHome)) && icons.every(Boolean);
 };
 
 /**
