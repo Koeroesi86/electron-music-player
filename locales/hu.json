@@ -40,6 +40,8 @@
   "library.noResults": "A könyvtárban nincs találat erre: „{search}”",
   "online.radio": "Rádió",
   "folders.title": "Mappák",
+  "folders.count_one": "{count} mappa",
+  "folders.count_other": "{count} mappa",
   "folders.remove": "Eltávolítás",
   "folders.drop": "Húzd ide a zenei mappákat",
   "folders.add": "Mappa hozzáadása…",

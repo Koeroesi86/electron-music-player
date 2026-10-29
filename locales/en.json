@@ -40,6 +40,8 @@
   "library.noResults": "Nothing in the library matches “{search}”",
   "online.radio": "Radio",
   "folders.title": "Folders",
+  "folders.count_one": "{count} folder",
+  "folders.count_other": "{count} folders",
   "folders.remove": "Remove",
   "folders.drop": "Drop music folders here",
   "folders.add": "Add folder…",

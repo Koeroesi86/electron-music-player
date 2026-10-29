@@ -1,56 +1,161 @@
 .folderManagement {
-  padding-left: 12px;
+  padding: 0 12px 12px;
 
-  .sectionTitle {
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 100;
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     padding: 12px 0;
+
+    .sectionTitle {
+      margin: 0;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 100;
+    }
+
+    .count {
+      flex: 1 1 auto;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .addItems {
+      -webkit-app-region: no-drag;
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      gap: 4px;
+      height: 28px;
+      padding: 0 12px 0 8px;
+      color: var(--accent-contrast);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 0;
+      border-radius: 14px;
+      background-color: var(--accent);
+
+      svg {
+        font-size: 16px;
+      }
+
+      &:hover {
+        filter: brightness(1.1);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--text);
+        outline-offset: 2px;
+      }
+    }
   }
 
   .folders {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
     .folder {
       -webkit-app-region: no-drag;
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
+      gap: 10px;
+      min-height: 40px;
+      padding: 0 8px 0 12px;
       font-size: 12px;
+      border-radius: 6px;
+      background-color: var(--overlay-faint);
+      transition: background-color 0.1s ease-in-out;
 
-      .path {
-        overflow-x: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
+      &:hover {
+        background-color: var(--overlay);
       }
 
+      .icon {
+        flex: none;
+        font-size: 20px;
+        color: var(--accent);
+      }
+
+      .path {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-width: 0;
+        line-height: 16px;
+
+        .name,
+        .parent {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        .name {
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .parent {
+          font-size: 11px;
+          color: var(--text-muted);
+        }
+      }
+
+      &.offline .icon,
       &.offline .path {
         opacity: 0.5;
       }
 
       .offlineLabel {
+        display: inline-flex;
         flex: none;
-        opacity: 0.7;
-        font-style: italic;
+        align-items: center;
+        gap: 4px;
+        color: var(--text-soft);
       }
 
       .remove {
+        display: inline-flex;
         flex: none;
-        cursor: pointer;
+        align-items: center;
+        gap: 2px;
+        height: 24px;
+        padding: 0 8px 0 4px;
+        color: var(--text-muted);
         font-size: 12px;
+        cursor: pointer;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+
+        svg {
+          font-size: 14px;
+        }
+
+        &:hover {
+          color: var(--text);
+          background-color: var(--overlay-strong);
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--accent);
+        }
       }
     }
+  }
 
-    .addItems {
-      -webkit-app-region: no-drag;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .dropHint {
-      margin-top: 6px;
-      font-size: 12px;
-      opacity: 0.6;
-    }
+  .dropHint {
+    margin-top: 8px;
+    padding: 14px;
+    font-size: 12px;
+    text-align: center;
+    color: var(--text-muted);
+    border: 1px dashed var(--overlay-strong);
+    border-radius: 6px;
   }
 }
