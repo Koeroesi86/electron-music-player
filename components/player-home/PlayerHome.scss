@@ -59,9 +59,7 @@ html, body {
   color: var(--text);
   background: var(--app-background);
 
-  // the room the window buttons (components/window-controls) take at the right of a header: the two edges, three buttons and two gaps, and a gap to what is next to them
-  --window-controls-inset: 114px;
-
+  --title-bar-height: 40px;
   --player-bar-height: 88px;
 
   // the panels let the blur through only when there is one (see windowBackdrop.ts)
@@ -123,13 +121,16 @@ html, body {
 
   .wrapper {
     position: relative;
+    display: flex;
+    flex-direction: column;
     height: 100%;
   }
 
   .mainPanel {
     display: flex;
     flex-direction: row;
-    height: calc(100% - var(--player-bar-height));
+    flex: 1 1 0;
+    min-height: 0;
   }
 
   .controls {
