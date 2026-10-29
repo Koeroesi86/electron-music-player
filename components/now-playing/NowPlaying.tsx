@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import slugify from 'slugify';
 import { MdClose as RemoveIcon, MdMusicNote as NoteIcon, MdPlayArrow as PlayIcon } from 'react-icons/md';
@@ -25,6 +25,7 @@ interface NowPlayingProps {
   playTrack: (track: Track) => void;
   moveTrack: (from: number, to: number) => void;
   removeTrack: (index: number) => void;
+  clearQueue: () => void;
   openLibrary: () => void;
 }
 
@@ -38,10 +39,12 @@ const NowPlaying = ({
   playTrack,
   moveTrack,
   removeTrack,
+  clearQueue,
   openLibrary,
 }: NowPlayingProps) => {
   const { t } = useTranslation();
   const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt) : undefined;
+  const [confirming, setConfirming] = useState(false);
   const list = useRef<HTMLDivElement>(null);
   const current = useRef<HTMLDivElement>(null);
   // a track is identified by its place in the queue, it can be in it more than once
@@ -90,7 +93,22 @@ const NowPlaying = ({
             <span>
               {t('nowPlaying.upNext')} · {t('tracks.count', { count: nowPlaying.length })}
             </span>
-            <Time seconds={nowPlaying.reduce((total, track) => total + (track.duration || 0), 0)} />
+            <span className={style.queueTotals}>
+              <Time seconds={nowPlaying.reduce((total, track) => total + (track.duration || 0), 0)} />
+              {/* the song that plays stays, so there is nothing to clear when it is the only one */}
+              <button
+                type="button"
+                className={classNames(style.clearButton, { [style.confirming]: confirming })}
+                disabled={!nowPlaying.some((track) => track.path !== currentSong?.path)}
+                onClick={() => {
+                  if (confirming) clearQueue();
+                  setConfirming(!confirming);
+                }}
+                onBlur={() => setConfirming(false)}
+              >
+                {confirming ? t('nowPlaying.clearConfirm') : t('nowPlaying.clear')}
+              </button>
+            </span>
           </div>
           <div className={style.tracks} ref={list}>
             {nowPlaying.map((track, index) => {

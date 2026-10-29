@@ -77,12 +77,47 @@
 
   .queueHeader {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     padding: 0 10px 8px;
     font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-faint);
+  }
+
+  .queueTotals {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .clearButton {
+    padding: 2px 8px;
+    border: 1px solid var(--overlay-strong);
+    border-radius: 99px;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: var(--text-muted);
+    background: transparent;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: var(--text);
+      background-color: var(--overlay);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    &.confirming {
+      color: var(--accent-contrast);
+      border-color: var(--accent);
+      background: var(--accent);
+    }
   }
 
   .tracks {

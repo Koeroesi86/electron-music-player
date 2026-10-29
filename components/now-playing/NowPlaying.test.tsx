@@ -45,6 +45,7 @@ const renderPage = (props: Partial<Parameters<typeof NowPlaying>[0]> = {}) =>
       playTrack={vi.fn()}
       moveTrack={vi.fn()}
       removeTrack={vi.fn()}
+      clearQueue={vi.fn()}
       openLibrary={vi.fn()}
       {...props}
     />
@@ -102,6 +103,7 @@ describe('NowPlaying', () => {
         playTrack={vi.fn()}
         moveTrack={vi.fn()}
         removeTrack={vi.fn()}
+        clearQueue={vi.fn()}
         openLibrary={vi.fn()}
       />
     );
@@ -163,6 +165,33 @@ describe('NowPlaying', () => {
     fireEvent.drop(second);
 
     expect(moveTrack).toHaveBeenCalledWith(0, 1);
+  });
+
+  it('clears the queue on the second click, and asks first', () => {
+    const clearQueue = vi.fn();
+    renderPage({ clearQueue });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(clearQueue).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear the queue?' }));
+    expect(clearQueue).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeTruthy();
+  });
+
+  it('forgets the question when the button loses the focus', () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    fireEvent.blur(screen.getByRole('button', { name: 'Clear the queue?' }));
+
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeTruthy();
+  });
+
+  it('has nothing to clear while the song that plays is the only one in the queue', () => {
+    renderPage({ nowPlaying: [flac] });
+
+    expect((screen.getByRole('button', { name: 'Clear' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('shows a message and a way into the library when nothing is loaded', () => {

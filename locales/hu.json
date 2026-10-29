@@ -19,6 +19,8 @@
   "queue.add": "Hozzáadás a sorhoz",
   "queue.added": "Hozzáadva a sorhoz",
   "queue.addShort": "Sorhoz adás",
+  "nowPlaying.clear": "Törlés",
+  "nowPlaying.clearConfirm": "Törlöd a sort?",
   "nowPlaying.upNext": "Következik",
   "nowPlaying.remove": "{title} eltávolítása a sorból",
   "nowPlaying.play": "{title} lejátszása",

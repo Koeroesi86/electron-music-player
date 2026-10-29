@@ -82,6 +82,17 @@ describe('uiState reducer', () => {
       expect(run({ type: 'MOVE_QUEUE_TRACK', payload: { from, to } }, queue)).toBe(queue);
     });
 
+    it('clears the queue but the song that plays, and the history of shuffle', () => {
+      const playing = run({ type: 'CLEAR_QUEUE', payload: {} }, { ...queue, currentSong: track('b'), played: [track('a')] });
+
+      expect(paths(playing)).toEqual(['b']);
+      expect(playing.played).toEqual([]);
+    });
+
+    it('clears the whole queue when nothing plays', () => {
+      expect(run({ type: 'CLEAR_QUEUE', payload: {} }, queue).nowPlaying).toEqual([]);
+    });
+
     it('adds tracks at the end of the queue, once, and leaves the queue as it is when all are in it', () => {
       expect(paths(run({ type: 'ADD_TO_QUEUE', payload: { tracks: [track('d'), track('a'), track('e'), track('d')] } }, queue))).toEqual([
         'a',
