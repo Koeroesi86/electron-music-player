@@ -10,7 +10,7 @@ const { waitForPage } = require('./wait-for-page')
 // usage: node scripts/screenshots.js [scene...] [--out folder]
 // takes the pictures of the website (site/screenshots by default) from the built app (npm run build first), the same ones every time:
 // a library of generated tagged files, a made up station directory, a clean profile, English, reduced motion, 1360 x 850, and a clock that is held where the scene wants it
-// the scenes are in scripts/screenshot-scenes.js, the files and stations in scripts/screenshot-fixtures.js; a display is needed (xvfb-run on a headless Linux)
+// the scenes are in scripts/screenshot-scenes.js, the files and stations in scripts/screenshot-fixtures.js; Linux needs no display (the window is drawn headless), Windows and macOS need their desktop
 const root = resolve(__dirname, '..')
 const timeout = 60000
 const size = { width: 1360, height: 850 }
@@ -176,8 +176,8 @@ const run = async home => {
   const directory = await startDirectory()
   const music = join(home, 'music')
   writeLibrary(music)
-  // a Wayland session without an X server needs to be told, the others pick their own
-  const display = process.platform === 'linux' && !process.env.DISPLAY && process.env.WAYLAND_DISPLAY ? ['--ozone-platform=wayland'] : []
+  // Linux draws without a display server (headless ozone): a window on a Wayland or X session gets no frames while the compositor does not ask for them (a locked screen, another workspace), and the page never renders or the window stops answering
+  const display = process.platform === 'linux' ? ['--ozone-platform=headless'] : []
   const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env
   const env =
     process.platform === 'win32'
