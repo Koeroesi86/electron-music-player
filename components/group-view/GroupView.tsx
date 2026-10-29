@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import classNames from 'classnames';
 import { FaCaretDown, FaCaretUp, FaChevronLeft } from 'react-icons/fa';
 import type { Folder, GroupSummary } from '../../types/library';
 import { cycleSort } from '../../types/library-query';
 import type { GroupKind, GroupSort, GroupSortField } from '../../types/library-query';
 import { useTranslation } from '../../client/i18n';
-import { useDelayedValue } from '../../client/hooks/use-delayed-value';
 import { usePageLoader } from '../../client/hooks/use-page-loader';
 import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
-import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { useWindowedList } from '../../client/hooks/use-windowed-list';
 import { selectedFolders } from '../../client/library-query';
 import { getCachedItem } from '../../client/redux/library/pages';
@@ -17,7 +15,6 @@ import type { OpenGroup } from '../../client/redux/types';
 import AlbumSort from '../album-sort';
 import CoverSizeSlider from '../cover-size-slider';
 import GroupAlbums from '../group-albums';
-import GroupSortSelect from '../group-sort';
 import GroupTile from '../group-tile';
 import style from './GroupView.scss';
 
@@ -35,15 +32,12 @@ const tileRowHeightOf = (tileWidth: number) => tileWidth + tileTextHeight + tile
 /** The artists and the album artists are tiles like the albums, the genres have no covers of their own and stay a list */
 const tiledKinds: GroupKind[] = ['artist', 'albumArtist'];
 
-/** How long the filter waits for the next key before the list is asked again */
-const filterDelay = 250;
-
 const ariaSorts = { asc: 'ascending', desc: 'descending' } as const;
 
 interface GroupViewProps {
   kind: GroupKind;
   groups: PageCache<GroupSummary>;
-  /** The sort and the filter of the list, undefined is the default order and an empty text is all of the names */
+  /** The sort and the filter of the list (set in the header), undefined is the default order and an empty text is all of the names */
   sort: GroupSort | undefined;
   filter: string;
   /** The least width of a tile in px, which the slider below the tiles sets */
@@ -55,7 +49,6 @@ interface GroupViewProps {
   open: OpenGroup | undefined;
   loadPage: (page: number) => void;
   setSort: (sort: GroupSort | undefined) => void;
-  setFilter: (filter: string) => void;
   setCoverSize: (size: number) => void;
   openGroup: (group: OpenGroup) => void;
   closeGroup: () => void;
@@ -95,7 +88,6 @@ const GroupList = ({
   folders,
   loadPage,
   setSort,
-  setFilter,
   setCoverSize,
   openGroup,
 }: Omit<GroupViewProps, 'open' | 'closeGroup'>) => {
@@ -109,13 +101,6 @@ const GroupList = ({
     gap: tiled ? tileGap : 0,
   });
   usePageLoader(groups, firstIndex, lastIndex, loadPage);
-
-  // the text is shown as it is typed, the list is asked for it once the typing pauses
-  const [text, setText] = useState(filter);
-  const typed = useDelayedValue(text, filterDelay);
-  useUpdateEffect(() => {
-    setFilter(typed);
-  }, [typed, setFilter]);
 
   const queryKey = JSON.stringify([sort, filter, selectedFolders(selected, folders)]);
   // another sort, filter or other folders are another list, which starts from its top
@@ -168,17 +153,6 @@ const GroupList = ({
 
   return (
     <div className={classNames(style.groups, { [style.tiled]: tiled })}>
-      <div className={style.toolbar}>
-        <input
-          type="search"
-          className={style.filter}
-          value={text}
-          placeholder={t('groups.filter')}
-          aria-label={t('groups.filter')}
-          onChange={(event) => setText(event.target.value)}
-        />
-        {tiled && <GroupSortSelect />}
-      </div>
       {!tiled && (
         <div role="row" className={style.header}>
           <HeaderField field="name" className={style.name} label={t('groups.name')} sort={sort} onSort={sortBy} />

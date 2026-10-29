@@ -9,13 +9,16 @@ interface LibrarySearchProps {
   /** The text the library is searched for now */
   search: string;
   setSearch: (search: string) => void;
+  /** What the field is called and says before anything is typed, the search of the library when omitted */
+  label?: string;
 }
 
 /** The same delay as the search of the radio stations */
 const searchDelay = 400;
 
-const LibrarySearch = ({ search, setSearch }: LibrarySearchProps) => {
+const LibrarySearch = ({ search, setSearch, label }: LibrarySearchProps) => {
   const { t } = useTranslation();
+  const name = label ?? t('library.search');
   const [text, setText] = useState(search);
   const delayedText = useDelayedValue(text, searchDelay);
 
@@ -27,7 +30,7 @@ const LibrarySearch = ({ search, setSearch }: LibrarySearchProps) => {
   return (
     <label className={style.librarySearch}>
       <FaSearch aria-hidden />
-      <input type="search" aria-label={t('library.search')} placeholder={t('library.search')} value={text} onChange={(event) => setText(event.target.value)} />
+      <input type="search" aria-label={name} placeholder={name} value={text} onChange={(event) => setText(event.target.value)} />
     </label>
   );
 };
