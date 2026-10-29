@@ -10,7 +10,6 @@ import Confirm from '../confirm';
 import PlayerControls from '../player-controls';
 import AudioComponent from '../audio-component';
 import TitleBar from '../title-bar';
-import WindowControls from '../window-controls';
 import Navigation from '../navigation';
 import AudioSpectrum from '../audio-spectrum';
 import PlayerTabs from '../player-tabs';
@@ -67,11 +66,11 @@ const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, fol
       })}
     >
       <div className={style.wrapper}>
+        <TitleBar />
         <div className={style.mainPanel}>
           <div className={style.library}>
             <div className={style.manageLibrary}>
               <div className={style.manageLibraryPanel}>
-                <TitleBar />
                 <div className={style.navigationContainer}>
                   <Navigation spectrum={<AudioSpectrum width={180} height={32} capHeight={1} meterCount={45} meterWidth={2} gap={2} />} />
                 </div>
@@ -82,7 +81,6 @@ const PlayerHome = ({ maximized, enableTransparency = true, blurred, loaded, fol
         </div>
         <PlayerControls />
       </div>
-      <WindowControls />
       <AlbumDetails />
       <Confirm
         message={confirmation?.message ?? null}

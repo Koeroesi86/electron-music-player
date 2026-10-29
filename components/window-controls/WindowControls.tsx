@@ -9,7 +9,7 @@ interface WindowControlsProps {
   close: () => void;
 }
 
-/** The minimize, maximize and close buttons on every platform, in the top right corner over the drag region */
+/** The minimize, maximize and close buttons on every platform, at the right end of the title bar */
 function WindowControls({ maximized, minimize, maximize, close }: WindowControlsProps) {
   const { t } = useTranslation();
 

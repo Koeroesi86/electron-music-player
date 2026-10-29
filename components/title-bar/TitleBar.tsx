@@ -1,17 +1,39 @@
+import type { Track } from '../../types/library';
+import { toNowPlaying } from '../../client/now-playing';
+import { useTranslation } from '../../client/i18n';
 import appIcon from '../../assets/icon.svg';
 import style from './TitleBar.scss';
+import WindowControls from '../window-controls';
 
 interface TitleBarProps {
   title?: string;
+  currentSong?: Track | null;
+  streamTitle?: string | null;
+  streamArt?: string | null;
+  openNowPlaying?: () => void;
 }
 
-function TitleBar({ title = 'eMusic' }: TitleBarProps) {
+/** The bar across the top of the window: the app, the track that plays in the middle, and the window buttons; the empty part of it drags the window */
+function TitleBar({ title = 'eMusic', currentSong = null, streamTitle = null, streamArt = null, openNowPlaying = () => {} }: TitleBarProps) {
+  const { t } = useTranslation();
+  const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt) : undefined;
+
   return (
     <div className={style.titleBar}>
       <div className={style.title}>
         <img className={style.icon} src={appIcon} alt="" />
         {title}
       </div>
+      {shown ? (
+        <button type="button" className={style.track} title={t('nowPlaying.title')} onClick={openNowPlaying}>
+          <span className={style.cover} style={shown.cover ? { backgroundImage: `url("${shown.cover}")` } : undefined} />
+          <span className={style.name}>{shown.track.title}</span>
+          {shown.track.artist && <span className={style.artist}>{shown.track.artist}</span>}
+        </button>
+      ) : (
+        <span />
+      )}
+      <WindowControls />
     </div>
   );
 }
