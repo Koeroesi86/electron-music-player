@@ -352,7 +352,7 @@ describe('connection middleware', () => {
     });
 
     describe('the photos of the artists', () => {
-      const adam = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 1, cover: null };
+      const adam = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 1, cover: null, covers: [] };
       const nameless = { ...adam, key: '', name: '' };
       const page = (kind: 'artist' | 'albumArtist' | 'genre', items = [adam, nameless]) =>
         ({ type: 'STORE_GROUP_PAGE', payload: { kind, page: 0, items, total: items.length } }) as const;

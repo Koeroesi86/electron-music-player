@@ -390,9 +390,9 @@ describe('libraryRepository', () => {
 
       expect(page.total).toBe(3);
       expect(page.items).toEqual([
-        { key: 'adam', name: 'Adam', albumCount: 3, trackCount: 3, cover: null },
-        { key: 'bjork', name: 'Björk', albumCount: 1, trackCount: 2, cover: 'one.jpg' },
-        { key: '', name: '', albumCount: 1, trackCount: 1, cover: null },
+        { key: 'adam', name: 'Adam', albumCount: 3, trackCount: 3, cover: null, covers: [] },
+        { key: 'bjork', name: 'Björk', albumCount: 1, trackCount: 2, cover: 'one.jpg', covers: [] },
+        { key: '', name: '', albumCount: 1, trackCount: 1, cover: null, covers: [] },
       ]);
     });
 
@@ -409,6 +409,22 @@ describe('libraryRepository', () => {
       // Various has a lookup without a photo and Björk none, no album of Various has a cover
       expect(await covers('albumArtist')).toEqual(['one.jpg', null, null]);
       expect(await covers('genre')).toEqual([null, null, null]);
+    });
+
+    it('gives a genre up to three of its covers, from the folders it is limited to, and the artists none', async () => {
+      await save(
+        ['a', 'b', 'c', 'd'].flatMap((letter) => [
+          withValues(`/m/j${letter}/1.flac`, { artist: 'Miles', genre: 'Jazz', album: letter, picture: `${letter}.jpg` }),
+          withValues(`/m/j${letter}/2.flac`, { artist: 'Miles', genre: 'Jazz', album: letter, picture: `${letter}.jpg` }),
+        ])
+      );
+      const covers = async (kind: 'artist' | 'genre', filter: string, folders: string[] = []) =>
+        (await getGroupPage(database, kind, 0, 10, { ...everything, filter, folders })).items.map((item) => item.covers);
+
+      expect(await covers('genre', 'jazz')).toEqual([['a.jpg', 'b.jpg', 'c.jpg']]);
+      expect(await covers('genre', 'jazz', ['/m/jb', '/m/jc', '/m/jd'])).toEqual([['b.jpg', 'c.jpg', 'd.jpg']]);
+      expect(await covers('genre', 'pop')).toEqual([['one.jpg']]);
+      expect(await covers('artist', 'miles')).toEqual([[]]);
     });
 
     it('lists the album artists and the genres, the tracks without one last', async () => {

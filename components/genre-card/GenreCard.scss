@@ -1,0 +1,142 @@
+// the height of a card, GroupView.tsx sizes the rows by it
+$height: 112px;
+
+.genreCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  height: $height;
+  min-width: 0;
+  padding: 12px 14px;
+  overflow: hidden;
+  font: inherit;
+  color: var(--on-genre);
+  text-align: left;
+  background: var(--overlay);
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1), box-shadow .2s ease-in-out;
+
+  @for $tone from 0 through 11 {
+    &.tone#{$tone} {
+      background: linear-gradient(135deg, var(--genre-#{$tone}-from), var(--genre-#{$tone}-to));
+    }
+  }
+
+  // the genre that has no name has no colour of its own either
+  &.unknown {
+    color: var(--text);
+    background: var(--overlay);
+
+    &::before {
+      content: none;
+    }
+
+    .counts {
+      color: var(--text-muted);
+    }
+
+    .name {
+      font-style: italic;
+      text-shadow: none;
+    }
+  }
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px -10px var(--shadow);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  // a shade from the bottom, so the white text reads on the light gradients too
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, var(--on-genre-shadow), transparent 75%);
+  }
+
+  .name,
+  .counts {
+    position: relative;
+    z-index: 2;
+    // the corner is the covers', the text ends before them
+    padding-right: 52px;
+    overflow: hidden;
+  }
+
+  .counts {
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  // a long name takes a second line before it is cut
+  .name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow-wrap: anywhere;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -.01em;
+    text-shadow: 0 1px 8px var(--on-genre-shadow);
+  }
+
+  .counts {
+    margin-top: 3px;
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--on-genre-muted);
+  }
+
+  // the covers hang over the corner, the last of them in front
+  .fan {
+    z-index: 1;
+    position: absolute;
+    right: -12px;
+    bottom: -14px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .art {
+    position: absolute;
+    inset: 0;
+    background: var(--art-placeholder) center / cover;
+    border-radius: 6px;
+    box-shadow: 0 6px 14px var(--art-shadow);
+  }
+
+  .art0 {
+    transform: rotate(-14deg) translate(-14px, -4px);
+  }
+
+  .art1 {
+    transform: rotate(-5deg) translate(-7px, -8px);
+  }
+
+  .art2 {
+    transform: rotate(6deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover,
+    &:focus-visible {
+      transform: none;
+    }
+  }
+}

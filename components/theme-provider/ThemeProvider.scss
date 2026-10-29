@@ -97,6 +97,35 @@
   --art-glow: rgba(255, 255, 255, 0.4);
   --art-glow-hard: #ffffff;
 
+  // the cards of the genres: twelve gradients (the name of a genre picks one) and the text on them, the same in both themes
+  --genre-0-from: #ae293f;
+  --genre-0-to: #693c1c;
+  --genre-1-from: #ae5929;
+  --genre-1-to: #69651c;
+  --genre-2-from: #ae8129;
+  --genre-2-to: #56691c;
+  --genre-3-from: #60ae29;
+  --genre-3-to: #1c6929;
+  --genre-4-from: #29ae6b;
+  --genre-4-to: #1c6269;
+  --genre-5-from: #29aeae;
+  --genre-5-to: #1c3c69;
+  --genre-6-from: #2976ae;
+  --genre-6-to: #1c1c69;
+  --genre-7-from: #2934ae;
+  --genre-7-to: #421c69;
+  --genre-8-from: #6b29ae;
+  --genre-8-to: #691c62;
+  --genre-9-from: #ae29a2;
+  --genre-9-to: #691c35;
+  --genre-10-from: #ae296b;
+  --genre-10-to: #69221c;
+  --genre-11-from: #ae3a29;
+  --genre-11-to: #69531c;
+  --on-genre: #ffffff;
+  --on-genre-muted: rgba(255, 255, 255, 0.82);
+  --on-genre-shadow: rgba(0, 0, 0, 0.35);
+
   // the confirm dialog is a paper card in every theme
   --card-background: #ffffff;
   --card-text: #333333;

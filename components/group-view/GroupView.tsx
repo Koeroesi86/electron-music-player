@@ -1,9 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import classNames from 'classnames';
-import { FaCaretDown, FaCaretUp, FaChevronLeft } from 'react-icons/fa';
+import { FaChevronLeft } from 'react-icons/fa';
 import type { Folder, GroupSummary } from '../../types/library';
-import { cycleSort } from '../../types/library-query';
-import type { GroupKind, GroupSort, GroupSortField } from '../../types/library-query';
+import type { GroupKind, GroupSort } from '../../types/library-query';
 import { useTranslation } from '../../client/i18n';
 import { usePageLoader } from '../../client/hooks/use-page-loader';
 import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
@@ -14,12 +13,10 @@ import type { PageCache } from '../../client/redux/library/pages';
 import type { OpenGroup } from '../../client/redux/types';
 import AlbumSort from '../album-sort';
 import CoverSizeSlider from '../cover-size-slider';
+import GenreCard from '../genre-card';
 import GroupAlbums from '../group-albums';
 import GroupTile from '../group-tile';
 import style from './GroupView.scss';
-
-/** The height of a row of the list in px, matching .group in GroupView.scss */
-const listRowHeight = 40;
 
 /** The gap between two tiles in px, the tiles grow to fill the width; matching .tileRow in GroupView.scss */
 const tileGap = 18;
@@ -29,10 +26,10 @@ const tileTextHeight = 46;
 /** A row is a square photo and the text under it */
 const tileRowHeightOf = (tileWidth: number) => tileWidth + tileTextHeight + tileRowGap;
 
-/** The artists and the album artists are tiles like the albums, the genres have no covers of their own and stay a list */
-const tiledKinds: GroupKind[] = ['artist', 'albumArtist'];
-
-const ariaSorts = { asc: 'ascending', desc: 'descending' } as const;
+/** The cards of the genres: their least width, the gap and the height in px, matching .cardRow in GroupView.scss and $height in GenreCard.scss */
+const cardWidth = 210;
+const cardGap = 14;
+const cardHeight = 112;
 
 interface GroupViewProps {
   kind: GroupKind;
@@ -48,34 +45,10 @@ interface GroupViewProps {
   /** The group whose albums are shown instead of the list */
   open: OpenGroup | undefined;
   loadPage: (page: number) => void;
-  setSort: (sort: GroupSort | undefined) => void;
   setCoverSize: (size: number) => void;
   openGroup: (group: OpenGroup) => void;
   closeGroup: () => void;
 }
-
-interface HeaderFieldProps {
-  field: GroupSortField;
-  className: string;
-  label: string;
-  sort: GroupSort | undefined;
-  onSort: (field: GroupSortField) => void;
-}
-
-/** A column header that sorts by its column when it is clicked, and shows the direction while it is the sorted column */
-const HeaderField = ({ field, className, label, sort, onSort }: HeaderFieldProps) => {
-  const active = sort?.field === field ? sort : undefined;
-
-  return (
-    <div role="columnheader" aria-sort={active ? ariaSorts[active.direction] : 'none'} className={classNames(style.field, className)}>
-      <button type="button" onClick={() => onSort(field)}>
-        {label}
-        {active?.direction === 'asc' && <FaCaretUp aria-hidden />}
-        {active?.direction === 'desc' && <FaCaretDown aria-hidden />}
-      </button>
-    </div>
-  );
-};
 
 /** The list of the groups; it is its own component as its scroll and size listeners belong to the element, which is new each time the list comes back */
 const GroupList = ({
@@ -87,18 +60,18 @@ const GroupList = ({
   selected,
   folders,
   loadPage,
-  setSort,
   setCoverSize,
   openGroup,
 }: Omit<GroupViewProps, 'open' | 'closeGroup'>) => {
   const { t } = useTranslation();
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
-  const tiled = tiledKinds.includes(kind);
+  // the artists and the album artists are photo tiles of the size of the slider, the genres are cards of one size
+  const cards = kind === 'genre';
   const { listing, columns, rowHeight, firstIndex, lastIndex, offsetTop, height } = useWindowedList({
     itemCount: groups.total ?? 0,
-    rowHeight: tiled ? tileRowHeightOf : listRowHeight,
-    itemWidth: tiled ? coverSize : undefined,
-    gap: tiled ? tileGap : 0,
+    rowHeight: cards ? cardHeight + cardGap : tileRowHeightOf,
+    itemWidth: cards ? cardWidth : coverSize,
+    gap: cards ? cardGap : tileGap,
   });
   usePageLoader(groups, firstIndex, lastIndex, loadPage);
 
@@ -116,59 +89,38 @@ const GroupList = ({
     [listing, scrolled]
   );
 
-  const sortBy = (field: GroupSortField) => setSort(cycleSort(sort, field));
   const nameOf = (name: string) => name || t(`groups.unknown.${kind}`);
   const openOne = (group: GroupSummary) => openGroup({ kind, key: group.key, name: group.name });
   const rows = Array.from({ length: Math.ceil((lastIndex - firstIndex) / columns) }, (_, row) =>
     Array.from({ length: Math.min(columns, lastIndex - firstIndex - row * columns) }, (__, column) => firstIndex + row * columns + column)
   );
 
+  const rowStyle = { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, height: rowHeight };
   const tiles = rows.map((indexes) => (
-    <div key={indexes[0]} className={style.tileRow} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, height: rowHeight }}>
+    <div key={indexes[0]} className={classNames(style.tileRow, { [style.cardRow]: cards })} style={rowStyle}>
       {indexes.map((index) => {
         const group = getCachedItem(groups, index);
-        return group ? (
-          <GroupTile key={group.key} group={group} unknownName={nameOf('')} open={openOne} />
+        if (!group) return <div key={index} className={cards ? style.cardPlaceholder : style.tilePlaceholder} />;
+        return cards ? (
+          <GenreCard key={group.key} group={group} unknownName={nameOf('')} open={openOne} />
         ) : (
-          <div key={index} className={style.tilePlaceholder} />
+          <GroupTile key={group.key} group={group} unknownName={nameOf('')} open={openOne} />
         );
       })}
     </div>
   ));
 
-  const list = Array.from({ length: lastIndex - firstIndex }, (_, offset) => {
-    const group = getCachedItem(groups, firstIndex + offset);
-    return group ? (
-      <button key={group.key} type="button" className={style.group} onClick={() => openOne(group)}>
-        <span className={classNames(style.field, style.name, { [style.unknown]: !group.name })} title={nameOf(group.name)}>
-          {nameOf(group.name)}
-        </span>
-        <span className={classNames(style.field, style.count)}>{group.albumCount}</span>
-        <span className={classNames(style.field, style.count)}>{group.trackCount}</span>
-      </button>
-    ) : (
-      <div key={firstIndex + offset} className={style.placeholder} />
-    );
-  });
-
   return (
-    <div className={classNames(style.groups, { [style.tiled]: tiled })}>
-      {!tiled && (
-        <div role="row" className={style.header}>
-          <HeaderField field="name" className={style.name} label={t('groups.name')} sort={sort} onSort={sortBy} />
-          <HeaderField field="albumCount" className={style.count} label={t('groups.albums')} sort={sort} onSort={sortBy} />
-          <HeaderField field="trackCount" className={style.count} label={t('groups.tracks')} sort={sort} onSort={sortBy} />
-        </div>
-      )}
+    <div className={style.groups}>
       <div ref={separator} className={style.separator} />
       <div className={style.listing} ref={setListing}>
         <div className={style.window} style={{ height, paddingTop: offsetTop }}>
-          {tiled ? tiles : list}
+          {tiles}
         </div>
       </div>
       <div className={style.footer}>
         <span>{t(`groups.count.${kind}`, { count: groups.total ?? 0 })}</span>
-        {tiled && <CoverSizeSlider size={coverSize} setSize={setCoverSize} />}
+        {!cards && <CoverSizeSlider size={coverSize} setSize={setCoverSize} />}
       </div>
     </div>
   );

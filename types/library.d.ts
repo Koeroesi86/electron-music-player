@@ -49,6 +49,8 @@ export interface GroupSummary {
   albumCount: number;
   trackCount: number;
   cover: string | null;
+  /** Up to three covers of its albums, for the genres only (they have no photo) */
+  covers: string[];
 }
 
 /** One page of a list, together with the length of the whole list */

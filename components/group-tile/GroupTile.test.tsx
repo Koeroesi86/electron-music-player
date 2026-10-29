@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import GroupTile from './GroupTile';
 
-const group = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 12, cover: null };
+const group = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 12, cover: null, covers: [] };
 
 describe('GroupTile', () => {
   afterEach(cleanup);

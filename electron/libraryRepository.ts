@@ -171,10 +171,18 @@ const withPhoto = (key: string) => `COALESCE((SELECT picture FROM artist_photos 
 
 // the column the tracks of an artist, an album artist or a genre share, and the one that holds the name as it is written; the keys have an index
 // and the cover: the photo of the name when it has one (the artists and the album artists), else the cover of one of its albums; a genre has none
-const groupColumns: Record<GroupKind, { key: string; name: string; cover: (key: string) => string }> = {
-  artist: { key: 'artist_key', name: 'artist', cover: withPhoto },
-  albumArtist: { key: 'album_artist_key', name: 'albumArtist', cover: withPhoto },
-  genre: { key: 'genre_key', name: 'genre', cover: () => 'NULL' },
+// but up to three covers of its albums (separated by a unit separator, as a path may hold any other character), which the card of a genre fans out
+const coverSeparator = String.fromCharCode(31);
+const groupColumns: Record<GroupKind, { key: string; name: string; cover: (key: string) => string; covers: (key: string) => string }> = {
+  artist: { key: 'artist_key', name: 'artist', cover: withPhoto, covers: () => 'NULL' },
+  albumArtist: { key: 'album_artist_key', name: 'albumArtist', cover: withPhoto, covers: () => 'NULL' },
+  genre: {
+    key: 'genre_key',
+    name: 'genre',
+    cover: () => 'NULL',
+    covers: (key) =>
+      `(SELECT group_concat(picture, char(31)) FROM (SELECT DISTINCT picture FROM scoped AS sample WHERE sample.${key} = scoped.${key} AND COALESCE(picture, '') != '' ORDER BY picture LIMIT 3))`,
+  },
 };
 
 // a folder and an album title make one album
@@ -197,19 +205,23 @@ export const getGroupPage = (
   limit: number,
   { sort, folders, filter }: GroupQuery
 ): Promise<LibraryPage<GroupSummary>> => {
-  const { key, name, cover } = groupColumns[kind];
+  const { key, name, cover, covers } = groupColumns[kind];
   const folderFilter = toTrackFilter({ folders });
-  const source = `FROM (SELECT *, ${folderOf} AS folder FROM library ${folderFilter.where}) WHERE ${key} LIKE ? ESCAPE '!'`;
+  const scoped = `WITH scoped AS (SELECT *, ${folderOf} AS folder FROM library ${folderFilter.where})`;
+  const source = `FROM scoped WHERE ${key} LIKE ? ESCAPE '!'`;
   const variables = [...folderFilter.variables, `%${escapeLike(toSortKey(filter))}%`];
 
   return Promise.all([
-    executeQuery<GroupSummary>(database, {
-      query: `SELECT ${key} AS "key", MIN(TRIM(COALESCE(${name}, ''))) AS name, COUNT(DISTINCT ${albumIdentity}) AS albumCount, COUNT(*) AS trackCount, ${cover(key)} AS cover
+    executeQuery<Omit<GroupSummary, 'covers'> & { covers: string | null }>(database, {
+      query: `${scoped} SELECT ${key} AS "key", MIN(TRIM(COALESCE(${name}, ''))) AS name, COUNT(DISTINCT ${albumIdentity}) AS albumCount, COUNT(*) AS trackCount, ${cover(key)} AS cover, ${covers(key)} AS covers
         ${source} GROUP BY ${key} ORDER BY ${toOrderBy(groupOrders(key), sort, `(${key} = '') ASC, ${key}`)} LIMIT ? OFFSET ?`,
       variables: [...variables, limit, offset],
     }),
-    countTotal(database, `SELECT COUNT(*) AS total FROM (SELECT 1 ${source} GROUP BY ${key})`, variables),
-  ]).then(([items, total]) => ({ items, total }));
+    countTotal(database, `${scoped} SELECT COUNT(*) AS total FROM (SELECT 1 ${source} GROUP BY ${key})`, variables),
+  ]).then(([items, total]) => ({
+    items: items.map(({ covers: joined, ...group }) => ({ ...group, covers: joined ? joined.split(coverSeparator) : [] })),
+    total,
+  }));
 };
 
 /** The condition that limits the tracks to the ones of a group, none when the albums are not of a group */

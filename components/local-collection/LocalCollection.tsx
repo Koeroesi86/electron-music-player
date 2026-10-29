@@ -61,7 +61,7 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, groupOp
             <div className={style.filters}>
               {view !== 'folders' && <FolderFilter />}
               {view === 'albums' && <AlbumSort />}
-              {groupList && view !== 'genres' && <GroupSort />}
+              {groupList && <GroupSort />}
               <button
                 type="button"
                 title={t('library.rescan')}

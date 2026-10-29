@@ -82,7 +82,7 @@ describe('library reducer', () => {
   });
 
   describe('artists, album artists and genres', () => {
-    const group = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 2, cover: null };
+    const group = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 2, cover: null, covers: [] };
     const storeGroups = (state: LibraryState | undefined, kind: 'artist' | 'albumArtist' | 'genre') =>
       reducer(state, { type: 'STORE_GROUP_PAGE', payload: { kind, page: 0, items: [group], total: 1 } });
 

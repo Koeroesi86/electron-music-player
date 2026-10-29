@@ -52,7 +52,7 @@ describe('library api', () => {
   });
 
   it('fetches the page of artists, album artists or genres with the sort, the folders and the filter, and strips the file protocol of the covers', async () => {
-    const group = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 2, cover: 'file:///art.jpg' };
+    const group = { key: 'adam', name: 'Adam', albumCount: 1, trackCount: 2, cover: 'file:///art.jpg', covers: [] };
     respond({ items: [group], total: 1 });
 
     expect(await fetchGroupPage('artist', 1, { sort: undefined, folders: [], filter: '' })).toEqual({ items: [{ ...group, cover: '/art.jpg' }], total: 1 });
