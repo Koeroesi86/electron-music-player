@@ -1,5 +1,5 @@
 import { execFile } from 'child_process';
-import { copyFile, mkdir, readFile, rm, stat, utimes, writeFile } from 'fs/promises';
+import { copyFile, mkdir, readFile, rename, rm, stat, utimes, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { catalog } from '../locales';
 
@@ -68,6 +68,13 @@ const writeIcon = (size: number, { dataHome, iconsPath }: LauncherOptions) =>
     copyFile(join(iconsPath, `${size}x${size}.png`), getIconFile(dataHome, size))
   );
 
+// the desktop shell watches the folder for a new file and keeps the old entry when one is rewritten in place, which failed every start of the old AppImage after an update
+const writeDesktopFile = (dataHome: string, entry: string) => {
+  const temporary = join(getApplicationsPath(dataHome), `.${launcherName}.desktop.tmp`);
+
+  return writeFile(temporary, entry).then(() => rename(temporary, getDesktopFile(dataHome)));
+};
+
 export const enableLauncher = async (appImage: string, options: LauncherOptions) => {
   const entry = buildDesktopEntry(appImage);
   const { dataHome, refresh = updateDesktopDatabase } = options;
@@ -75,7 +82,7 @@ export const enableLauncher = async (appImage: string, options: LauncherOptions)
   await mkdir(getApplicationsPath(dataHome), { recursive: true });
   await Promise.all(iconSizes.map((size) => writeIcon(size, options)));
   await invalidateIconCache(dataHome);
-  await writeFile(getDesktopFile(dataHome), entry);
+  await writeDesktopFile(dataHome, entry);
   await refresh(getApplicationsPath(dataHome));
 };
 

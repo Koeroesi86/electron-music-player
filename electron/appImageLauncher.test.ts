@@ -95,6 +95,15 @@ describe('launcher on disk', () => {
     expect((await stat(theme)).mtime.getTime()).toBeGreaterThan(past.getTime());
   });
 
+  it('replaces the entry with a new file, as an entry rewritten in place stays unseen by the desktop shell', async () => {
+    await enableLauncher(appImage(), options);
+    const before = (await stat(desktopFile())).ino;
+    await enableLauncher(join(folder, 'other/moved.AppImage'), options);
+
+    expect((await stat(desktopFile())).ino).not.toBe(before);
+    await expect(readdir(join(folder, 'data/applications'))).resolves.toEqual(['emusic.desktop']);
+  });
+
   it('leaves nothing behind when the path can not be used', async () => {
     await expect(enableLauncher(join(folder, 'a"b.AppImage'), options)).rejects.toThrow('can not be used');
 
