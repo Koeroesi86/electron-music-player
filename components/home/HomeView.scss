@@ -379,12 +379,14 @@
 
   .stationTiles {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    // one column where the panel is narrow, so the name keeps its room
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 8px;
   }
 
   // a station: its logo (the radio icon without one), the name over the country, the format and a play button that shows on hover
   .stationTile {
+    position: relative;
     padding: 8px 10px;
 
     .stationLogo {
@@ -416,16 +418,30 @@
       max-width: 100%;
     }
 
+    // the country, then the format
     .stationDetails {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      margin-top: 2px;
       font-size: 11px;
       color: var(--text-muted);
     }
 
+    .stationCountry {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    // over the end of the tile, so it takes no room from the name
     .stationPlay {
-      flex: 0 0 auto;
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
       display: grid;
       place-items: center;
       width: 26px;

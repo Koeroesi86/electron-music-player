@@ -206,9 +206,11 @@ const HomeView = ({
                     </span>
                     <span className={style.stationText}>
                       <span className={style.stationName}>{station.name}</span>
-                      <span className={style.stationDetails}>{station.country || t('home.station')}</span>
+                      <span className={style.stationDetails}>
+                        <span className={style.stationCountry}>{station.country || t('home.station')}</span>
+                        <AudioFormatBadge track={toRadioTrack(station)} />
+                      </span>
                     </span>
-                    <AudioFormatBadge track={toRadioTrack(station)} />
                     <span className={style.stationPlay} aria-hidden>
                       <PlayIcon size="12px" />
                     </span>
