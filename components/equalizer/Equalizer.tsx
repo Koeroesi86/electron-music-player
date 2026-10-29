@@ -66,12 +66,6 @@ const Equalizer = ({ gains, createBiquadFilter, connectDestination, connectToSou
 
   return (
     <div className={style.equalizer}>
-      <div className={style.header}>
-        {t('equalizer.title')}
-        <button type="button" className={style.reset} disabled={flat} onClick={() => setGains(defaultGains)}>
-          {t('equalizer.reset')}
-        </button>
-      </div>
       <div className={style.content}>
         <div className={style.presets} role="group" aria-label={t('equalizer.presets')}>
           {equalizerPresets.map(({ id, gains: presetGains }) => (
@@ -86,6 +80,9 @@ const Equalizer = ({ gains, createBiquadFilter, connectDestination, connectToSou
             </button>
           ))}
           {preset === undefined && <span className={classNames(style.chip, style.active, style.custom)}>{t('equalizer.custom')}</span>}
+          <button type="button" className={style.reset} disabled={flat} onClick={() => setGains(defaultGains)}>
+            {t('equalizer.reset')}
+          </button>
           <button type="button" className={style.toggle} aria-expanded={showFaders} onClick={() => setShowFaders(!showFaders)}>
             {t(showFaders ? 'equalizer.hideFaders' : 'equalizer.faders')}
           </button>

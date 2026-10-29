@@ -7,21 +7,6 @@
   display: flex;
   flex-direction: column;
 
-  .header {
-    -webkit-app-region: drag;
-    display: flex;
-    flex: 0 0 auto;
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    line-height: 56px;
-    padding: 0 12px 0 12px;
-    font-weight: 600;
-    box-shadow: 0 0 3px var(--shadow-soft);
-  }
-
   .reset,
   .chip,
   .toggle {
@@ -96,7 +81,7 @@
       background-color: var(--accent-tint);
     }
 
-    .toggle {
+    .reset {
       margin-left: auto;
     }
   }
