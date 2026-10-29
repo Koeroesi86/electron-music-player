@@ -33,6 +33,10 @@ $height: 112px;
     color: var(--text);
     background: var(--overlay);
 
+    &::before {
+      content: none;
+    }
+
     .counts {
       color: var(--text-muted);
     }
@@ -54,17 +58,35 @@ $height: 112px;
     outline-offset: 2px;
   }
 
+  // a shade from the bottom, so the white text reads on the light gradients too
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, var(--on-genre-shadow), transparent 75%);
+  }
+
   .name,
   .counts {
     position: relative;
-    z-index: 1;
+    z-index: 2;
+    // the corner is the covers', the text ends before them
+    padding-right: 52px;
+    overflow: hidden;
+  }
+
+  .counts {
     display: block;
     white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
   }
 
+  // a long name takes a second line before it is cut
   .name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow-wrap: anywhere;
     font-size: 18px;
     font-weight: 800;
     line-height: 1.15;
@@ -81,6 +103,7 @@ $height: 112px;
 
   // the covers hang over the corner, the last of them in front
   .fan {
+    z-index: 1;
     position: absolute;
     right: -12px;
     bottom: -14px;
