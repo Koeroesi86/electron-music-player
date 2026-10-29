@@ -99,22 +99,25 @@ const TrackViewItem = ({
       onClick={() => 'path' in track && clickTrack(track)}
       onDoubleClick={() => 'path' in track && doubleClickTrack(track)}
     >
-      <TrackViewItemField className={style.favourite}>
+      <TrackViewItemField className={style.playing}>{isCurrent && <span className={style.bars} aria-hidden />}</TrackViewItemField>
+      {renderField('track', style.trackNo, track.track || '-')}
+      {renderField('title', style.title, track.title || '-')}
+      {renderField('artist', style.artist, track.artist || '-')}
+      {renderField('album', style.album, track.album || '-')}
+      {renderField('year', style.year, track.year || '-')}
+      <TrackViewItemField className={style.format}>
+        {'path' in track && <AudioFormatBadge track={track} className={classNames(style.pill, { [style.lossless]: track.lossless })} />}
+      </TrackViewItemField>
+      <TrackViewItemField className={style.actions}>
         {'path' in track && (
           <>
-            <FavouriteButton item={trackFavourite(track)} />
-            <AddToPlaylist source={track} />
-            <AddToQueue getTracks={() => Promise.resolve([track])} />
+            <FavouriteButton item={trackFavourite(track)} className={style.heart} />
+            <AddToPlaylist source={track} className={style.action} />
+            <AddToQueue getTracks={() => Promise.resolve([track])} className={style.action} />
           </>
         )}
       </TrackViewItemField>
       {renderField('duration', style.duration, typeof track.duration === 'string' ? track.duration : <Time seconds={track.duration} />)}
-      {renderField('artist', style.artist, track.artist || '-')}
-      {renderField('year', style.year, track.year || '-')}
-      {renderField('album', style.album, track.album || '-')}
-      {renderField('track', style.trackNo, track.track || '-')}
-      <TrackViewItemField className={style.format}>{'path' in track && <AudioFormatBadge track={track} />}</TrackViewItemField>
-      {renderField('title', style.title, track.title || '-')}
     </div>
   );
 };
