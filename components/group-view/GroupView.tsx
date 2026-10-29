@@ -91,7 +91,9 @@ const GroupList = ({ kind, groups, sort, filter, selected, folders, loadPage, se
   // the text is shown as it is typed, the list is asked for it once the typing pauses
   const [text, setText] = useState(filter);
   const typed = useDelayedValue(text, filterDelay);
-  useUpdateEffect(() => setFilter(typed), [typed, setFilter]);
+  useUpdateEffect(() => {
+    setFilter(typed);
+  }, [typed, setFilter]);
 
   const queryKey = JSON.stringify([sort, filter, selectedFolders(selected, folders)]);
   // another sort, filter or other folders are another list, which starts from its top

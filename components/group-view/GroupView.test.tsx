@@ -86,6 +86,16 @@ describe('GroupView', () => {
     expect(setFilter).toHaveBeenCalledTimes(1);
   });
 
+  it('leaves the list without an error after a filter was set by a dispatch that returns its action', async () => {
+    const setFilter = vi.fn((filter: string) => ({ type: 'SET_GROUP_FILTER', payload: { filter } }));
+    renderView({ setFilter });
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Filter by name' }), { target: { value: 'bj' } });
+    await vi.waitFor(() => expect(setFilter).toHaveBeenCalledWith('bj'));
+
+    expect(cleanup).not.toThrow();
+  });
+
   it('asks for the pages it shows', () => {
     const { loadPage } = renderView({ groups: createPageCache<GroupSummary>() });
 
