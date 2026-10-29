@@ -3,6 +3,7 @@ import { toNowPlaying } from '../../client/now-playing';
 import { useTranslation } from '../../client/i18n';
 import appIcon from '../../assets/icon.svg';
 import style from './TitleBar.scss';
+import AudioSpectrum from '../audio-spectrum';
 import WindowControls from '../window-controls';
 
 interface TitleBarProps {
@@ -29,6 +30,9 @@ function TitleBar({ title = 'eMusic', currentSong = null, streamTitle = null, st
           <span className={style.cover} style={shown.cover ? { backgroundImage: `url("${shown.cover}")` } : undefined} />
           <span className={style.name}>{shown.track.title}</span>
           {shown.track.artist && <span className={style.artist}>{shown.track.artist}</span>}
+          <span className={style.spectrum}>
+            <AudioSpectrum width={22} height={12} capHeight={0} meterCount={6} meterWidth={2} gap={2} />
+          </span>
         </button>
       ) : (
         <span />

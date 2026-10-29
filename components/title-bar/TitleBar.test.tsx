@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { Track } from '../../types/library';
 import TitleBar from './TitleBar';
 
+vi.mock('../audio-spectrum', () => ({ default: () => <canvas data-testid="spectrum" /> }));
 vi.mock('../window-controls', () => ({ default: () => <div data-testid="window-controls" /> }));
 
 const track: Track = {
@@ -42,6 +43,13 @@ describe('TitleBar', () => {
     render(<TitleBar />);
 
     expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.queryByTestId('spectrum')).toBeNull();
+  });
+
+  it('shows a small spectrum in the track while it plays', () => {
+    render(<TitleBar currentSong={track} />);
+
+    expect(screen.getByRole('button', { name: /Neon Rain/ }).querySelector('[data-testid="spectrum"]')).not.toBeNull();
   });
 
   it('shows the track that plays and opens the now playing page with it', () => {
