@@ -24,6 +24,7 @@ import ScanProgress from '../scan-progress';
 import LiveWave from '../live-wave';
 import AudioFormatBadge from '../audio-format-badge';
 import Time from '../time';
+import CoverFade from '../cover-fade';
 
 interface PlayerControlsProps {
   currentSong: Track | null;
@@ -72,7 +73,7 @@ const TrackDetails = ({ currentSong, streamTitle, streamArt }: Pick<PlayerContro
 
   return (
     <div className={style.meta}>
-      <div className={style.picture} style={shown?.cover ? { backgroundImage: `url("${shown.cover}")` } : {}} />
+      <CoverFade className={style.picture} src={shown?.cover} />
       <div className={style.details}>
         <div className={style.title}>{shown ? shown.track.title : t('player.none')}</div>
         <div className={style.album}>{shown ? shown.track.album : t('player.none')}</div>

@@ -9,6 +9,7 @@ import { useTranslation } from '../../client/i18n';
 import { trackFavourite } from '../../client/favourites';
 import style from './NowPlaying.scss';
 import AudioFormatBadge from '../audio-format-badge';
+import CoverFade from '../cover-fade';
 import FavouriteButton from '../favourite-button';
 import Time from '../time';
 
@@ -56,7 +57,7 @@ const NowPlaying = ({ nowPlaying, currentSong, streamTitle, streamArt, isPlaying
       <div className={style.contents}>
         {currentSong && shown && (
           <div className={style.currentSong}>
-            <div className={style.cover} style={shown.cover ? { backgroundImage: `url("${shown.cover}")` } : undefined} />
+            <CoverFade className={style.cover} src={shown.cover} />
             <div className={style.meta}>
               <div className={style.title}>{shown.track.title}</div>
               <div className={style.artist}>{shown.track.artist}</div>
