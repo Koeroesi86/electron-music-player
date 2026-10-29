@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
 import classNames from 'classnames';
-import { MdPlayArrow as PlayIcon } from 'react-icons/md';
+import { MdArrowDownward as DescendingIcon, MdArrowUpward as AscendingIcon, MdPlayArrow as PlayIcon } from 'react-icons/md';
 import type { RadioOption, RadioQuery, RadioStation } from '../../types/radio';
 import { countRadioFilters, parseRadioQuery, radioBitrates, radioPageSize, radioSortFields } from '../../types/radio-query';
+import type { RadioSortField } from '../../types/radio-query';
 import type { RadioState } from '../../client/redux/radio/reducer';
 import { useTranslation } from '../../client/i18n';
 import { useDelayedValue } from '../../client/hooks/use-delayed-value';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { stationFavourite } from '../../client/favourites';
 import type { Translator } from '../../locales/translate';
-import { toRadioTrack } from '../../client/radio-track';
-import AudioFormatBadge from '../audio-format-badge';
 import FavouriteButton from '../favourite-button';
 import style from './RadioStations.scss';
 
@@ -25,8 +24,16 @@ interface RadioStationsProps {
 
 const searchDelay = 400;
 
-// the codec and the bitrate are in the badge; a bitrate of 0 is one the directory does not know
-const describe = ({ country, bitrate }: RadioStation, { t }: Translator) => [country, bitrate ? '' : t('radio.bitrateUnknown')].filter(Boolean).join(' · ');
+// the columns of the list; the ones with a sort sort it from their header, the names from A and the bitrate from the highest
+const columns: { column: 'name' | 'genres' | 'codec' | 'bitrate' | 'country'; sort?: { field: RadioSortField; ascending: boolean } }[] = [
+  { column: 'name', sort: { field: 'name', ascending: true } },
+  { column: 'genres' },
+  { column: 'codec' },
+  { column: 'bitrate', sort: { field: 'bitrate', ascending: false } },
+  { column: 'country', sort: { field: 'country', ascending: true } },
+];
+
+const genresOf = ({ tags }: RadioStation) => tags.slice(0, 3).join(', ');
 
 interface FilterSelectProps {
   label: string;
@@ -39,7 +46,12 @@ interface FilterSelectProps {
 
 /** A value that was saved but is not among the loaded ones (the list failed to load) stays selectable as it is */
 const FilterSelect = ({ label, allLabel, value, options, onChange, formatNumber }: FilterSelectProps) => (
-  <select className={style.select} aria-label={label} value={value ?? ''} onChange={(event) => onChange(event.target.value || undefined)}>
+  <select
+    className={classNames(style.select, { [style.active]: Boolean(value) })}
+    aria-label={label}
+    value={value ?? ''}
+    onChange={(event) => onChange(event.target.value || undefined)}
+  >
     <option value="">{allLabel}</option>
     {value && !options.some((option) => option.value === value) && <option value={value}>{value}</option>}
     {options.map((option) => (
@@ -51,8 +63,7 @@ const FilterSelect = ({ label, allLabel, value, options, onChange, formatNumber 
 );
 
 const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, play }: RadioStationsProps) => {
-  const translator = useTranslation();
-  const { t, formatNumber } = translator;
+  const { t, formatNumber } = useTranslation();
   const { query, offset, hasMore, stations, tags, countries, languages, codecs, loading, error } = radio;
   const filterCount = countRadioFilters(query);
   const change = (changes: RadioQuery) => search({ ...query, ...changes });
@@ -71,6 +82,13 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
     if ((delayedName.trim() || undefined) !== query.name) change({ name: delayedName.trim() || undefined });
   }, [delayedName]);
 
+  const sortField = query.sort ?? 'popularity';
+  const descending = query.descending !== false;
+
+  // the sorted column flips its direction, any other one starts in its own
+  const sortByColumn = (field: RadioSortField, ascending: boolean) =>
+    change({ sort: parseRadioQuery({ sort: field }).sort, descending: (field === sortField ? descending : ascending) ? false : undefined });
+
   const clearFilters = () => {
     setName('');
     search({ sort: query.sort, descending: query.descending });
@@ -80,85 +98,109 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
     <div className={style.radioStations}>
       <div className={style.controls}>
         <input className={style.search} type="search" placeholder={t('radio.search')} value={name} onChange={(event) => setName(event.target.value)} />
-        <select
-          className={style.select}
-          aria-label={t('radio.genre')}
-          value={query.tag ?? ''}
-          onChange={(event) => change({ tag: event.target.value || undefined })}
-        >
-          <option value="">{t('radio.allGenres')}</option>
-          {tags.map((tag) => (
-            <option key={tag.name} value={tag.name}>
-              {tag.name} ({formatNumber(tag.stationCount)})
-            </option>
-          ))}
-        </select>
+        <div className={style.group} role="group" aria-label={t('radio.filters')}>
+          <select
+            className={classNames(style.select, { [style.active]: Boolean(query.tag) })}
+            aria-label={t('radio.genre')}
+            value={query.tag ?? ''}
+            onChange={(event) => change({ tag: event.target.value || undefined })}
+          >
+            <option value="">{t('radio.allGenres')}</option>
+            {tags.map((tag) => (
+              <option key={tag.name} value={tag.name}>
+                {tag.name} ({formatNumber(tag.stationCount)})
+              </option>
+            ))}
+          </select>
+          <FilterSelect
+            label={t('radio.country')}
+            allLabel={t('radio.allCountries')}
+            value={query.country}
+            options={countries}
+            onChange={(country) => change({ country })}
+            formatNumber={formatNumber}
+          />
+          <FilterSelect
+            label={t('radio.language')}
+            allLabel={t('radio.allLanguages')}
+            value={query.language}
+            options={languages}
+            onChange={(language) => change({ language })}
+            formatNumber={formatNumber}
+          />
+          <FilterSelect
+            label={t('radio.codec')}
+            allLabel={t('radio.allCodecs')}
+            value={query.codec}
+            options={codecs}
+            onChange={(codec) => change({ codec })}
+            formatNumber={formatNumber}
+          />
+          <select
+            className={classNames(style.select, { [style.active]: query.bitrateMin !== undefined })}
+            aria-label={t('radio.minimumBitrate')}
+            value={query.bitrateMin ?? ''}
+            onChange={(event) => change({ bitrateMin: radioBitrates.find((bitrate) => `${bitrate}` === event.target.value) })}
+          >
+            <option value="">{t('radio.anyBitrate')}</option>
+            {radioBitrates.map((bitrate) => (
+              <option key={bitrate} value={bitrate}>
+                {t('radio.bitrateMinimum', { bitrate })}
+              </option>
+            ))}
+          </select>
+          <button className={style.clear} type="button" disabled={filterCount === 0} onClick={clearFilters}>
+            {filterCount > 0 ? t('radio.clearFiltersCount', { count: filterCount }) : t('radio.clearFilters')}
+          </button>
+        </div>
+        <div className={classNames(style.group, style.sorting)} role="group" aria-label={t('radio.sorting')}>
+          <select
+            className={style.select}
+            aria-label={t('radio.sortBy')}
+            value={sortField}
+            onChange={(event) => change({ sort: parseRadioQuery({ sort: event.target.value }).sort })}
+          >
+            {radioSortFields.map((field) => (
+              <option key={field} value={field}>
+                {t(`radio.sort.${field}`)}
+              </option>
+            ))}
+          </select>
+          <button
+            className={style.order}
+            type="button"
+            aria-label={`${t('radio.direction')}: ${descending ? t('radio.descending') : t('radio.ascending')}`}
+            onClick={() => change({ descending: descending ? false : undefined })}
+          >
+            {descending ? <DescendingIcon size="14px" /> : <AscendingIcon size="14px" />}
+          </button>
+        </div>
       </div>
-      <div className={style.controls} role="group" aria-label={t('radio.filters')}>
-        <FilterSelect
-          label={t('radio.country')}
-          allLabel={t('radio.allCountries')}
-          value={query.country}
-          options={countries}
-          onChange={(country) => change({ country })}
-          formatNumber={formatNumber}
-        />
-        <FilterSelect
-          label={t('radio.language')}
-          allLabel={t('radio.allLanguages')}
-          value={query.language}
-          options={languages}
-          onChange={(language) => change({ language })}
-          formatNumber={formatNumber}
-        />
-        <FilterSelect
-          label={t('radio.codec')}
-          allLabel={t('radio.allCodecs')}
-          value={query.codec}
-          options={codecs}
-          onChange={(codec) => change({ codec })}
-          formatNumber={formatNumber}
-        />
-        <select
-          className={style.select}
-          aria-label={t('radio.minimumBitrate')}
-          value={query.bitrateMin ?? ''}
-          onChange={(event) => change({ bitrateMin: radioBitrates.find((bitrate) => `${bitrate}` === event.target.value) })}
-        >
-          <option value="">{t('radio.anyBitrate')}</option>
-          {radioBitrates.map((bitrate) => (
-            <option key={bitrate} value={bitrate}>
-              {t('radio.bitrateMinimum', { bitrate })}
-            </option>
-          ))}
-        </select>
-        <button className={style.clear} type="button" disabled={filterCount === 0} onClick={clearFilters}>
-          {filterCount > 0 ? t('radio.clearFiltersCount', { count: filterCount }) : t('radio.clearFilters')}
-        </button>
-      </div>
-      <div className={style.controls} role="group" aria-label={t('radio.sorting')}>
-        <select
-          className={style.select}
-          aria-label={t('radio.sortBy')}
-          value={query.sort ?? 'popularity'}
-          onChange={(event) => change({ sort: parseRadioQuery({ sort: event.target.value }).sort })}
-        >
-          {radioSortFields.map((field) => (
-            <option key={field} value={field}>
-              {t(`radio.sort.${field}`)}
-            </option>
-          ))}
-        </select>
-        <select
-          className={style.select}
-          aria-label={t('radio.direction')}
-          value={query.descending === false ? 'asc' : 'desc'}
-          onChange={(event) => change({ descending: event.target.value === 'asc' ? false : undefined })}
-        >
-          <option value="desc">{t('radio.descending')}</option>
-          <option value="asc">{t('radio.ascending')}</option>
-        </select>
-      </div>
+      {stations.length > 0 && (
+        <div className={classNames(style.stations, style.headerRow)}>
+          <div className={classNames(style.station, style.header)}>
+            <span />
+            {columns.map(({ column, sort }) => (
+              <span
+                key={column}
+                className={classNames({ [style.right]: column === 'bitrate' })}
+                role="columnheader"
+                aria-sort={sort && sortField === sort.field ? (descending ? 'descending' : 'ascending') : sort ? 'none' : undefined}
+              >
+                {sort ? (
+                  <button type="button" onClick={() => sortByColumn(sort.field, sort.ascending)}>
+                    {t(`radio.column.${column}`)}
+                    {sortField === sort.field && (descending ? <DescendingIcon size="10px" /> : <AscendingIcon size="10px" />)}
+                  </button>
+                ) : (
+                  t(`radio.column.${column}`)
+                )}
+              </span>
+            ))}
+            <span />
+          </div>
+        </div>
+      )}
       <div className={style.stations}>
         {error && <div className={style.message}>{t('radio.error', { error })}</div>}
         {loading && <div className={style.message}>{t('radio.loading')}</div>}
@@ -168,14 +210,19 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
             key={station.uuid}
             className={classNames(style.station, { [style.current]: station.uuid === currentStation })}
             onDoubleClick={() => play(station)}
-            title={station.tags.join(', ')}
           >
             <span className={style.playButton} onClick={() => play(station)}>
-              <PlayIcon size={'12px'} />
+              <PlayIcon size={'14px'} />
             </span>
             <span className={style.name}>{station.name}</span>
-            <AudioFormatBadge track={toRadioTrack(station)} className={style.format} />
-            <span className={style.details}>{describe(station, translator)}</span>
+            <span className={style.genres}>{genresOf(station)}</span>
+            <span>
+              {station.codec && (
+                <span className={classNames(style.pill, { [style.lossless]: station.codec.toUpperCase() === 'FLAC' })}>{station.codec.toUpperCase()}</span>
+              )}
+            </span>
+            <span className={style.right}>{station.bitrate || <span title={t('radio.bitrateUnknown')}>—</span>}</span>
+            <span className={style.country}>{station.country}</span>
             <FavouriteButton item={stationFavourite(station)} className={style.favourite} />
           </div>
         ))}

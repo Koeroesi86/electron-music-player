@@ -29,4 +29,12 @@ describe('ViewSwitcher', () => {
     expect(screen.getByRole('button', { name: 'Rescan' })).toBeTruthy();
     expect(setView).not.toHaveBeenCalled();
   });
+
+  it('has no header at all without tabs and controls, and gives the panels the whole height', () => {
+    const { container } = render(<ViewSwitcher views={views} current="one" setView={vi.fn()} tabs={false} />);
+
+    expect(container.querySelector('.viewControls')).toBeNull();
+    expect(container.querySelector('.viewPanels')?.classList.contains('headless')).toBe(true);
+    expect(screen.getByText('first panel')).toBeTruthy();
+  });
 });

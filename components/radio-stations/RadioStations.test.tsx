@@ -7,8 +7,8 @@ import RadioStations from './RadioStations';
 // the heart is tested with its own component, it needs the store
 vi.mock('../favourite-button', () => ({ default: () => null }));
 
-const jazz: RadioStation = { uuid: 'a', name: 'Jazz FM', country: 'Hungary', tags: ['jazz'], codec: 'MP3', bitrate: 128 };
-const rock: RadioStation = { uuid: 'b', name: 'Rock Radio', country: '', tags: [], codec: 'AAC', bitrate: 0 };
+const jazz: RadioStation = { uuid: 'a', name: 'Jazz FM', country: 'Hungary', tags: ['jazz', 'lounge', 'swing', 'bebop'], codec: 'MP3', bitrate: 128 };
+const rock: RadioStation = { uuid: 'b', name: 'Rock Radio', country: '', tags: [], codec: 'flac', bitrate: 0 };
 
 const radio = (state: Partial<RadioState> = {}): RadioState => ({
   query: {},
@@ -55,14 +55,27 @@ describe('RadioStations', () => {
 
     expect(screen.getByText('Jazz FM')).toBeTruthy();
     expect(screen.getByText('Hungary')).toBeTruthy();
-    expect(screen.getByText('Unknown bitrate')).toBeTruthy();
+    expect(screen.getByText('jazz, lounge, swing')).toBeTruthy();
+    expect(screen.getByTitle('Unknown bitrate').textContent).toBe('—');
   });
 
-  it('shows the format of a station that has one', () => {
+  it('shows the codec as a pill, the lossless one in the accent colour, and the bitrate in its own column', () => {
     renderPanel();
 
-    expect(screen.getByText('MP3 128')).toBeTruthy();
-    expect(screen.getByText('AAC')).toBeTruthy();
+    expect(screen.getByText('MP3').classList.contains('lossless')).toBe(false);
+    expect(screen.getByText('FLAC').classList.contains('lossless')).toBe(true);
+    expect(screen.getByText('128')).toBeTruthy();
+  });
+
+  it('lights a filter that is on', () => {
+    renderPanel({ query: { country: 'HU', bitrateMin: 192 } });
+
+    expect(['Country', 'Minimum bitrate', 'Genre', 'Language'].map((label) => screen.getByLabelText(label).classList.contains('active'))).toEqual([
+      true,
+      true,
+      false,
+      false,
+    ]);
   });
 
   it('plays a station on double click', () => {
@@ -192,16 +205,55 @@ describe('RadioStations', () => {
     search.mockClear();
 
     expect((screen.getByLabelText('Sort by') as HTMLSelectElement).value).toBe('popularity');
-    expect((screen.getByLabelText('Order') as HTMLSelectElement).value).toBe('desc');
+    expect(screen.getByRole('button', { name: 'Order: Descending' })).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'bitrate' } });
     expect(search).toHaveBeenLastCalledWith({ country: 'HU', sort: 'bitrate' });
 
-    fireEvent.change(screen.getByLabelText('Order'), { target: { value: 'asc' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Order: Descending' }));
     expect(search).toHaveBeenLastCalledWith({ country: 'HU', descending: false });
 
     fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'popularity' } });
     expect(search).toHaveBeenLastCalledWith({ country: 'HU', sort: undefined });
+  });
+
+  describe('sorting by a column header', () => {
+    const sortOf = (name: string) => screen.getByRole('button', { name }).closest('[role="columnheader"]')?.getAttribute('aria-sort');
+
+    it('sorts by a column in its own direction and flips the sorted one', () => {
+      const { search } = renderPanel({ query: { country: 'HU' } });
+      search.mockClear();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Name' }));
+      expect(search).toHaveBeenLastCalledWith({ country: 'HU', sort: 'name', descending: false });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Bitrate' }));
+      expect(search).toHaveBeenLastCalledWith({ country: 'HU', sort: 'bitrate', descending: undefined });
+    });
+
+    it('goes back and forth on the column that is sorted', () => {
+      const { search } = renderPanel({ query: { sort: 'country', descending: false } });
+      search.mockClear();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Country' }));
+
+      expect(search).toHaveBeenCalledWith({ sort: 'country', descending: undefined });
+    });
+
+    it('exposes the direction of the sorted column only, and has no button for the columns that cannot sort', () => {
+      renderPanel({ query: { sort: 'bitrate' } });
+
+      expect(sortOf('Bitrate')).toBe('descending');
+      expect([sortOf('Name'), sortOf('Country')]).toEqual(['none', 'none']);
+      expect(screen.getByRole('columnheader', { name: 'Genres' }).getAttribute('aria-sort')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Genres' })).toBeNull();
+    });
+
+    it('has no header without stations', () => {
+      renderPanel({ stations: [] });
+
+      expect(screen.queryByRole('columnheader')).toBeNull();
+    });
   });
 
   it('loads the next page of a narrowed list only while there is one', () => {

@@ -7,44 +7,78 @@
   display: flex;
   flex-direction: column;
 
+  // one row of chips: the search, the filters and the sort, wrapping when the window is narrow
   .controls {
     -webkit-app-region: no-drag;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     flex-shrink: 0;
-    gap: 12px;
-    padding: 0 12px 12px;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+
+    .group {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+
+      &.sorting {
+        margin-left: auto;
+      }
+    }
 
     .search,
     .select,
-    .clear {
-      height: 28px;
-      padding: 0 8px;
+    .clear,
+    .order {
+      height: 32px;
       color: inherit;
       font-size: 12px;
       border: 0;
-      border-radius: 3px;
+      border-radius: 16px;
       background-color: var(--overlay);
     }
 
     .search {
-      flex: 1 1 auto;
+      flex: 1 1 160px;
+      max-width: 260px;
+      padding: 0 14px;
     }
 
+    // a select drawn as a chip; the caret is two gradients so that it takes the colour of the text
     .select {
-      flex: 0 1 200px;
+      flex: 0 1 auto;
       min-width: 0;
+      max-width: 180px;
+      padding: 0 28px 0 14px;
+      cursor: pointer;
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, currentcolor 50%), linear-gradient(135deg, currentcolor 50%, transparent 50%);
+      background-position:
+        calc(100% - 17px) 14px,
+        calc(100% - 12px) 14px;
+      background-size: 5px 5px;
+      background-repeat: no-repeat;
 
       // the open list takes the background of the select, which is translucent: it gets a solid one of the theme
       option {
         color: var(--text);
         background-color: var(--panel-solid);
       }
+
+      // a filter that is on
+      &.active {
+        color: var(--accent);
+        background-color: var(--accent-tint);
+      }
     }
 
     .select,
-    .clear {
+    .clear,
+    .order {
       &:hover:not(:disabled) {
         background-color: var(--overlay-strong);
       }
@@ -54,14 +88,35 @@
       }
     }
 
+    .select.active:hover {
+      background-color: var(--accent-tint);
+    }
+
     .clear {
       flex: 0 0 auto;
+      padding: 0 8px;
+      color: var(--text-muted);
       cursor: pointer;
+      background: none;
+
+      &:hover:not(:disabled) {
+        color: var(--text);
+        background: none;
+      }
 
       &:disabled {
         cursor: default;
         opacity: 0.5;
       }
+    }
+
+    .order {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      padding: 0;
+      cursor: pointer;
     }
   }
 
@@ -70,6 +125,14 @@
     overflow-y: auto;
     padding: 0 12px 12px;
     will-change: transform;
+    scrollbar-gutter: stable;
+
+    // the header stays above the list, its gutter is the one of the scrollbar below
+    &.headerRow {
+      flex: 0 0 auto;
+      padding-bottom: 0;
+      overflow-y: hidden;
+    }
 
     .message {
       font-size: 12px;
@@ -86,7 +149,7 @@
       font-size: 12px;
       cursor: pointer;
       border: 0;
-      border-radius: 3px;
+      border-radius: 14px;
       background-color: var(--overlay);
 
       &:hover {
@@ -99,50 +162,126 @@
     }
 
     .station {
-      display: flex;
-      flex-direction: row;
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1.4fr) minmax(0, 1.2fr) 64px 56px minmax(0, 0.8fr) 30px;
+      gap: 10px;
       align-items: center;
+      height: 28px;
+      padding: 0 10px;
       font-size: 12px;
-      line-height: 32px;
-      padding: 0 12px;
       cursor: pointer;
-      border-bottom: 1px solid var(--overlay);
-      background-color: var(--overlay-faint);
+      border-radius: 5px;
       transition: background-color 0.1s ease-in-out;
       will-change: background-color;
 
-      &.current {
-        font-weight: bold;
-      }
-
-      &:hover {
-        background-color: var(--overlay);
-      }
-
-      .playButton {
-        margin-right: 6px;
-      }
-
-      .name {
-        flex: 1 1 auto;
-        overflow-x: hidden;
+      > span {
+        min-width: 0;
+        overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
       }
 
+      .right {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      &:hover {
+        background-color: var(--overlay-faint);
+      }
+
+      // the playing station: an accent edge and a tint
+      &.current {
+        font-weight: 600;
+        background-color: var(--accent-tint);
+        box-shadow: inset 2px 0 0 var(--accent);
+      }
+
+      .playButton {
+        display: inline-flex;
+        color: var(--text-muted);
+        opacity: 0;
+      }
+
+      &:hover .playButton,
+      &.current .playButton {
+        opacity: 1;
+      }
+
+      &.current .playButton {
+        color: var(--accent);
+      }
+
+      .name {
+        font-weight: 500;
+      }
+
+      .genres,
+      .country,
+      .right {
+        color: var(--text-muted);
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 0 6px;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 17px;
+        border-radius: 9px;
+        background-color: var(--overlay);
+
+        &.lossless {
+          color: var(--accent);
+          background-color: var(--accent-tint);
+        }
+      }
+
       .favourite {
-        margin-left: 12px;
+        justify-self: end;
       }
 
-      .format {
-        flex: 0 0 auto;
-        margin-left: 12px;
-      }
+      // flat labels over a hairline, the sorted column in the text colour
+      &.header {
+        height: 28px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: default;
+        border-radius: 0;
+        border-bottom: 1px solid var(--overlay);
 
-      .details {
-        flex: 0 0 auto;
-        margin-left: 12px;
-        opacity: 0.7;
+        &:hover {
+          background-color: transparent;
+        }
+
+        button {
+          max-width: 100%;
+          padding: 0;
+          font: inherit;
+          color: inherit;
+          cursor: pointer;
+          background: none;
+          border: 0;
+
+          &:hover {
+            color: var(--text);
+          }
+
+          &:focus-visible {
+            outline: 2px solid var(--accent);
+          }
+
+          > svg {
+            margin-left: 3px;
+            vertical-align: middle;
+          }
+        }
+
+        > [aria-sort='ascending'],
+        > [aria-sort='descending'] {
+          color: var(--text);
+        }
       }
     }
   }

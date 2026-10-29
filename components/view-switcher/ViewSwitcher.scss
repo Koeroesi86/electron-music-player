@@ -35,6 +35,11 @@
     overflow: hidden;
     position: relative;
 
+    // no header above: the panel has the whole height and draws its own controls
+    &.headless {
+      height: 100%;
+    }
+
     .viewPanel {
       @include tab-panel;
 
