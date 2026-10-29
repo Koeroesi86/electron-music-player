@@ -394,3 +394,14 @@ footer {
   padding-bottom: 40px;
   border-top: 1px solid var(--border);
 }
+
+.light-shot {
+  margin: 48px auto 0;
+}
+
+.light-shot figcaption {
+  margin-top: 12px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.95rem;
+}

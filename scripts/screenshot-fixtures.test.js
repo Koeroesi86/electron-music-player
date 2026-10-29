@@ -42,6 +42,17 @@ describe('startDirectory', () => {
     expect(listed[0]).toMatchObject({ country: 'Hungary', codec: 'MP3', bitrate: 192 })
   })
 
+  it('gives every station a logo that is an image, and the albums a genre', async () => {
+    directory = await startDirectory()
+    const radio = createRadioBrowser('test', directory.origin)
+
+    const { stations: listed } = await radio.searchStations({})
+
+    expect(listed.every(station => station.hasLogo)).toBe(true)
+    expect((await fetch(radio.getLogoUrl(listed[0].uuid))).headers.get('content-type')).toBe('image/png')
+    expect(albums.every(album => album.genre)).toBe(true)
+  })
+
   it('answers the lists of the filters', async () => {
     directory = await startDirectory()
     const radio = createRadioBrowser('test', directory.origin)

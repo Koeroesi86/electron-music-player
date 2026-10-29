@@ -54,14 +54,88 @@ const scenes = [
     steps: [
       // the dialog of the album before is still open
       { click: 'Close', nth: -1 },
+      // two more albums played, so the history of Home has more than one row
+      ...playAlbum(albums[1]),
+      ...playAlbum(albums[3]),
       { click: 'Radio stations' },
       { wait: 'Night Owl FM' },
-      { click: 'Night Owl FM', from: name => name.parentElement.firstElementChild },
+      { click: 'Night Owl FM', from: name => name.parentElement.parentElement.firstElementChild },
       { waitFor: `document.querySelector('audio')?.src.includes('/radio/')` },
       { run: holdWhenRun(12) },
       { wait: clock(12) }
     ]
   }
 ]
+
+// the folder of the library is in a folder of the run that has a random name, which a picture would show: it reads as a folder of a home
+const hidePaths = `(() => {
+  const texts = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+  for (let node = texts.nextNode(); node; node = texts.nextNode()) node.textContent = node.textContent.replace(/\\S*emusic-screenshots-\\w+[\\\\/]?/, '/home/mia/')
+})()`
+
+// the version and the update line of a development run are not what the picture is about
+const hideAbout = `document.querySelector('[class*="About__about"]').style.display = 'none'`
+
+// types a name into a field of the app and submits it, as a person does
+const typeInto = (label, text) =>
+  `(() => { const input = document.querySelector('[aria-label=${JSON.stringify(label)}]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event('input', { bubbles: true })); input.form.requestSubmit() })()`
+
+// a playlist of the albums, built through the dialog of each: the dialog is the last of the page, so is its menu
+const playlist = (name, listed) => [
+  { click: 'New playlist' },
+  { run: typeInto('Playlist name', name) },
+  { wait: name },
+  ...listed.flatMap(({ title, tracks }) => [
+    { click: 'Albums' },
+    { wait: title },
+    { click: title },
+    { wait: tracks.at(-1) },
+    { click: 'Add to a playlist', nth: -1 },
+    { click: name, nth: -1 },
+    { click: 'Close', nth: -1 }
+  ])
+]
+
+// the heart in the row or tile that says the text: the nearest parent with a heart of its own
+const like = text => ({
+  run: `(() => {
+    const heart = '[aria-label="Add to favourites"]'
+    let element = [...document.body.querySelectorAll('*')].find(candidate => !candidate.children.length && candidate.textContent.trim() === ${JSON.stringify(text)})
+    while (element && element.querySelectorAll(heart).length !== 1) element = element.parentElement
+    element.querySelector(heart).click()
+  })()`
+})
+
+scenes.push(
+  { name: 'albums', steps: [{ click: 'Albums' }, { wait: albums[4].title }] },
+  { name: 'genre', steps: [{ click: 'Genres' }, { wait: 'Indie' }, { click: 'Indie' }, { wait: 'Play all' }] },
+  { name: 'folders', steps: [{ click: 'Folders' }, { wait: 'Drop music folders here' }, { run: hidePaths }] },
+  {
+    name: 'liked',
+    steps: [
+      { click: 'Albums' },
+      { wait: albums[0].title },
+      like(albums[0].title),
+      like(albums[2].title),
+      like(albums[4].title),
+      { click: 'Songs' },
+      { wait: '20 tracks' },
+      like(albums[1].tracks[0]),
+      like(albums[3].tracks[2]),
+      { click: 'Radio stations' },
+      { wait: 'Night Owl FM' },
+      like('Night Owl FM'),
+      like('Juniper Classical'),
+      like('Harbour Jazz'),
+      { click: 'Liked' },
+      { wait: 'Night Owl FM' }
+    ]
+  },
+  { name: 'playlist', steps: [...playlist('Late night', [albums[0], albums[4]]), { click: 'Late night' }, { wait: 'Aurora Drift' }] },
+  { name: 'equalizer', steps: [{ click: 'Equalizer' }, { wait: 'Drag a dot' }, { click: 'Bass boost' }] },
+  { name: 'home', steps: [{ click: 'Home' }, { wait: 'RECENTLY PLAYED' }] },
+  { name: 'settings', steps: [{ click: 'Settings' }, { wait: 'Accent colour' }, { run: hideAbout }, { run: hidePaths }] },
+  { name: 'light', steps: [{ click: 'Light' }, { click: 'Albums' }, { wait: albums[4].title }] }
+)
 
 module.exports = { scenes, setup }
