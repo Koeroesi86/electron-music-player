@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import classNames from 'classnames';
+import { FaTh, FaThLarge } from 'react-icons/fa';
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { AlbumSort as AlbumSortValue } from '../../types/library-query';
 import { useTranslation } from '../../client/i18n';
@@ -103,17 +104,23 @@ const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, s
       </div>
       <div className={style.footer}>
         <span>{t('albums.count', { count: albums.total ?? 0 })}</span>
-        <input
-          type="range"
-          className={style.coverSize}
-          aria-label={t('albums.coverSize')}
-          title={t('albums.coverSize')}
-          min={coverSizes.min}
-          max={coverSizes.max}
-          step={coverSizes.step}
-          value={coverSize}
-          onChange={(event) => setCoverSize(Number(event.target.value))}
-        />
+        <label className={style.coverSizeControl} title={t('albums.coverSize')}>
+          <span className={style.coverSizeLabel}>{t('albums.coverSize')}</span>
+          <FaTh className={style.coverSizeIcon} aria-hidden="true" />
+          <input
+            type="range"
+            className={style.coverSize}
+            aria-label={t('albums.coverSize')}
+            min={coverSizes.min}
+            max={coverSizes.max}
+            step={coverSizes.step}
+            value={coverSize}
+            style={{ backgroundSize: `${((coverSize - coverSizes.min) / (coverSizes.max - coverSizes.min)) * 100}% 4px, 100% 4px` }}
+            onChange={(event) => setCoverSize(Number(event.target.value))}
+          />
+          <FaThLarge className={style.coverSizeIcon} aria-hidden="true" />
+          <span className={style.coverSizeValue}>{coverSize} px</span>
+        </label>
       </div>
     </div>
   );
