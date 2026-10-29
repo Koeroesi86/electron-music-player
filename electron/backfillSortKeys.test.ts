@@ -61,4 +61,17 @@ describe('backfillSortKeys', () => {
 
     expect(await keysOf(database)).toEqual([{ path: '/m/1', title_key: 'kept', artist_key: 'kept', album_key: 'kept' }]);
   });
+
+  it('leaves every track as it was when one update fails', async () => {
+    await insertWithoutKeys(database, '/m/1', 'Ékes');
+    await insertWithoutKeys(database, '/m/2', 'Zebra');
+    await executeQuery(database, {
+      query: `CREATE TRIGGER fail_update BEFORE UPDATE ON library WHEN NEW.path = '/m/2' BEGIN SELECT RAISE(ABORT, 'failed'); END`,
+      variables: [],
+    });
+
+    await expect(backfillSortKeys(database)).rejects.toBeDefined();
+
+    expect((await keysOf(database)).map(({ title_key: titleKey }) => titleKey)).toEqual([null, null]);
+  });
 });

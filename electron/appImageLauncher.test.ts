@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { normalize, posix } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -82,6 +82,17 @@ describe('launcher on disk', () => {
     await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(true);
     await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
     expect(refresh).toHaveBeenCalledExactlyOnceWith(normalize(join(folder, 'data/applications')));
+  });
+
+  it('makes the icon theme newer than the icon cache of the desktop when the icons are rewritten', async () => {
+    const theme = join(folder, 'data/icons/hicolor');
+    await enableLauncher(appImage(), options);
+    const past = new Date('2020-01-01');
+    await utimes(theme, past, past);
+
+    await enableLauncher(appImage(), options);
+
+    expect((await stat(theme)).mtime.getTime()).toBeGreaterThan(past.getTime());
   });
 
   it('leaves nothing behind when the path can not be used', async () => {

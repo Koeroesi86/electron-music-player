@@ -18,7 +18,7 @@ describe('createDatabase', () => {
 
   it('returns the open database once it is migrated', async () => {
     vi.mocked(migrate).mockResolvedValue(undefined);
-    vi.mocked(backfillSortKeys).mockResolvedValue([]);
+    vi.mocked(backfillSortKeys).mockResolvedValue(undefined);
 
     await expect(createDatabase('/library.sqlite')).resolves.toBe<Database | typeof database>(database);
 

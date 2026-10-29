@@ -1,5 +1,5 @@
 import { execFile } from 'child_process';
-import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'fs/promises';
+import { copyFile, mkdir, readFile, rm, stat, utimes, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { catalog } from '../locales';
 
@@ -56,6 +56,13 @@ export const readLauncherTarget = (dataHome: string) =>
 
 export const isLauncherEnabled = (dataHome: string) => readLauncherTarget(dataHome).then((target) => target !== undefined);
 
+// the desktop reads the icons from a cache that is only dropped when the theme folder is newer than it, which a rewritten icon of the same name does not change
+const invalidateIconCache = (dataHome: string) => {
+  const now = new Date();
+
+  return utimes(join(dataHome, 'icons/hicolor'), now, now).catch(() => undefined);
+};
+
 const writeIcon = (size: number, { dataHome, iconsPath }: LauncherOptions) =>
   mkdir(join(dataHome, 'icons/hicolor', `${size}x${size}`, 'apps'), { recursive: true }).then(() =>
     copyFile(join(iconsPath, `${size}x${size}.png`), getIconFile(dataHome, size))
@@ -67,14 +74,15 @@ export const enableLauncher = async (appImage: string, options: LauncherOptions)
 
   await mkdir(getApplicationsPath(dataHome), { recursive: true });
   await Promise.all(iconSizes.map((size) => writeIcon(size, options)));
+  await invalidateIconCache(dataHome);
   await writeFile(getDesktopFile(dataHome), entry);
   await refresh(getApplicationsPath(dataHome));
 };
 
 export const disableLauncher = ({ dataHome, refresh = updateDesktopDatabase }: LauncherOptions) =>
-  Promise.all([getDesktopFile(dataHome), ...iconSizes.map((size) => getIconFile(dataHome, size))].map((file) => rm(file, { force: true }))).then(() =>
-    refresh(getApplicationsPath(dataHome))
-  );
+  Promise.all([getDesktopFile(dataHome), ...iconSizes.map((size) => getIconFile(dataHome, size))].map((file) => rm(file, { force: true })))
+    .then(() => invalidateIconCache(dataHome))
+    .then(() => refresh(getApplicationsPath(dataHome)));
 
 const exists = (path: string) =>
   stat(path).then(
