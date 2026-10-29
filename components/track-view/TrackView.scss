@@ -65,40 +65,50 @@
     color: var(--text-muted);
   }
 
+  // quiet chips for the selection, the accent one plays it; the ones that need a selection wait for one
   .controls {
+    display: flex;
+    gap: 8px;
+
     button {
-      position: relative;
-      display: inline-block;
-      line-height: 26px;
-      padding: 0 12px;
-      margin-left: -1px;
+      height: 28px;
+      padding: 0 14px;
+      font: inherit;
       font-size: 12px;
-      font-weight: 400;
-      cursor: pointer;
-      color: var(--control-text);
-      background: var(--control-background);
+      color: var(--text-soft);
+      background: var(--overlay-faint);
       border: 0;
-      border-radius: 0;
-      transition: color .2s ease-in-out, background-color .2s ease-in-out;
+      border-radius: 14px;
+      box-shadow: inset 0 0 0 1px var(--overlay);
+      cursor: pointer;
+      transition: color .2s ease-in-out, background-color .2s ease-in-out, box-shadow .2s ease-in-out;
 
-      &:first-of-type {
-        border-top-left-radius: 3px;
-        border-bottom-left-radius: 3px;
+      &:hover:not(:disabled) {
+        color: var(--text);
+        background: var(--overlay);
       }
 
-      &:last-of-type {
-        border-top-right-radius: 3px;
-        border-bottom-right-radius: 3px;
+      &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
+
+      &:disabled {
+        color: var(--text-disabled);
+        cursor: default;
+      }
+    }
+
+    .play:not(:disabled) {
+      font-weight: 600;
+      color: var(--accent-contrast);
+      background: var(--accent);
+      box-shadow: none;
 
       &:hover {
-        z-index: 1;
-        color: var(--control-text-hover);
-        background-color: var(--control-background-hover);
-      }
-
-      &:focus {
-        outline: 0;
+        color: var(--accent-contrast);
+        background: var(--accent);
+        filter: brightness(1.1);
       }
     }
   }

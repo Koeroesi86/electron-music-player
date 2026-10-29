@@ -60,6 +60,14 @@ describe('TrackView', () => {
     expect(screen.getByText('50000 tracks')).toBeTruthy();
   });
 
+  it('keeps Clear selection and Play selected off until a track is selected', () => {
+    render(<TrackView {...baseProps} tracks={firstPage} />);
+
+    expect((screen.getByText('Clear selection') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByText('Play selected') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByText('Select All') as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it('requests the pages missing for the window', () => {
     const loadPage = vi.fn();
     render(<TrackView {...baseProps} tracks={firstPage} loadPage={loadPage} />);
