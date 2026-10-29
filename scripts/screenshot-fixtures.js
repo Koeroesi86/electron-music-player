@@ -11,6 +11,7 @@ const durations = [167, 184, 201, 218]
 const albums = [
   {
     title: 'Night Shift',
+    genre: 'Synthwave',
     artist: 'The Velvet Engine',
     year: 2018,
     tracks: ['Neon Rain', 'Last Train', 'Overclock', 'Afterhours'],
@@ -18,6 +19,7 @@ const albums = [
   },
   {
     title: 'Room Tones',
+    genre: 'Chamber',
     artist: 'Juniper Quartet',
     year: 2023,
     tracks: ['First Light', 'Soft Hands', 'Interlude', 'Open Window'],
@@ -25,6 +27,7 @@ const albums = [
   },
   {
     title: 'Salt and Static',
+    genre: 'Indie',
     artist: 'Marble Coast',
     year: 2019,
     tracks: ['Sea Wall', 'Tape Hiss', 'Low Tide Radio', 'Harbour Lights'],
@@ -32,6 +35,7 @@ const albums = [
   },
   {
     title: 'Small Hours',
+    genre: 'Indie',
     artist: 'Ada Rivers',
     year: 2022,
     tracks: ['Kitchen Table', 'Paper Boats', 'Slow Burn', 'Porch Light'],
@@ -39,6 +43,7 @@ const albums = [
   },
   {
     title: 'Winter Signals',
+    genre: 'Ambient',
     artist: 'Northern Lights Orchestra',
     year: 2021,
     tracks: ['Aurora Drift', 'Glass Lake', 'Long Night', 'Polar Hum'],
@@ -78,7 +83,7 @@ const writeLibrary = folder =>
         join(directory, `${index + 1}-${toFile(title)}.flac`),
         writeFlac({
           seconds: durations[index],
-          tags: { TITLE: title, ARTIST: album.artist, ALBUMARTIST: album.artist, ALBUM: album.title, TRACKNUMBER: index + 1, DATE: album.year },
+          tags: { TITLE: title, ARTIST: album.artist, ALBUMARTIST: album.artist, ALBUM: album.title, GENRE: album.genre, TRACKNUMBER: index + 1, DATE: album.year },
           cover
         })
       )
@@ -91,7 +96,7 @@ const silentByte = position => [0xff, 0xfb, 0x90, 0x00][position % frameLength] 
 
 const audioPerBlock = 16000
 
-const toDirectoryStation = (station, index) => ({
+const toDirectoryStation = (station, index, origin) => ({
   stationuuid: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
   name: station.name,
   country: station.country,
@@ -99,7 +104,8 @@ const toDirectoryStation = (station, index) => ({
   tags: station.tags,
   codec: station.codec,
   bitrate: station.bitrate,
-  hls: 0
+  hls: 0,
+  favicon: `${origin}/logo/${index}.png`
 })
 
 const countBy = (items, key) => [...Map.groupBy(items, item => item[key])].map(([value, group]) => [value, group.length])
@@ -111,9 +117,11 @@ const json = (response, body) => response.writeHead(200, { 'content-type': 'appl
  * the app is pointed to it with EMUSIC_RADIO_DIRECTORY, so no real station and no search of an image on the internet is involved
  */
 const startDirectory = () => {
-  const directory = stations.map(toDirectoryStation)
   const announcement = `${announced.album.artist} - ${announced.album.tracks[announced.track]}`
   let origin = ''
+  const directory = () => stations.map((station, index) => toDirectoryStation(station, index, origin))
+  // a logo a station: the cover of an album, small
+  const logos = stations.map((_, index) => drawCover(albums[index % albums.length].cover, 96))
 
   const options = {
     '/json/countries': countBy(stations, 'code').map(([code, stationcount]) => ({ name: stations.find(station => station.code === code).country, iso_3166_1: code, stationcount })),
@@ -147,11 +155,12 @@ const startDirectory = () => {
   const server = createServer((request, response) => {
     const { pathname } = new URL(request.url, 'http://directory.test')
     if (pathname === '/json/servers') return json(response, [])
-    if (pathname === '/json/stations/search') return json(response, directory)
-    if (pathname === '/json/stations/byuuid') return json(response, directory)
+    if (pathname === '/json/stations/search') return json(response, directory())
+    if (pathname === '/json/stations/byuuid') return json(response, directory())
     if (pathname.startsWith('/json/url/')) return json(response, { url: `${origin}/station` })
     if (pathname in options) return json(response, options[pathname])
     if (pathname === '/station') return stream(request, response)
+    if (pathname.startsWith('/logo/')) return response.writeHead(200, { 'content-type': 'image/png' }).end(logos[Number.parseInt(pathname.slice(6))])
     if (pathname === '/cover.png') return response.writeHead(200, { 'content-type': 'image/png' }).end(cover)
     return response.writeHead(404).end()
   })

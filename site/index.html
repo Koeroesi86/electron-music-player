@@ -44,6 +44,9 @@
       <li>No account</li>
       <li>Lossless</li>
       <li>Internet radio</li>
+      <li>Playlists</li>
+      <li>Equalizer</li>
+      <li>Light and dark</li>
       <li>Windows · macOS · Linux</li>
     </ul>
 
@@ -53,61 +56,149 @@
         <ul class="cards">
           <li>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h16" /></svg>
-            <h3>Your library, sorted out</h3>
-            <p>Browse by album, artist, album artist and genre, or search by artist, album and title.</p>
+            <h3>Your library, any way you browse</h3>
+            <p>Albums, artists, album artists, genres, songs and folders. Search by artist, album or title, sort every list, and narrow it to the folders you pick.</p>
           </li>
           <li>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h3l2-6 4 12 3-9 2 3h4" /></svg>
             <h3>Lossless, and you can see it</h3>
-            <p>Every track and station shows its audio format, so you know what you are listening to.</p>
+            <p>Every track and station wears its format: FLAC 16/44.1, FLAC 24/96, MP3 320. No guessing what you are listening to.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" /></svg>
+            <h3>Plays what you have</h3>
+            <p>FLAC, MP3, AAC and M4A, Ogg and Opus, WAV, AIFF, APE, WavPack and WMA, with the tags and the cover read from the files.</p>
           </li>
           <li>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9a10 10 0 0 1 14 0M8 12.5a6 6 0 0 1 8 0M12 16h.01M3 6a14 14 0 0 1 18 0" /></svg>
             <h3>Internet radio built in</h3>
-            <p>Tune in to stations from the open radio-browser.info directory, next to your own files. <a href="#radio">More about radio</a></p>
+            <p>Thousands of stations from the open radio-browser.info directory, with their logos, filters and the song that is on right now. <a href="#radio">More about radio</a></p>
           </li>
           <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2" /><path d="M8 21h8" /></svg>
-            <h3>Feels at home</h3>
-            <p>Window controls follow your system, and a translucent window blurs the desktop behind it where the system allows.</p>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" /></svg>
-            <h3>Stays up to date</h3>
-            <p>The app updates itself on start. New releases come out twice a week.</p>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" /></svg>
+            <h3>A Home that remembers</h3>
+            <p>Pick up where you stopped, replay what you heard last, and start your Liked tracks, a playlist or a favourite station in one click.</p>
           </li>
           <li>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" /></svg>
-            <h3>Free and open</h3>
-            <p>No price and no account. The source is public under the <a href="https://github.com/Koeroesi86/electron-music-player/blob/master/LICENSE.md">ISC licence</a>.</p>
+            <h3>Liked and playlists</h3>
+            <p>Heart a track, an album or a station and it waits in Liked. Build playlists, reorder them by dragging, and keep playing even when a folder is away.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16M12 4v16M18 4v16M4 14h4M10 8h4M16 12h4" /></svg>
+            <h3>An equalizer you can see</h3>
+            <p>Ten bands drawn as a curve: drag a dot or pick Bass boost, Vocal, Treble boost or Loudness.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h12M4 12h12M4 17h8M19 14v6M16 17h6" /></svg>
+            <h3>A queue you control</h3>
+            <p>Add songs or whole albums, drag them into order, take out what you do not want. Shuffle and repeat are one tap away.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 3 3 0 0 0 0-6 3 3 0 0 1 0-6 3 3 0 0 0 0-6z" /></svg>
+            <h3>Light, dark, or your cover</h3>
+            <p>Follow the system or choose a mode, then pick an accent colour, or let it follow the cover of whatever is playing.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M12 5v14M8 19h8" /></svg>
+            <h3>Speaks your language</h3>
+            <p>English and Hungarian, following your system unless you say otherwise.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v11H3zM8 21h8M12 16v5" /></svg>
+            <h3>Feels at home</h3>
+            <p>Media keys and the media controls of your system, play buttons on the Windows taskbar, a menu entry on Linux, and a translucent window that blurs the desktop where the system allows.</p>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" /></svg>
+            <h3>Free, private, up to date</h3>
+            <p>No price, no account, no tracking. Artist photos are off until you allow them. The app updates itself, and new releases come out twice a week, under the <a href="https://github.com/Koeroesi86/electron-music-player/blob/master/LICENSE.md">ISC licence</a>.</p>
           </li>
         </ul>
       </section>
 
       <section class="tour" aria-labelledby="tour">
         <h2 id="tour">A look around</h2>
-        <div class="row" id="radio">
+        <div class="row">
           <div class="copy">
-            <h3>Internet radio, next to your own music</h3>
-            <p>Search the station directory by name, genre, country, language, codec or bitrate, and sort by popularity, name, bitrate, trending, votes or country, or by clicking a column. Each station shows its genres, codec, bitrate and country, a live badge tells you it is a stream, and the player bar shows the song that is on right now.</p>
-            <p>Heart the stations you come back to and they wait in Liked, like your tracks.</p>
+            <h3>Open it, and your music is waiting</h3>
+            <p>Home keeps what you were doing: a button to continue the track you paused, the list of what you played lately and tiles for your Liked tracks, your playlists and your favourite stations. Clear the list whenever you like.</p>
           </div>
-          <figure class="shot"><img src="screenshots/radio.webp" width="1360" height="850" loading="lazy" alt="The Radio page of eMusic: a table of stations with their genres, codec, bitrate and country, filter chips for genre, country, language, codec and bitrate, a sort menu, and a live station playing in the player bar." /></figure>
+          <figure class="shot"><img src="screenshots/home.webp" width="1360" height="850" loading="lazy" alt="The Home page of eMusic: tiles for Liked and a playlist, the recently played tracks and a station with their formats, and three favourite radio stations with their logos." /></figure>
+        </div>
+        <div class="row flip">
+          <div class="copy">
+            <h3>Every album, front and centre</h3>
+            <p>A grid of covers that fills the window, with a slider for the size. Click a cover for the track list, a format badge on each track and a Play album button; sort by title, artist, year, length or number of tracks.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/albums.webp" width="1360" height="850" loading="lazy" alt="The albums page of eMusic: five album covers in a grid with artist, year, number of tracks, length and a FLAC badge, a search box, folder filter, sort menu and a cover size slider." /></figure>
+        </div>
+        <div class="row">
+          <div class="copy">
+            <h3>Artists, album artists and genres</h3>
+            <p>Browse by who made it or what it is. Genres get a colour and a fan of covers; open one and press <b>Play all</b> or <b>Shuffle</b> to queue everything in it.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/genre.webp" width="1360" height="850" loading="lazy" alt="An opened genre in eMusic with Play all and Shuffle buttons in the header and the two albums of the genre below." /></figure>
         </div>
         <div class="row flip">
           <div class="copy">
             <h3>Everything you own, in one list</h3>
-            <p>Every file in your folders shows up with its artist, year, album, track number and format. Open a folder once and the library keeps itself in step with it.</p>
+            <p>Every file in your folders with its artist, year, album, track number and format. Tick several songs and play just those. Open a folder once and the library keeps itself in step with it.</p>
           </div>
           <figure class="shot"><img src="screenshots/songs.webp" width="1360" height="850" loading="lazy" alt="The songs list of eMusic with the title first, the artist, album and year muted beside it, a FLAC badge on every track and the heart, add to playlist and add to queue buttons on the playing row." /></figure>
         </div>
         <div class="row">
           <div class="copy">
+            <h3>Drop a folder in, or take one away</h3>
+            <p>Drag folders onto the window or pick them, and watch the scan count its files. A folder that is unplugged stays in the library as <i>Unavailable</i>, its tracks and favourites wait for it, and nothing on disk is ever touched.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/folders.webp" width="1360" height="850" loading="lazy" alt="The folders page of eMusic: a folder row with Remove, an Add folder button and a drop area." /></figure>
+        </div>
+        <div class="row flip">
+          <div class="copy">
             <h3>What is playing, and what is next</h3>
-            <p>The cover, the format and the whole queue sit on one page. Add songs or whole albums to the end of the queue, drag them into the order you want, and take out what you do not. The player bar below keeps the controls, the position and the volume in reach.</p>
+            <p>The cover, the format and the whole queue sit on one page. Add songs or whole albums to the end of the queue, drag them into the order you want and take out what you do not. The player bar keeps the controls, the position and the volume in reach.</p>
           </div>
           <figure class="shot"><img src="screenshots/now.webp" width="1360" height="850" loading="lazy" alt="The Now playing page of eMusic: the large cover, the queue of four tracks and the player bar with the progress." /></figure>
         </div>
+        <div class="row" id="radio">
+          <div class="copy">
+            <h3>Internet radio, next to your own music</h3>
+            <p>Search the station directory by name, genre, country, language, codec or bitrate, and sort by popularity, name, bitrate, trending, votes or country, or by clicking a column. Stations show their logo, genres, codec, bitrate and country, a live badge tells you it is a stream, and the player bar shows the song that is on right now, with its cover.</p>
+            <p>The list reflows to a narrow window, dropping the least important columns first.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/radio.webp" width="1360" height="850" loading="lazy" alt="The Radio page of eMusic: a table of stations with logos, genres, codec, bitrate and country, filter chips for genre, country, language, codec and bitrate, a sort menu, and a live station playing in the player bar." /></figure>
+        </div>
+        <div class="row flip">
+          <div class="copy">
+            <h3>Heart it, and it is yours</h3>
+            <p>Tracks, albums and stations land in one Liked page with a switch between Local and Online, a count of what is in it, Play all and Shuffle. Sort by when you liked it, by name or by artist.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/liked.webp" width="1360" height="850" loading="lazy" alt="The Liked page of eMusic: a heart cover with totals, Play all local and Shuffle buttons, a Local and Online switch and a list of liked tracks and albums." /></figure>
+        </div>
+        <div class="row">
+          <div class="copy">
+            <h3>Playlists, the quick way</h3>
+            <p>Press the plus in the sidebar, name it, then add tracks or whole albums from any list. Drag playlists into order and drag the tracks inside one. Tracks whose files are away stay put and play again when they return.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/playlist.webp" width="1360" height="850" loading="lazy" alt="A playlist in eMusic named Late night: numbered rows with title, artist, album and format, and a Play all button." /></figure>
+        </div>
+        <div class="row flip">
+          <div class="copy">
+            <h3>Shape the sound</h3>
+            <p>Ten bands from 70 Hz to 16 kHz, drawn as a curve you drag. Presets get you started, Faders show the numbers, Reset puts it flat again.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/equalizer.webp" width="1360" height="850" loading="lazy" alt="The Equalizer page of eMusic: the Bass boost preset drawn as a response curve with ten draggable points." /></figure>
+        </div>
+        <div class="row">
+          <div class="copy">
+            <h3>Make it yours</h3>
+            <p>Light, dark or follow the system. Six accent colours, your own, or an automatic one that follows the cover of the song. Turn on translucent panels where your desktop blurs windows, switch the language, and decide if artist photos may be fetched.</p>
+            <p>The version and the update status live in the same place; the app checks on start and can check on demand.</p>
+          </div>
+          <figure class="shot"><img src="screenshots/settings.webp" width="1360" height="850" loading="lazy" alt="The Settings page of eMusic: theme mode tiles, accent colours, language, the library folders, an Artist photos switch and a Window blur switch." /></figure>
+        </div>
+        <figure class="shot light-shot"><img src="screenshots/light.webp" width="1360" height="850" loading="lazy" alt="The albums page of eMusic in the light theme, with a dark blue accent taken from the cover that is playing." /><figcaption>The light theme, with the accent taken from the cover that is playing.</figcaption></figure>
         <p class="meta">The music and the stations in the screenshots are made up for the pictures.</p>
       </section>
 
