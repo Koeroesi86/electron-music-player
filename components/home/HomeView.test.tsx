@@ -248,6 +248,14 @@ describe('HomeView', () => {
       expect(playStation).toHaveBeenCalledWith(station);
     });
 
+    it('keeps the format under the name, with the country, so a narrow tile does not squeeze the name out', () => {
+      renderView([], null, { favourites: [liked(stationFavourite(station))] });
+
+      const details = document.querySelector('.stationDetails');
+      expect(details?.textContent).toBe('HungaryMP3 128');
+      expect(details?.previousElementSibling?.className).toBe('stationName');
+    });
+
     it('has no section without a station', () => {
       renderView([played(trackFavourite(track))]);
 
