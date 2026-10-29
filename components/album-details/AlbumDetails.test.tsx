@@ -111,4 +111,28 @@ describe('AlbumDetails', () => {
     expect(screen.getByText('Title')).toBeTruthy();
     expect(screen.getByRole('img').getAttribute('src')).toBe(getCoverUrl('/data/albumart/abc123.jpg'));
   });
+
+  it('closes on a click outside the dialog, and not on a click inside it', () => {
+    const close = vi.fn();
+    const { container } = render(<AlbumDetails album={album} playTracks={vi.fn()} close={close} />);
+
+    fireEvent.click(screen.getByText('One'));
+    expect(close).not.toHaveBeenCalled();
+
+    fireEvent.click(container.firstElementChild as Element);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes with Escape while an album is open, and listens no more once it is closed', () => {
+    const close = vi.fn();
+    const { rerender } = render(<AlbumDetails album={album} playTracks={vi.fn()} close={close} />);
+
+    fireEvent.keyDown(document, { key: 'Enter' });
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(close).toHaveBeenCalledTimes(1);
+
+    rerender(<AlbumDetails album={null} playTracks={vi.fn()} close={close} />);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(close).toHaveBeenCalledTimes(1);
+  });
 });
