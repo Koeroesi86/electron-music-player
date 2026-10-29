@@ -125,6 +125,14 @@
     overflow-y: auto;
     padding: 0 12px 12px;
     will-change: transform;
+    scrollbar-gutter: stable;
+
+    // the header stays above the list, its gutter is the one of the scrollbar below
+    &.headerRow {
+      flex: 0 0 auto;
+      padding-bottom: 0;
+      overflow-y: hidden;
+    }
 
     .message {
       font-size: 12px;
@@ -235,9 +243,6 @@
 
       // flat labels over a hairline, the sorted column in the text colour
       &.header {
-        position: sticky;
-        top: 0;
-        z-index: 1;
         height: 28px;
         font-size: 11px;
         font-weight: 600;
@@ -245,10 +250,9 @@
         cursor: default;
         border-radius: 0;
         border-bottom: 1px solid var(--overlay);
-        background-color: var(--app-background);
 
         &:hover {
-          background-color: var(--app-background);
+          background-color: transparent;
         }
 
         button {

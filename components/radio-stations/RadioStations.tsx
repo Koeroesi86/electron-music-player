@@ -176,11 +176,8 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
           </button>
         </div>
       </div>
-      <div className={style.stations}>
-        {error && <div className={style.message}>{t('radio.error', { error })}</div>}
-        {loading && <div className={style.message}>{t('radio.loading')}</div>}
-        {!loading && !error && stations.length === 0 && <div className={style.message}>{t('radio.empty')}</div>}
-        {stations.length > 0 && (
+      {stations.length > 0 && (
+        <div className={classNames(style.stations, style.headerRow)}>
           <div className={classNames(style.station, style.header)}>
             <span />
             {columns.map(({ column, sort }) => (
@@ -202,7 +199,12 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
             ))}
             <span />
           </div>
-        )}
+        </div>
+      )}
+      <div className={style.stations}>
+        {error && <div className={style.message}>{t('radio.error', { error })}</div>}
+        {loading && <div className={style.message}>{t('radio.loading')}</div>}
+        {!loading && !error && stations.length === 0 && <div className={style.message}>{t('radio.empty')}</div>}
         {stations.map((station) => (
           <div
             key={station.uuid}
