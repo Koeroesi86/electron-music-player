@@ -51,9 +51,13 @@ export const buildDesktopEntry = (appImage: string) => {
 };
 
 /** The AppImage the installed entry starts, undefined when there is no entry */
-export const readLauncherTarget = (dataHome: string) =>
+const readExec = (dataHome: string) =>
   readFile(getDesktopFile(dataHome), 'utf8')
     .then((entry) => entry.match(/^Exec="([^"]*)"/m)?.[1])
+    .catch(() => undefined);
+
+export const readLauncherTarget = (dataHome: string) =>
+  readExec(dataHome)
     .then((exec) => (exec === getLauncherLink(dataHome) ? readlink(exec).catch(() => exec) : exec))
     .catch(() => undefined);
 
@@ -75,6 +79,9 @@ const writeIcon = (size: number, { dataHome, iconsPath }: LauncherOptions) =>
 const writeLink = (appImage: string, dataHome: string) => {
   const link = getLauncherLink(dataHome);
   const temporary = `${link}.tmp`;
+
+  // an AppImage started through the link may report the link as its own path, which must not become the target of the link
+  if (appImage === link) return Promise.resolve();
 
   return mkdir(join(link, '..'), { recursive: true })
     .then(() => rm(temporary, { force: true }))
@@ -125,6 +132,12 @@ const isCurrent = async (appImage: string, { dataHome, iconsPath }: LauncherOpti
   return target === appImage && entry?.toString() === buildDesktopEntry(getLauncherLink(dataHome)) && icons.every(Boolean);
 };
 
+// the desktop shell may keep the path of an entry from before the update for a whole session, so the path that the update removed leads to the link
+const keepPath = (path: string, dataHome: string) =>
+  rm(path, { force: true })
+    .then(() => symlink(getLauncherLink(dataHome), path, 'file'))
+    .catch(() => undefined);
+
 /**
  * Keeps an enabled entry working: it points to the running AppImage when the one it started was moved,
  * and goes away when that one is gone and the app does not run from an AppImage; an entry of the running AppImage is rewritten
@@ -135,8 +148,11 @@ export const syncLauncher = async (appImage: string | undefined, options: Launch
   if (target === undefined) return;
   if (appImage && target === appImage && !(await isCurrent(appImage, options))) return enableLauncher(appImage, options);
   if (await exists(target)) return;
+  if (!appImage) return disableLauncher(options);
 
-  await (appImage ? enableLauncher(appImage, options) : disableLauncher(options));
+  const exec = await readExec(options.dataHome);
+  await enableLauncher(appImage, options);
+  if (exec !== getLauncherLink(options.dataHome)) await keepPath(target, options.dataHome);
 };
 
 const getOfferedFile = (folder: string) => join(folder, 'launcher-offered');

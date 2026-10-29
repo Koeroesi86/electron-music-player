@@ -192,6 +192,26 @@ describe('launcher on disk', () => {
       await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(buildDesktopEntry(link()));
     });
 
+    it('leaves a link at the path of an entry that started a removed AppImage, as the desktop may keep that path', async () => {
+      const old = join(folder, 'old/eMusic-26.10.6.AppImage');
+      await mkdir(join(old, '..'));
+      await enableLauncher(old, options);
+      await writeFile(desktopFile(), buildDesktopEntry(old));
+
+      await syncLauncher(appImage(), options);
+
+      await expect(readlink(old)).resolves.toBe(link());
+      await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
+    });
+
+    it('does not point the link to itself', async () => {
+      await enableLauncher(appImage(), options);
+
+      await enableLauncher(link(), options);
+
+      await expect(readlink(link())).resolves.toBe(appImage());
+    });
+
     it('restores a link that went missing', async () => {
       await enableLauncher(appImage(), options);
       await rm(link());
