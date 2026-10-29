@@ -5,7 +5,7 @@ export interface RadioArtImage {
   data: Buffer;
 }
 
-type Fetcher = (url: string, init: { signal: AbortSignal }) => Promise<Response>;
+export type Fetcher = (url: string, init: { signal: AbortSignal }) => Promise<Response>;
 
 const lookupTimeout = 5000;
 const maxImageBytes = 2_000_000;
@@ -20,7 +20,7 @@ const getOk = async (fetcher: Fetcher, url: string) => {
   return response;
 };
 
-const getImage = async (fetcher: Fetcher, url: string): Promise<RadioArtImage> => {
+export const getImage = async (fetcher: Fetcher, url: string): Promise<RadioArtImage> => {
   const response = await getOk(fetcher, url);
   const type = response.headers.get('content-type') ?? '';
   const data = Buffer.from(await response.arrayBuffer());

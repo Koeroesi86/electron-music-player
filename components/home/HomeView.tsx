@@ -98,7 +98,6 @@ const HomeView = ({
 
   return (
     <div className={style.home}>
-      <div className={style.header}>{t('home.title')}</div>
       <div className={style.contents}>
         {!hasFolders && (
           <div className={style.emptyLibrary}>

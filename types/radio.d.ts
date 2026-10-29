@@ -7,6 +7,8 @@ export interface RadioStation {
   tags: string[];
   codec: string;
   bitrate: number;
+  /** The directory has a logo (an http(s) image) for the station; it is served at `/radio-logo/<uuid>` and the address stays in the main process */
+  hasLogo?: boolean;
 }
 
 export interface RadioTag {

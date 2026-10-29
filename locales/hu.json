@@ -145,7 +145,6 @@
   "playlists.unavailableNote": "Az a szám, amelynek fájlja már nincs a könyvtárban, a listán marad, nem elérhetőként jelenik meg, és lejátszáskor kimarad. A fájl visszatértekor újra szól.",
   "playlists.trackCount_one": "{count} szám",
   "playlists.trackCount_other": "{count} szám",
-  "home.title": "Kezdőlap",
   "home.recentlyPlayed": "Nemrég játszott",
   "home.clear": "Előzmények törlése",
   "home.clearConfirm": "Törlöd a nemrég játszott számok és rádióállomások listáját?",

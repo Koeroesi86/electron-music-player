@@ -5,6 +5,7 @@ const defaultDirectoryUrl = 'https://all.api.radio-browser.info';
 const requestTimeout = 10000;
 const optionLimit = { countries: 300, languages: 300, codecs: 20 };
 const tagLimit = 40;
+const maxLogos = 2000;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -17,6 +18,13 @@ const count = (value: unknown) => (typeof value === 'number' && Number.isFinite(
 // the audio element can not play an HLS playlist, and the directory filter for them does not catch all
 const isPlayable = (value: JsonRecord) => text(value.stationuuid) && text(value.name).trim() && value.hls !== 1;
 
+/** The logo of a station when it is a plain http(s) address */
+const toLogoUrl = (value: JsonRecord) => {
+  const url = URL.canParse(text(value.favicon)) ? new URL(text(value.favicon)) : undefined;
+
+  return url && /^https?:$/.test(url.protocol) ? url.href : undefined;
+};
+
 const toStation = (value: unknown): RadioStation | undefined => {
   if (!isRecord(value) || !isPlayable(value)) return undefined;
 
@@ -27,6 +35,7 @@ const toStation = (value: unknown): RadioStation | undefined => {
     tags: text(value.tags).split(',').filter(Boolean),
     codec: text(value.codec),
     bitrate: count(value.bitrate),
+    hasLogo: toLogoUrl(value) !== undefined,
   };
 };
 
@@ -117,11 +126,26 @@ export const createRadioBrowser = (userAgent: string, directoryUrl = defaultDire
 
   const request = async (path: string) => fetchFrom(await getServers(), path);
 
+  // the address of a logo is not sent to the page, which asks for it by the uuid of the station; the oldest are dropped past a limit
+  const logos = new Map<string, string>();
+
+  const toStations = (answer: unknown) => {
+    const stations = toList(answer, toStation);
+    (Array.isArray(answer) ? answer : [])
+      .filter((value) => isRecord(value) && isPlayable(value) && toLogoUrl(value))
+      .forEach((value) => {
+        logos.set(text(value.stationuuid), toLogoUrl(value) ?? '');
+        if (logos.size > maxLogos) logos.delete(logos.keys().next().value ?? '');
+      });
+
+    return stations;
+  };
+
   /** A full page means that the directory may have more, the stations it lists but the app cannot play do not count */
   const searchStations = async (query: RadioQuery) => {
     const answer = await request(`/json/stations/search?${toSearchParameters(query)}`);
 
-    return { stations: toList(answer, toStation), hasMore: Array.isArray(answer) && answer.length >= radioPageSize };
+    return { stations: toStations(answer), hasMore: Array.isArray(answer) && answer.length >= radioPageSize };
   };
 
   // the lists are fetched once for the session, a failed fetch is tried again with the next request
@@ -153,13 +177,13 @@ export const createRadioBrowser = (userAgent: string, directoryUrl = defaultDire
   const findStations = async (uuids: string[]) => {
     if (uuids.length === 0) return [];
 
-    return toList(await request(`/json/stations/byuuid?${new URLSearchParams({ uuids: uuids.join(',') })}`), toStation);
+    return toStations(await request(`/json/stations/byuuid?${new URLSearchParams({ uuids: uuids.join(',') })}`));
   };
 
   /** Also registers a click of the station, which ranks it in the directory */
   const resolveStream = async (uuid: string) => toStreamUrl(await request(`/json/url/${encodeURIComponent(uuid)}`));
 
-  return { searchStations, getTags, getOptions, findStations, resolveStream };
+  return { searchStations, getTags, getOptions, findStations, resolveStream, getLogoUrl: (uuid: string) => logos.get(uuid) };
 };
 
 export type RadioBrowser = ReturnType<typeof createRadioBrowser>;

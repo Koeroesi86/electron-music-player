@@ -8,6 +8,7 @@ import type { RadioState } from '../../client/redux/radio/reducer';
 import { useTranslation } from '../../client/i18n';
 import { useDelayedValue } from '../../client/hooks/use-delayed-value';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
+import { getRadioLogoUrl } from '../../client/cover-url';
 import { stationFavourite } from '../../client/favourites';
 import type { Translator } from '../../locales/translate';
 import FavouriteButton from '../favourite-button';
@@ -23,6 +24,13 @@ interface RadioStationsProps {
 }
 
 const searchDelay = 400;
+
+/** The logo of a station; one that does not load leaves the name alone */
+const StationLogo = ({ uuid }: { uuid: string }) => {
+  const [failed, setFailed] = useState(false);
+
+  return failed ? null : <img className={style.logo} src={getRadioLogoUrl(uuid)} alt="" loading="lazy" onError={() => setFailed(true)} />;
+};
 
 // the columns of the list; the ones with a sort sort it from their header, the names from A and the bitrate from the highest
 const columns: { column: 'name' | 'genres' | 'codec' | 'bitrate' | 'country'; sort?: { field: RadioSortField; ascending: boolean } }[] = [
@@ -214,7 +222,10 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
             <span className={style.playButton} onClick={() => play(station)}>
               <PlayIcon size={'14px'} />
             </span>
-            <span className={style.name}>{station.name}</span>
+            <span className={style.name}>
+              {station.hasLogo && <StationLogo uuid={station.uuid} />}
+              <span className={style.nameText}>{station.name}</span>
+            </span>
             <span className={style.genres}>{genresOf(station)}</span>
             <span>
               {station.codec && (

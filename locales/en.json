@@ -145,7 +145,6 @@
   "playlists.unavailableNote": "A track whose file is not in the library any more stays in the playlist, shown as not available and skipped when the playlist plays. It plays again when the file returns.",
   "playlists.trackCount_one": "{count} track",
   "playlists.trackCount_other": "{count} tracks",
-  "home.title": "Home",
   "home.recentlyPlayed": "Recently played",
   "home.clear": "Clear history",
   "home.clearConfirm": "Clear the list of recently played tracks and stations?",

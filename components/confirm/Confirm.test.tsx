@@ -28,6 +28,14 @@ describe('Confirm', () => {
     expect(container.firstElementChild?.classList.contains('show')).toBe(true);
   });
 
+  it('dims the window behind it only while it is shown', () => {
+    const { container, rerender } = render(<Confirm message={null} cancel={() => {}} />);
+    expect(container.querySelector('[aria-hidden]')).toBeNull();
+
+    rerender(<Confirm message="Hi" cancel={() => {}} />);
+    expect(container.querySelector('[aria-hidden]')).not.toBeNull();
+  });
+
   it('calls confirm and cancel handlers', () => {
     const confirm = vi.fn();
     const cancel = vi.fn();

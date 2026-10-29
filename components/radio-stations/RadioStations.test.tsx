@@ -50,6 +50,22 @@ describe('RadioStations', () => {
     expect(search).toHaveBeenCalledWith({});
   });
 
+  it('shows the logo of a station that has one, served by uuid, and not for the others', () => {
+    const { container } = renderPanel({ stations: [{ ...jazz, hasLogo: true }, rock] });
+
+    const logos = Array.from(container.querySelectorAll('img'));
+    expect(logos).toHaveLength(1);
+    expect(logos[0].getAttribute('src')).toContain('/radio-logo/a');
+  });
+
+  it('hides a logo that does not load', () => {
+    const { container } = renderPanel({ stations: [{ ...jazz, hasLogo: true }] });
+
+    fireEvent.error(container.querySelector('img') as HTMLImageElement);
+
+    expect(container.querySelector('img')).toBeNull();
+  });
+
   it('lists the stations with their details', () => {
     renderPanel();
 
@@ -97,8 +113,8 @@ describe('RadioStations', () => {
   it('marks the station that is playing', () => {
     renderPanel(undefined, 'b');
 
-    expect(screen.getByText('Rock Radio').parentElement?.classList.contains('current')).toBe(true);
-    expect(screen.getByText('Jazz FM').parentElement?.classList.contains('current')).toBe(false);
+    expect(screen.getByText('Rock Radio').parentElement?.parentElement?.classList.contains('current')).toBe(true);
+    expect(screen.getByText('Jazz FM').parentElement?.parentElement?.classList.contains('current')).toBe(false);
   });
 
   it('searches by name after typing stops', () => {

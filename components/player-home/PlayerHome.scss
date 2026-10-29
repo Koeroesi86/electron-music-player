@@ -1,3 +1,5 @@
+@use '../../client/styles/scrollbar' as *;
+
 $FontName: "Open Sans";
 
 // the latin and latin-ext subsets (Hungarian included) of the Open Sans from the @fontsource/open-sans package
@@ -98,26 +100,7 @@ html, body {
     display: none;
   }
 
-  /* width */
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  /* Track */
-  ::-webkit-scrollbar-track {
-    background: var(--overlay-strong);
-  }
-
-  /* Handle */
-  ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    transition: background-color .1s ease-in-out;
-  }
-
-  /* Handle on hover */
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--text);
-  }
+  @include thin-scrollbar;
 
   .wrapper {
     position: relative;

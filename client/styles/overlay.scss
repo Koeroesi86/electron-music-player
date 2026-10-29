@@ -1,0 +1,14 @@
+// what floats over the page: a hairline instead of a drop shadow, and a scrim behind a dialog
+@mixin popover-surface {
+  color: var(--text);
+  background: var(--panel-solid);
+  border: 1px solid var(--overlay-strong);
+  border-radius: 10px;
+}
+
+@mixin scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: var(--scrim);
+}

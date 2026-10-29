@@ -20,14 +20,14 @@
   .separator {
     flex: 0 0;
     position: absolute;
-    top: -2px;
+    top: -1px;
     left: 0;
     z-index: 1;
     display: block;
-    height: 2px;
-    min-height: 2px;
+    height: 1px;
+    min-height: 1px;
     width: calc(100% - 6px);
-    box-shadow: 0 2px 6px var(--shadow-hard);
+    background-color: var(--overlay);
     transition: opacity .2s ease-in-out;
     opacity: 0.2;
     will-change: opacity;

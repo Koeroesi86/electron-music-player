@@ -93,7 +93,6 @@
     place-items: center;
     background: var(--accent);
     color: var(--accent-contrast);
-    box-shadow: 0 0 16px var(--accent-glow);
     cursor: pointer;
     transition: transform .15s ease-in-out;
 
@@ -109,7 +108,6 @@
     &[disabled] {
       background: var(--overlay-strong);
       color: var(--text-disabled);
-      box-shadow: none;
       cursor: default;
     }
   }
@@ -182,7 +180,6 @@
     height: 6px;
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 0 6px var(--accent-glow);
   }
 
   .playing .liveDot {

@@ -8,3 +8,5 @@ export const getCoverUrl = (picture: string) => {
 
 /** The art the local server holds for the song a station is playing */
 export const getRadioArtUrl = (art: string) => localUrl(`/radio-art/${art}`);
+
+export const getRadioLogoUrl = (uuid: string) => localUrl(`/radio-logo/${encodeURIComponent(uuid)}`);

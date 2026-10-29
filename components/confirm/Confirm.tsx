@@ -15,21 +15,24 @@ function Confirm({ message, confirm = () => {}, cancel, confirmLabel, cancelLabe
   const { t } = useTranslation();
 
   return (
-    <div
-      className={classNames(style.confirm, {
-        [style.show]: message,
-      })}
-    >
-      <div className={style.message}>{message}</div>
-      <div className={style.buttons}>
-        <button onClick={confirm} className={style.button}>
-          {confirmLabel ?? t('confirm.yes')}
-        </button>
-        <button onClick={cancel} className={style.button}>
-          {cancelLabel ?? t('confirm.no')}
-        </button>
+    <>
+      <div
+        className={classNames(style.confirm, {
+          [style.show]: message,
+        })}
+      >
+        <div className={style.message}>{message}</div>
+        <div className={style.buttons}>
+          <button onClick={confirm} className={style.button}>
+            {confirmLabel ?? t('confirm.yes')}
+          </button>
+          <button onClick={cancel} className={style.button}>
+            {cancelLabel ?? t('confirm.no')}
+          </button>
+        </div>
       </div>
-    </div>
+      {message && <div className={style.scrim} aria-hidden />}
+    </>
   );
 }
 
