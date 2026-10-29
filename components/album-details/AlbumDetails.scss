@@ -108,13 +108,19 @@
     opacity: 0.85;
   }
 
-  .playAlbum {
+  .playButtons {
     align-self: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .playAlbum {
     display: flex;
     align-items: center;
     gap: 8px;
     height: 44px;
-    margin-top: 12px;
     padding: 0 20px;
     border: 0;
     border-radius: 22px;
@@ -172,6 +178,17 @@
 
     .trackTitle {
       flex-grow: 1;
+    }
+
+    // shown with the mouse over the row, a keyboard reaches it all the same
+    .trackQueue {
+      margin-left: 12px;
+      opacity: 0;
+    }
+
+    &:hover .trackQueue,
+    .trackQueue:focus-visible {
+      opacity: 1;
     }
 
     // the badge and the duration after it

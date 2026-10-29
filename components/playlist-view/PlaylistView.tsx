@@ -8,6 +8,7 @@ import { useDragReorder } from '../../client/hooks/use-drag-reorder';
 import { useTranslation } from '../../client/i18n';
 import style from './PlaylistView.scss';
 import AudioFormatBadge from '../audio-format-badge';
+import AddToQueue from '../add-to-queue';
 import NameField from '../name-field';
 
 interface PlaylistViewProps {
@@ -111,6 +112,7 @@ const PlaylistView = ({ playlist, playTracks, rename, remove, removeEntry, moveE
             >
               <PlayIcon size="12px" />
             </button>
+            {available && <AddToQueue className={style.action} getTracks={() => Promise.resolve([track])} />}
             <button
               type="button"
               className={style.action}

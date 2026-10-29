@@ -1,8 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Track } from '../../types/library';
 import type { Playlist } from '../../types/playlists';
 import PlaylistView from './PlaylistView';
+
+const queued = vi.hoisted(() => vi.fn());
+vi.mock('../add-to-queue', async () => {
+  const { createElement } = await import('react');
+
+  return {
+    default: ({ getTracks }: { getTracks: () => Promise<unknown[]> }) =>
+      createElement('button', { 'aria-label': 'Add to the queue', onClick: () => void getTracks().then(queued) }),
+  };
+});
 
 const track = (title: string): Track => ({
   path: `/music/${title}.flac`,
@@ -27,7 +37,10 @@ const playlist: Playlist = {
 };
 
 describe('PlaylistView', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    queued.mockReset();
+  });
 
   const renderView = (shown: Playlist | null = playlist) => {
     const props = { playTracks: vi.fn(), rename: vi.fn(), remove: vi.fn(), removeEntry: vi.fn(), moveEntry: vi.fn() };
@@ -40,6 +53,16 @@ describe('PlaylistView', () => {
     renderView({ ...playlist, entries: [{ id: 1, track: { ...track('One'), codec: 'FLAC', lossless: 1, bitDepth: 24, sampleRate: 96000 }, available: true }] });
 
     expect(screen.getByText('FLAC 24/96')).toBeTruthy();
+  });
+
+  it('adds a track that is available to the queue, and offers it for none that the library lost', async () => {
+    renderView();
+
+    const buttons = screen.getAllByRole('button', { name: 'Add to the queue' });
+    expect(buttons).toHaveLength(2);
+
+    fireEvent.click(buttons[1]);
+    await waitFor(() => expect(queued).toHaveBeenCalledWith([playlist.entries[2].track]));
   });
 
   it('says so when the playlist is not there', () => {

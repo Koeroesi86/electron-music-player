@@ -82,6 +82,17 @@ describe('uiState reducer', () => {
       expect(run({ type: 'MOVE_QUEUE_TRACK', payload: { from, to } }, queue)).toBe(queue);
     });
 
+    it('adds tracks at the end of the queue, once, and leaves the queue as it is when all are in it', () => {
+      expect(paths(run({ type: 'ADD_TO_QUEUE', payload: { tracks: [track('d'), track('a'), track('e'), track('d')] } }, queue))).toEqual([
+        'a',
+        'b',
+        'c',
+        'd',
+        'e',
+      ]);
+      expect(run({ type: 'ADD_TO_QUEUE', payload: { tracks: [track('b')] } }, queue)).toBe(queue);
+    });
+
     it('removes the track at an index and keeps the others in order', () => {
       expect(paths(run({ type: 'REMOVE_FROM_QUEUE', payload: { index: 1 } }, queue))).toEqual(['a', 'c']);
     });

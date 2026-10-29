@@ -91,6 +91,12 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, radioQuery: parseRadioQuery(action.payload.query) };
     case 'PLAY_TRACKS':
       return { ...state, nowPlaying: action.payload.tracks, played: [] };
+    // a track that is in the queue already is not added a second time, the queue finds the song that plays by its path
+    case 'ADD_TO_QUEUE': {
+      const queued = new Set(state.nowPlaying.map(({ path }) => path));
+      const added = action.payload.tracks.filter(({ path }, index, all) => !queued.has(path) && all.findIndex((other) => other.path === path) === index);
+      return added.length ? { ...state, nowPlaying: [...state.nowPlaying, ...added] } : state;
+    }
     case 'MOVE_QUEUE_TRACK': {
       const { from, to } = action.payload;
       const queue = [...state.nowPlaying];

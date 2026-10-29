@@ -33,6 +33,22 @@ describe('uiState middleware', () => {
     vi.restoreAllMocks();
   });
 
+  it('starts the first track that is added to the queue when nothing is loaded', () => {
+    const store = createTestStore({ nowPlaying: [] });
+    dispatch(store, { type: 'ADD_TO_QUEUE', payload: { tracks: [b, c] } });
+
+    expect(store.getState().uiState.currentSong).toEqual(b);
+    expect(store.getState().uiState.nowPlaying).toEqual([b, c]);
+  });
+
+  it('keeps the song that plays when a track is added to the queue', () => {
+    const store = createTestStore({ nowPlaying: [a], currentSong: a });
+    dispatch(store, { type: 'ADD_TO_QUEUE', payload: { tracks: [b] } });
+
+    expect(store.getState().uiState.currentSong).toEqual(a);
+    expect(store.getState().uiState.nowPlaying).toEqual([a, b]);
+  });
+
   it('plays the first track of PLAY_TRACKS', () => {
     const store = createTestStore({});
     dispatch(store, { type: 'PLAY_TRACKS', payload: { tracks: [b, c] } });

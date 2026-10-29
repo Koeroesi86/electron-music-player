@@ -72,13 +72,13 @@
       }
     }
 
-    // the heart and the playlist button side by side, centred on the line
+    // the heart, the playlist button and the queue button side by side, centred on the line
     &.favourite {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       box-sizing: border-box;
-      width: 56px;
+      width: 78px;
       height: 20px;
       padding-right: 0;
       padding-left: 6px;

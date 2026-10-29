@@ -11,6 +11,7 @@ import { albumFavourite } from '../../client/favourites';
 import style from './AlbumDetails.scss';
 import FavouriteButton from '../favourite-button';
 import AddToPlaylist from '../add-to-playlist';
+import AddToQueue from '../add-to-queue';
 import AudioFormatBadge from '../audio-format-badge';
 import Time from '../time';
 
@@ -63,10 +64,13 @@ const AlbumDetails = ({ album, playTracks, close }: AlbumDetailsProps) => {
             {displayed.year && <span>{displayed.year}</span>}
             <Time seconds={displayed.duration} />
           </div>
-          <button type="button" className={style.playAlbum} onClick={() => playTracks(displayed.tracks ?? [])}>
-            <FontAwesomeIcon icon={faPlay} size="sm" />
-            <span className={style.label}>{t('album.play')}</span>
-          </button>
+          <div className={style.playButtons}>
+            <button type="button" className={style.playAlbum} onClick={() => playTracks(displayed.tracks ?? [])}>
+              <FontAwesomeIcon icon={faPlay} size="sm" />
+              <span className={style.label}>{t('album.play')}</span>
+            </button>
+            <AddToQueue withLabel getTracks={() => Promise.resolve(displayed.tracks ?? [])} />
+          </div>
         </div>
       </div>
       <div className={style.tracks}>
@@ -76,6 +80,7 @@ const AlbumDetails = ({ album, playTracks, close }: AlbumDetailsProps) => {
             <span className={style.trackTitle}>{track.title}</span>
             <AudioFormatBadge track={track} />
             {track.duration ? <Time seconds={track.duration} /> : null}
+            <AddToQueue getTracks={() => Promise.resolve([track])} className={style.trackQueue} />
           </div>
         ))}
       </div>

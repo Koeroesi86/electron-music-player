@@ -11,6 +11,7 @@ import Time from '../time';
 import FavouriteButton from '../favourite-button';
 import AudioFormatBadge from '../audio-format-badge';
 import AddToPlaylist from '../add-to-playlist';
+import AddToQueue from '../add-to-queue';
 
 /** The header row displays labels in place of the track values */
 export type TrackLabels = Record<'duration' | 'artist' | 'year' | 'album' | 'track' | 'title', string>;
@@ -103,6 +104,7 @@ const TrackViewItem = ({
           <>
             <FavouriteButton item={trackFavourite(track)} />
             <AddToPlaylist source={track} />
+            <AddToQueue getTracks={() => Promise.resolve([track])} />
           </>
         )}
       </TrackViewItemField>

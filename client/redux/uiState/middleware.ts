@@ -58,6 +58,11 @@ const middleware = actionMiddleware((store) => [
   onAction('NEXT_SONG', () => playNext(store)),
   onAction('PREVIOUS_SONG', () => playPrevious(store)),
   onAction('PLAY_TRACKS', ({ payload }) => store.dispatch({ type: 'PLAY_TRACK', payload: { track: payload.tracks[0] || null } })),
+  // with nothing loaded the first track that is added starts playing, as it is the only thing to play
+  onAction('ADD_TO_QUEUE', ({ payload }) => {
+    const [first] = payload.tracks;
+    if (!store.getState().uiState.currentSong && first) store.dispatch({ type: 'PLAY_TRACK', payload: { track: first } });
+  }),
   onAction('CLICK_NOTIFICATION', () => store.dispatch({ type: 'SET_TAB', payload: { tab: 'now-playing' } })),
 ]);
 

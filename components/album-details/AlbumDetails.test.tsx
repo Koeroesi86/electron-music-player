@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Album } from '../../types/library';
 import { getCoverUrl } from '../../client/cover-url';
 import { getImageTint } from '../../client/cover-tint';
@@ -7,6 +7,15 @@ import AlbumDetails from './AlbumDetails';
 
 vi.mock('../favourite-button', () => ({ default: () => null }));
 vi.mock('../add-to-playlist', () => ({ default: () => null }));
+const queued = vi.hoisted(() => vi.fn());
+vi.mock('../add-to-queue', async () => {
+  const { createElement } = await import('react');
+
+  return {
+    default: ({ getTracks }: { getTracks: () => Promise<unknown[]> }) =>
+      createElement('button', { 'aria-label': 'Add to the queue', onClick: () => void getTracks().then(queued) }),
+  };
+});
 vi.mock('../../client/cover-tint', () => ({ getImageTint: vi.fn() }));
 
 const album: Album = {
@@ -26,6 +35,7 @@ describe('AlbumDetails', () => {
   afterEach(() => {
     cleanup();
     vi.mocked(getImageTint).mockReset();
+    queued.mockReset();
   });
 
   it('shows the same cover as the thumbnail', () => {
@@ -61,6 +71,18 @@ describe('AlbumDetails', () => {
     fireEvent.click(screen.getByText('Play album'));
 
     expect(playTracks).toHaveBeenCalledWith(album.tracks);
+  });
+
+  it('adds the tracks of the album, or one of them, to the queue', async () => {
+    setup(album);
+    const [albumButton, trackButton] = screen.getAllByRole('button', { name: 'Add to the queue' });
+
+    fireEvent.click(albumButton);
+    await waitFor(() => expect(queued).toHaveBeenLastCalledWith(album.tracks));
+    fireEvent.click(trackButton);
+    await waitFor(() => expect(queued).toHaveBeenCalledTimes(2));
+
+    expect(queued).toHaveBeenLastCalledWith([album.tracks![0]]);
   });
 
   it('tints the header with the color of the loaded cover', () => {
