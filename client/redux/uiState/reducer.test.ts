@@ -156,6 +156,12 @@ describe('uiState reducer', () => {
     expect(run({ type: 'SET_GAIN', payload: { value: -40, index: 0 } }).equalizer[0]).toBe(-12);
   });
 
+  it('sets all the equalizer gains at once, as a preset does, and keeps them within the range', () => {
+    const gains = [1, 2, 3, 4, 5, 6, 7, 8, 9, 20];
+    expect(run({ type: 'SET_GAINS', payload: { gains } }).equalizer).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 12]);
+    expect(run({ type: 'SET_GAINS', payload: { gains: [1] } }).equalizer).toEqual(Array(10).fill(0));
+  });
+
   it('restores saved equalizer gains and drops ones from before gains were in dB', () => {
     const saved = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { equalizer: saved } } }).equalizer).toEqual(saved);

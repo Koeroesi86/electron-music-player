@@ -187,6 +187,7 @@ export type AppAction =
   | PayloadAction<'SET_VOLUME', { volume: number | string }>
   | PayloadAction<'SET_CURRENT_TIME', { currentTime: number | string }>
   | PayloadAction<'SET_GAIN', { value: number | string; index: number }>
+  | PayloadAction<'SET_GAINS', { gains: number[] }>
   | PayloadAction<'SELECT_ALBUM', { album: Album | null }>
   | PayloadAction<'PLAY_TRACKS', { tracks: Track[] }>
   | EmptyAction<'CLEAR_QUEUE'>

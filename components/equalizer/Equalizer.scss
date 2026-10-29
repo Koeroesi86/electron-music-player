@@ -4,29 +4,121 @@
   left: 0;
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 
-  .header {
-    -webkit-app-region: drag;
-    display: flex;
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    height: 56px;
-    line-height: 56px;
-    padding: 0 12px 0 12px;
-    font-weight: 600;
-    box-shadow: 0 0 3px var(--shadow-soft);
+  .reset,
+  .chip,
+  .toggle {
+    -webkit-app-region: no-drag;
+    height: 28px;
+    padding: 0 14px;
+    font-size: 12px;
+    line-height: 28px;
+    color: inherit;
+    border: 0;
+    border-radius: 14px;
+    background-color: var(--overlay);
+    white-space: nowrap;
   }
 
-  .sliders {
-    height: calc(100% - 56px);
-    width: 100%;
+  .reset,
+  .toggle,
+  .chip {
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+    }
+  }
+
+  button.chip,
+  .reset,
+  .toggle {
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background-color: var(--overlay-strong);
+    }
+  }
+
+  // quiet buttons: text only
+  .reset,
+  .toggle {
+    padding: 0 8px;
+    font-weight: 400;
+    color: var(--text-muted);
+    background: none;
+
+    &:hover:not(:disabled) {
+      color: var(--text);
+      background: none;
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.4;
+    }
+  }
+
+  .content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    -webkit-app-region: no-drag;
+  }
+
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+
+    .chip.active {
+      font-weight: 600;
+      color: var(--accent);
+      background-color: var(--accent-tint);
+    }
+
+    .reset {
+      margin-left: auto;
+    }
+  }
+
+  .card {
+    padding: 12px 14px 14px;
+    border-radius: 10px;
+    background-color: var(--overlay-faint);
+  }
+
+  .cardHeader {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin-bottom: 14px;
+    font-size: 11px;
+    color: var(--text-muted);
+
+    b {
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .hint {
+      margin-left: auto;
+      color: var(--text-faint);
+    }
+  }
+
+  .faders {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-evenly;
     flex-wrap: nowrap;
-    padding: 0 20px;
+    padding: 12px 24px 14px 48px;
 
     .slider {
       flex: 1 1 0%;
@@ -35,13 +127,28 @@
       flex-direction: column;
       align-items: center;
 
+      .value {
+        height: 16px;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 16px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+
+        &.changed {
+          color: var(--accent);
+        }
+      }
+
       .input {
         height: 100px;
-        //width: 100%;
+        margin-top: 6px;
       }
 
       .band {
         margin-top: 12px;
+        font-size: 11px;
+        color: var(--text-muted);
       }
     }
   }

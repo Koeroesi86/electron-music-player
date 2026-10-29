@@ -12,6 +12,7 @@ const mapState = (state: RootState) => ({
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
   setGain: (index: number, value: number | string) => dispatch({ type: 'SET_GAIN', payload: { index, value } }),
+  setGains: (gains: number[]) => dispatch({ type: 'SET_GAINS', payload: { gains } }),
 });
 
 const connector = connect(mapState, mapDispatch);

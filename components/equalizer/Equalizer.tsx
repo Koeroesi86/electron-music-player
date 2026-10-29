@@ -1,9 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import classNames from 'classnames';
 import style from './Equalizer.scss';
 import { useTranslation } from '../../client/i18n';
+import type { MessageKey } from '../../locales/translate';
 import Slider from '../slider/Slider';
+import EqualizerCurve from './EqualizerCurve';
 import { useLatest } from '../../client/hooks/use-latest';
-import { bandType, equalizerBands, maxGain, minGain } from '../../client/audio/equalizer';
+import { bandType, defaultGains, equalizerBands, equalizerPresets, formatGain, matchingPreset, maxGain, minGain } from '../../client/audio/equalizer';
+
+// the names of the presets of client/audio/equalizer.ts
+const presetNames: Record<string, MessageKey> = {
+  flat: 'equalizer.preset.flat',
+  bass: 'equalizer.preset.bass',
+  vocal: 'equalizer.preset.vocal',
+  treble: 'equalizer.preset.treble',
+  loudness: 'equalizer.preset.loudness',
+};
 
 interface EqualizerProps {
   gains: number[];
@@ -12,10 +24,12 @@ interface EqualizerProps {
   connectToSource: (node: AudioNode) => void;
   onAudioMounted: (listener: () => void) => void;
   setGain: (index: number, value: number | string) => void;
+  setGains: (gains: number[]) => void;
 }
 
-const Equalizer = ({ gains, createBiquadFilter, connectDestination, connectToSource, onAudioMounted, setGain }: EqualizerProps) => {
+const Equalizer = ({ gains, createBiquadFilter, connectDestination, connectToSource, onAudioMounted, setGain, setGains }: EqualizerProps) => {
   const { t } = useTranslation();
+  const [showFaders, setShowFaders] = useState(false);
   const filters = useRef<BiquadFilterNode[]>([]);
   const latestGains = useLatest(gains);
 
@@ -47,25 +61,60 @@ const Equalizer = ({ gains, createBiquadFilter, connectDestination, connectToSou
 
   useEffect(applyGains, [gains]);
 
+  const preset = matchingPreset(gains);
+  const flat = preset === 'flat';
+
   return (
     <div className={style.equalizer}>
-      <div className={style.header}>{t('equalizer.title')}</div>
-      <div className={style.sliders}>
-        {equalizerBands.map(({ label }, index) => (
-          <div className={style.slider} key={label}>
-            <div className={style.input}>
-              <Slider
-                min={minGain}
-                max={maxGain}
-                step={0.5}
-                value={gains[index] ?? 0}
-                orientation={'vertical'}
-                onInput={(e) => setGain(index, e.currentTarget.value)}
-              />
-            </div>
-            <div className={style.band}>{label}</div>
+      <div className={style.content}>
+        <div className={style.presets} role="group" aria-label={t('equalizer.presets')}>
+          {equalizerPresets.map(({ id, gains: presetGains }) => (
+            <button
+              type="button"
+              key={id}
+              className={classNames(style.chip, { [style.active]: id === preset })}
+              aria-pressed={id === preset}
+              onClick={() => setGains(presetGains)}
+            >
+              {t(presetNames[id])}
+            </button>
+          ))}
+          {preset === undefined && <span className={classNames(style.chip, style.active, style.custom)}>{t('equalizer.custom')}</span>}
+          <button type="button" className={style.reset} disabled={flat} onClick={() => setGains(defaultGains)}>
+            {t('equalizer.reset')}
+          </button>
+          <button type="button" className={style.toggle} aria-expanded={showFaders} onClick={() => setShowFaders(!showFaders)}>
+            {t(showFaders ? 'equalizer.hideFaders' : 'equalizer.faders')}
+          </button>
+        </div>
+        <div className={style.card}>
+          <div className={style.cardHeader}>
+            <b>{t('equalizer.response')}</b>
+            {t('equalizer.range')}
+            <span className={style.hint}>{t('equalizer.hint')}</span>
           </div>
-        ))}
+          <EqualizerCurve gains={gains} setGain={setGain} />
+        </div>
+        {showFaders && (
+          <div className={classNames(style.card, style.faders)}>
+            {equalizerBands.map(({ label }, index) => (
+              <div className={style.slider} key={label}>
+                <div className={classNames(style.value, { [style.changed]: (gains[index] ?? 0) !== 0 })}>{formatGain(gains[index] ?? 0)}</div>
+                <div className={style.input}>
+                  <Slider
+                    min={minGain}
+                    max={maxGain}
+                    step={0.5}
+                    value={gains[index] ?? 0}
+                    orientation={'vertical'}
+                    onInput={(e) => setGain(index, e.currentTarget.value)}
+                  />
+                </div>
+                <div className={style.band}>{label}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

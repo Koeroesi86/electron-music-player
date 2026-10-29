@@ -129,6 +129,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       const { value, index } = action.payload;
       return { ...state, equalizer: state.equalizer.map((gain, band) => (band === index ? clampGain(toNumber(value)) : gain)) };
     }
+    case 'SET_GAINS':
+      return { ...state, equalizer: restoreGains(action.payload.gains) };
     case 'RADIO_STREAM_TITLE': {
       const { uuid, title } = action.payload;
       const isCurrent = state.currentSong && radioUuidOf(state.currentSong.path) === uuid;
