@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import Equalizer from './Equalizer';
-import { defaultGains, equalizerBands } from '../../client/audio/equalizer';
+import { defaultGains, equalizerBands, equalizerPresets } from '../../client/audio/equalizer';
 
 const createFilter = () => {
   const filter = {
@@ -29,6 +29,7 @@ const setup = (gains = defaultGains) => {
       mounted = listener;
     },
     setGain: vi.fn(),
+    setGains: vi.fn(),
   };
   const view = render(<Equalizer {...props} />);
   return { props, filters, view, mount: () => mounted() };
@@ -66,11 +67,82 @@ describe('Equalizer', () => {
     expect(filters.map((filter) => filter.gain.value)).toEqual(gains.map((gain) => gain + 1));
   });
 
-  it('reports a slider change with its band', () => {
+  it('keeps the faders hidden until they are asked for', () => {
+    const { view } = setup();
+    expect(view.container.querySelectorAll('input[type="range"]')).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Faders' }));
+    expect(view.container.querySelectorAll('input[type="range"]')).toHaveLength(equalizerBands.length);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide faders' }));
+    expect(view.container.querySelectorAll('input[type="range"]')).toHaveLength(0);
+  });
+
+  it('reports a fader change with its band', () => {
     const { props, view } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Faders' }));
 
     fireEvent.input(view.container.querySelectorAll('input[type="range"]')[3], { target: { value: '4' } });
 
     expect(props.setGain).toHaveBeenCalledWith(3, '4');
+  });
+
+  it('sets the gains of a preset and marks the one the gains are', () => {
+    const bass = equalizerPresets.find(({ id }) => id === 'bass')?.gains ?? [];
+    const { props } = setup(bass);
+
+    expect(screen.getByRole('button', { name: 'Bass boost' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Flat' }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.queryByText('Custom')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Vocal' }));
+    expect(props.setGains).toHaveBeenCalledExactlyOnceWith(equalizerPresets.find(({ id }) => id === 'vocal')?.gains);
+  });
+
+  it('shows Custom when the gains are no preset, and resets them', () => {
+    const { props } = setup(defaultGains.map((_, index) => (index === 2 ? 1.5 : 0)));
+
+    expect(screen.getByText('Custom')).toBeTruthy();
+    expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(props.setGains).toHaveBeenCalledExactlyOnceWith(defaultGains);
+  });
+
+  it('has nothing to reset when the curve is flat', () => {
+    setup();
+
+    expect((screen.getByRole('button', { name: 'Reset' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('button', { name: 'Flat' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('moves a dot of the curve with the arrow keys within the range', () => {
+    const { props } = setup(defaultGains.map((_, index) => (index === 0 ? 12 : 0)));
+    const dots = screen.getAllByRole('slider');
+
+    expect(dots).toHaveLength(equalizerBands.length);
+    expect(dots[1].getAttribute('aria-valuetext')).toBe('0 dB');
+    fireEvent.keyDown(dots[1], { key: 'ArrowUp' });
+    expect(props.setGain).toHaveBeenLastCalledWith(1, 0.5);
+    fireEvent.keyDown(dots[1], { key: 'PageDown' });
+    expect(props.setGain).toHaveBeenLastCalledWith(1, -3);
+    fireEvent.keyDown(dots[0], { key: 'ArrowUp' });
+    expect(props.setGain).toHaveBeenLastCalledWith(0, 12);
+  });
+
+  it('sets the gain under the pointer while a dot is dragged', () => {
+    const { props, view } = setup();
+    const plot = view.container.querySelector('[role="slider"]')?.parentElement;
+    if (!plot) throw new Error('no plot');
+    plot.getBoundingClientRect = () => new DOMRect(0, 100, 400, 240);
+    const dot = screen.getAllByRole('slider')[4];
+
+    fireEvent.pointerDown(dot, { clientY: 100 });
+    expect(props.setGain).toHaveBeenLastCalledWith(4, 12);
+    fireEvent.pointerMove(window, { clientY: 220 });
+    expect(props.setGain).toHaveBeenLastCalledWith(4, 0);
+    fireEvent.pointerUp(window);
+    fireEvent.pointerMove(window, { clientY: 340 });
+    expect(props.setGain).toHaveBeenCalledTimes(2);
   });
 });
