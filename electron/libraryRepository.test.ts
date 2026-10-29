@@ -108,6 +108,17 @@ describe('libraryRepository', () => {
       expect((await getAlbumPage(database, 1, 1, unsorted)).items.map(({ id }) => id)).toEqual(['/m/x - Other']);
     });
 
+    it('lists the format of the first track of an album, for its badge', async () => {
+      await Promise.all([
+        addTrack(database, { ...music('/m/x/1.flac', 'Same'), codec: 'FLAC', lossless: 1, bitDepth: 24, sampleRate: 96000 }),
+        addTrack(database, { ...music('/m/x/2.flac', 'Same'), codec: 'MP3', lossless: 0, bitrate: 320000 }),
+      ]);
+
+      const [album] = (await getAlbumPage(database, 0, 10, unsorted)).items;
+
+      expect(album).toMatchObject({ codec: 'FLAC', lossless: 1, bitDepth: 24, sampleRate: 96000, trackCount: 2 });
+    });
+
     it('groups the tracks of a folder with either separator, and tracks without an album under an empty title', async () => {
       await Promise.all([music('C:\\m\\1.flac', 'Win'), music('C:\\m\\2.flac', 'Win'), track('/m/none.flac')].map((item) => addTrack(database, item)));
 

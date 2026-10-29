@@ -4,46 +4,58 @@
   overflow: hidden;
   position: absolute;
 
+  // the search takes the left, the chips and the rescan the right
   .libraryControls {
     flex-grow: 1;
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
 
-    button {
+    .filters {
+      display: flex;
+      flex: 1 1 auto;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .rescan {
       -webkit-app-region: no-drag;
-      padding: 0 10px;
-      line-height: 30px;
-      font-size: 12px;
-      background: var(--overlay);
-      border: 0;
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      font-size: 14px;
       color: var(--text-soft);
+      background: transparent;
+      border: 0;
+      border-radius: 8px;
       cursor: pointer;
       transition: color .2s ease-in-out, background-color .2s ease-in-out;
-      border-radius: 3px;
 
-      &:hover {
-        background: var(--overlay-strong);
+      &:hover:not(:disabled) {
+        background: var(--overlay);
         color: var(--text);
       }
 
-      &:focus {
-        outline: 0;
+      &:focus-visible {
+        outline: 2px solid var(--accent);
       }
 
-      &.spinning {
-        > svg {
-          animation-name: spin;
-          animation-duration: 1s;
-          animation-iteration-count: infinite;
-          animation-timing-function: linear;
-          animation-play-state: running;
-        }
+      &:disabled {
+        cursor: default;
       }
 
-      > svg {
-        margin-left: 2px;
-        margin-right: 4px;
+      &.spinning > svg {
+        animation-name: spin;
+        animation-duration: 1s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+        animation-play-state: running;
       }
     }
   }

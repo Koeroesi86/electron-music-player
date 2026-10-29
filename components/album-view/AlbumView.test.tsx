@@ -4,7 +4,6 @@ import type { AlbumSummary } from '../../types/library';
 import { createPageCache, storePage } from '../../client/redux/library/pages';
 import AlbumView from './AlbumView';
 
-vi.mock('../album-sort', () => ({ default: () => null }));
 vi.mock('../album-view-thumbnail', () => ({ default: () => null }));
 
 const album = (index: number): AlbumSummary => ({

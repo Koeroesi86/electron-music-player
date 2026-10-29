@@ -16,6 +16,7 @@ const GroupSort = ({ sort, setSort }: GroupSortProps) => {
     <SortSelect
       fields={groupSortFields}
       labels={{
+        prefix: t('library.sort'),
         field: t('groups.sortField'),
         direction: t('groups.sortDirection'),
         default: t('groups.sort.default'),

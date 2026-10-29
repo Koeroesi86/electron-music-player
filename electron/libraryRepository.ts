@@ -240,7 +240,7 @@ export const getAlbumPage = (
   return Promise.all([
     executeQuery<Omit<AlbumSummary, 'id' | 'path'> & { firstPath: string }>(database, {
       // the bare columns come from the row of MIN(path), the first track of the album
-      query: `SELECT COALESCE(album, '') AS title, artist, picture AS cover, year, SUM(duration) AS duration, COUNT(*) AS trackCount, MIN(path) AS firstPath
+      query: `SELECT COALESCE(album, '') AS title, artist, picture AS cover, year, SUM(duration) AS duration, COUNT(*) AS trackCount, codec, bitDepth, sampleRate, bitrate, vbr, lossless, MIN(path) AS firstPath
         FROM (SELECT *, ${folderOf} AS folder FROM library ${where}) ${groupFilter.where} GROUP BY folder, COALESCE(album, '') ${having}
         ORDER BY ${toOrderBy(albumOrders, sort, 'MIN(path)')} LIMIT ? OFFSET ?`,
       variables: [...variables, limit, offset],

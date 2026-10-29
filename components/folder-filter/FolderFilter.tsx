@@ -1,9 +1,10 @@
-import { useId, useState } from 'react';
-import type { FocusEvent, KeyboardEvent } from 'react';
-import { FaChevronDown } from 'react-icons/fa';
+import { useState } from 'react';
+import classNames from 'classnames';
+import { FaChevronDown, FaRegFolder } from 'react-icons/fa';
 import type { Folder } from '../../types/library';
 import { selectedFolders } from '../../client/library-query';
 import { useTranslation } from '../../client/i18n';
+import { usePopup } from '../../client/hooks/use-popup';
 import style from './FolderFilter.scss';
 
 interface FolderFilterProps {
@@ -16,19 +17,14 @@ interface FolderFilterProps {
 
 const FolderFilter = ({ folders, selected, setSelected }: FolderFilterProps) => {
   const { t } = useTranslation();
-  const panelId = useId();
-  const [open, setOpen] = useState(false);
   // what is checked while the list is open: Clear leaves nothing checked, which shows everything just like all checked do
   const [draft, setDraft] = useState<string[]>();
+  const { open, panelId, toggle: toggleOpen, rootProps } = usePopup(() => setDraft(undefined));
   const paths = folders.map(({ path }) => path);
   const known = selectedFolders(selected, folders);
   const checked = draft ?? (known.length ? known : paths);
-  const label = known.length === 0 || known.length === paths.length ? t('folderFilter.all') : t('folderFilter.selected', { count: known.length });
-
-  const close = () => {
-    setOpen(false);
-    setDraft(undefined);
-  };
+  const limited = known.length > 0 && known.length < paths.length;
+  const label = limited ? t('folderFilter.selected', { count: known.length }) : t('folderFilter.all');
 
   // every folder checked is no filter
   const choose = (next: string[]) => {
@@ -39,30 +35,19 @@ const FolderFilter = ({ folders, selected, setSelected }: FolderFilterProps) => 
   const toggle = (path: string) =>
     choose(checked.includes(path) ? checked.filter((item) => item !== path) : paths.filter((item) => item === path || checked.includes(item)));
 
-  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) close();
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Escape' || !open) return;
-
-    event.stopPropagation();
-    close();
-    event.currentTarget.querySelector('button')?.focus();
-  };
-
   return (
-    <div className={style.folderFilter} onBlur={handleBlur} onKeyDown={handleKeyDown}>
+    <div className={style.folderFilter} {...rootProps}>
       <button
         type="button"
-        className={style.toggle}
+        className={classNames(style.toggle, { [style.limited]: limited })}
         aria-label={`${t('folderFilter.label')}: ${label}`}
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={toggleOpen}
       >
+        <FaRegFolder aria-hidden />
         {label}
-        <FaChevronDown />
+        <FaChevronDown className={style.chevron} aria-hidden />
       </button>
       {open && (
         <div id={panelId} role="group" className={style.panel} aria-label={t('folderFilter.label')}>

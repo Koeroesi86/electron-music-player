@@ -1,53 +1,41 @@
+@use '../../client/styles/filter-chip' as *;
+
 .folderFilter {
   position: relative;
-  margin-right: 8px;
   -webkit-app-region: no-drag;
 
-  .toggle,
-  .actions button {
-    padding: 0 10px;
-    line-height: 30px;
-    font-size: 12px;
-    background: var(--overlay);
-    border: 0;
-    border-radius: 3px;
-    color: var(--text-soft);
-    cursor: pointer;
-    transition: color .2s ease-in-out, background-color .2s ease-in-out;
-
-    &:hover {
-      background: var(--overlay-strong);
-      color: var(--text);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--accent);
-    }
-  }
-
-  .toggle > svg {
-    margin-left: 6px;
-    font-size: 9px;
+  .toggle {
+    @include chip;
   }
 
   .panel {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    z-index: 10;
-    min-width: 240px;
-    max-width: 420px;
-    margin-top: 4px;
-    padding: 8px;
-    border-radius: 3px;
-    background: var(--panel-solid);
-    box-shadow: 0 2px 8px var(--shadow);
+    @include popup-panel;
+    max-width: 320px;
   }
 
   .actions {
     display: flex;
     gap: 4px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
+
+    button {
+      padding: 4px 10px;
+      font: inherit;
+      font-size: 12px;
+      color: var(--accent);
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--overlay);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--accent);
+      }
+    }
   }
 
   .folders {
@@ -60,10 +48,19 @@
     label {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 4px 2px;
-      font-size: 12px;
+      gap: 10px;
+      padding: 7px 10px;
+      font-size: 13px;
+      border-radius: 8px;
       cursor: pointer;
+
+      &:hover {
+        background: var(--overlay);
+      }
+    }
+
+    input {
+      accent-color: var(--accent);
     }
 
     span {
