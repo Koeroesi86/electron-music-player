@@ -1,38 +1,69 @@
+@use '../../client/styles/filter-chip' as *;
+
 .sortSelect {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  padding: 6px 12px;
+  position: relative;
+  -webkit-app-region: no-drag;
 
-  .select {
-    -webkit-app-region: no-drag;
-    height: 30px;
-    padding: 0 8px;
-    color: var(--text-soft);
-    font-size: 12px;
-    border: 0;
-    border-radius: 3px;
-    background-color: var(--overlay);
+  .toggle {
+    @include chip;
+  }
 
-    cursor: pointer;
+  .direction {
+    font-size: 10px;
+  }
 
-    // the open list takes the background of the select, which is translucent: it gets a solid one of the theme
-    option {
-      color: var(--text);
-      background-color: var(--panel-solid);
-    }
+  .panel {
+    @include popup-panel;
+    min-width: 200px;
+  }
 
-    &:hover:not(:disabled) {
-      background-color: var(--overlay-strong);
-    }
+  .item {
+    @include popup-item;
+  }
 
-    &:focus-visible {
-      outline: 2px solid var(--accent);
-    }
+  .check {
+    flex: 0 0 12px;
+    font-size: 11px;
+    color: var(--accent);
+  }
 
-    &:disabled {
-      color: var(--text-faint);
-      cursor: default;
+  [aria-checked='true'].item {
+    color: var(--accent);
+  }
+
+  // ascending and descending: two halves of one control
+  .directions {
+    display: flex;
+    gap: 2px;
+    margin-top: 6px;
+    padding: 3px;
+    border-radius: 8px;
+    background: var(--overlay-faint);
+
+    button {
+      flex: 1;
+      padding: 5px 8px;
+      font: inherit;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+
+      &[aria-checked='true'] {
+        color: var(--accent-contrast);
+        background: var(--accent);
+      }
+
+      &:disabled {
+        color: var(--text-faint);
+        cursor: default;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--accent);
+      }
     }
   }
 }

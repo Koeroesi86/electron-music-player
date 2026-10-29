@@ -1,6 +1,7 @@
 import type { DragEvent } from 'react';
 import classNames from 'classnames';
 import { FaSyncAlt } from 'react-icons/fa';
+import AlbumSort from '../album-sort';
 import type { LibraryView } from '../../client/redux/types';
 import AlbumView from '../album-view';
 import GroupView from '../group-view';
@@ -50,11 +51,20 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFile
         controls={
           <div className={style.libraryControls}>
             {view !== 'folders' && <LibrarySearch key={view} />}
-            {view !== 'folders' && <FolderFilter />}
-            <button onClick={rescanLibrary} disabled={!!scanningFolder} className={classNames({ [style.spinning]: scanningFolder })}>
-              <FaSyncAlt />
-              {t('library.rescan')}
-            </button>
+            <div className={style.filters}>
+              {view !== 'folders' && <FolderFilter />}
+              {view === 'albums' && <AlbumSort />}
+              <button
+                type="button"
+                title={t('library.rescan')}
+                aria-label={t('library.rescan')}
+                onClick={rescanLibrary}
+                disabled={!!scanningFolder}
+                className={classNames(style.rescan, { [style.spinning]: scanningFolder })}
+              >
+                <FaSyncAlt />
+              </button>
+            </div>
           </div>
         }
       />

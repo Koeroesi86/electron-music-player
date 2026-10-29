@@ -16,6 +16,7 @@ const AlbumSort = ({ sort, setSort }: AlbumSortProps) => {
     <SortSelect
       fields={albumSortFields}
       labels={{
+        prefix: t('library.sort'),
         field: t('albums.sortField'),
         direction: t('albums.sortDirection'),
         default: t('albums.sort.default'),

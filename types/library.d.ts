@@ -35,8 +35,8 @@ export interface Album {
   tracks: Track[];
 }
 
-/** An album as listed in a window of the library, its tracks are fetched when the album is opened or played */
-export interface AlbumSummary extends Omit<Album, 'tracks'> {
+/** An album as listed in a window of the library, its tracks are fetched when the album is opened or played; the format is the one of its first track */
+export interface AlbumSummary extends Omit<Album, 'tracks'>, Partial<AudioFormat> {
   trackCount: number;
 }
 

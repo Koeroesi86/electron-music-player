@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Track } from '../types/library';
-import { audioFormatLabel } from './audio-format-label';
+import { albumFormatLabel, audioFormatLabel } from './audio-format-label';
 
 const track = (format: Partial<Track>): Track => ({
   path: '/music/a',
@@ -33,5 +33,23 @@ describe('audioFormatLabel', () => {
   it('shows nothing for a track whose codec is not known', () => {
     expect(audioFormatLabel(track({}))).toBeUndefined();
     expect(audioFormatLabel(track({ codec: null, bitrate: 320000 }))).toBeUndefined();
+  });
+});
+
+describe('albumFormatLabel', () => {
+  it.each([
+    [{ codec: 'FLAC', lossless: 1, bitDepth: 24, sampleRate: 96000 }, 'Hi-Res'],
+    [{ codec: 'FLAC', lossless: 1, bitDepth: 16, sampleRate: 96000 }, 'Hi-Res'],
+    [{ codec: 'FLAC', lossless: 1, bitDepth: 16, sampleRate: 44100 }, 'FLAC'],
+    [{ codec: 'FLAC', lossless: 1 }, 'FLAC'],
+    [{ codec: 'AAC', lossless: 0, bitDepth: 24, sampleRate: 96000 }, 'AAC'],
+    [{ codec: 'MP3', lossless: 0, bitrate: 320000 }, 'MP3'],
+  ])('shows %o as %s', (format, label) => {
+    expect(albumFormatLabel(format)).toBe(label);
+  });
+
+  it('shows nothing for an album whose codec is not known', () => {
+    expect(albumFormatLabel({})).toBeUndefined();
+    expect(albumFormatLabel({ codec: null, lossless: 1, bitDepth: 24 })).toBeUndefined();
   });
 });

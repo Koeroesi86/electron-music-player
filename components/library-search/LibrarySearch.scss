@@ -1,17 +1,37 @@
+// the search of the library: the field takes the space the chips leave
 .librarySearch {
   -webkit-app-region: no-drag;
-  flex: 0 1 220px;
+  display: flex;
+  flex: 0 1 280px;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
-  height: 30px;
-  margin-right: 8px;
-  padding: 0 8px;
-  color: var(--text);
+  height: 32px;
+  padding: 0 12px;
+  color: var(--text-muted);
   font-size: 12px;
-  border: 0;
-  border-radius: 3px;
+  border-radius: 8px;
   background-color: var(--overlay);
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: box-shadow .15s ease-in-out;
 
-  &:focus-visible {
-    outline: 2px solid var(--accent);
+  svg {
+    flex: 0 0 auto;
+  }
+
+  &:focus-within {
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    background: transparent;
+    border: 0;
+    outline: 0;
   }
 }

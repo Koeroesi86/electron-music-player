@@ -1,4 +1,4 @@
-import type { Track } from '../types/library';
+import type { AudioFormat, Track } from '../types/library';
 
 const toKilohertz = (sampleRate: number) => `${Math.round(sampleRate / 100) / 10}`;
 
@@ -13,3 +13,7 @@ export const audioFormatLabel = ({ codec, bitDepth, sampleRate, bitrate, vbr, lo
 
   return [codec, detail].filter(Boolean).join(' ');
 };
+
+/** The badge of an album, short as it sits on the corner of a cover: `Hi-Res` for a lossless one deeper than 16 bit or faster than 48 kHz, else the codec; undefined when the codec is not known */
+export const albumFormatLabel = ({ codec, bitDepth, sampleRate, lossless }: Partial<AudioFormat>) =>
+  codec && lossless && ((bitDepth ?? 0) > 16 || (sampleRate ?? 0) > 48000) ? 'Hi-Res' : (codec ?? undefined);

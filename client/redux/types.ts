@@ -56,6 +56,8 @@ export interface PersistedSettings {
   /** The sort of the tracks and of the albums, undefined is the default order */
   trackSort: TrackSort | undefined;
   albumSort: AlbumSort | undefined;
+  /** The least width of a cover of the album grid in px */
+  coverSize: number;
   /** The sort of the artists, the album artists and the genres */
   groupSort: GroupSort | undefined;
   /** Whether the photos of the artists are looked up at Deezer, which gets the names of the artists */
@@ -160,6 +162,7 @@ export type AppAction =
   | EmptyAction<'CLOSE_GROUP'>
   | PayloadAction<'SET_TRACK_SORT', { sort: TrackSort | undefined }>
   | PayloadAction<'SET_ALBUM_SORT', { sort: AlbumSort | undefined }>
+  | PayloadAction<'SET_COVER_SIZE', { size: number }>
   | PayloadAction<'SET_LIBRARY_FOLDERS', { folders: string[] }>
   | PayloadAction<'SET_LIBRARY_SEARCH', { search: string }>
   | PayloadAction<'STORE_ALBUM_PAGE', { page: number; items: AlbumSummary[]; total: number }>

@@ -20,14 +20,12 @@ describe('ViewSwitcher', () => {
     expect(setView).toHaveBeenCalledWith('two');
   });
 
-  it('names only the current view when the tabs are off, since the sidebar picks the view', () => {
+  it('shows the controls only when the tabs are off, since the sidebar picks the view and names it', () => {
     const setView = vi.fn();
     render(<ViewSwitcher views={views} current="two" setView={setView} tabs={false} controls={<button>Rescan</button>} />);
 
-    fireEvent.click(screen.getByText('Second'));
-
     expect(screen.queryByText('First')).toBeNull();
-    expect(screen.getByText('Second')).toBeTruthy();
+    expect(screen.queryByText('Second')).toBeNull();
     expect(screen.getByRole('button', { name: 'Rescan' })).toBeTruthy();
     expect(setView).not.toHaveBeenCalled();
   });

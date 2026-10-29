@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FaSearch } from 'react-icons/fa';
 import { useTranslation } from '../../client/i18n';
 import { useDelayedValue } from '../../client/hooks/use-delayed-value';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
@@ -24,14 +25,10 @@ const LibrarySearch = ({ search, setSearch }: LibrarySearchProps) => {
   }, [delayedText]);
 
   return (
-    <input
-      className={style.librarySearch}
-      type="search"
-      aria-label={t('library.search')}
-      placeholder={t('library.search')}
-      value={text}
-      onChange={(event) => setText(event.target.value)}
-    />
+    <label className={style.librarySearch}>
+      <FaSearch aria-hidden />
+      <input type="search" aria-label={t('library.search')} placeholder={t('library.search')} value={text} onChange={(event) => setText(event.target.value)} />
+    </label>
   );
 };
 

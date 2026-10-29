@@ -1,12 +1,12 @@
 import classNames from 'classnames';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay } from '@fortawesome/free-solid-svg-icons';
+import { FaPlay } from 'react-icons/fa';
 import type { AlbumSummary } from '../../types/library';
 import { isOffline } from '../../client/offline-folders';
 import { useTranslation } from '../../client/i18n';
 import style from './AlbumViewThumbnail.scss';
-import Time from '../time';
 import { getCoverUrl } from '../../client/cover-url';
+import { albumFormatLabel } from '../../client/audio-format-label';
+import { formatLength } from '../../client/utils/format-length';
 import { albumFavourite } from '../../client/favourites';
 import FavouriteButton from '../favourite-button';
 import AddToPlaylist from '../add-to-playlist';
@@ -21,6 +21,14 @@ interface AlbumViewThumbnailProps {
 const AlbumViewThumbnail = ({ album, offlineFolders, selectAlbum, playAlbum }: AlbumViewThumbnailProps) => {
   const { t } = useTranslation();
   const offline = isOffline(`${album.path}/`, offlineFolders);
+  const cover = album.cover ? { backgroundImage: `url("${getCoverUrl(album.cover)}")` } : undefined;
+  const format = albumFormatLabel(album);
+  // the year is missing on a track that has none
+  const year = Number(album.year) > 0 ? `${Number(album.year)}` : undefined;
+  const length = formatLength(album.duration);
+  const facts = [year, t('tracks.count', { count: album.trackCount }), length].filter(Boolean).join(' · ');
+  // a narrow cover has no room for the number of tracks
+  const shortFacts = [year, length].filter(Boolean).join(' · ');
 
   return (
     <div
@@ -30,31 +38,36 @@ const AlbumViewThumbnail = ({ album, offlineFolders, selectAlbum, playAlbum }: A
       onDoubleClick={() => playAlbum(album)}
       onTouchEnd={() => playAlbum(album)}
     >
-      <div title={album.title} className={style.cover} style={album.cover ? { backgroundImage: `url("${getCoverUrl(album.cover)}")` } : undefined}>
-        <FavouriteButton item={albumFavourite(album)} className={style.favourite} />
-        <AddToPlaylist source={album} className={style.playlist} />
-        <div className={style.overlay}>
-          <div
-            className={classNames(style.metaData, style.icon)}
-            onClick={(e) => {
-              e.stopPropagation();
+      <div className={style.frame}>
+        {/* a blurred copy of the cover under it: the shadow has the colours of the cover */}
+        {cover && <div className={style.glow} style={cover} aria-hidden />}
+        <div title={album.title} className={style.cover} style={cover}>
+          <FavouriteButton item={albumFavourite(album)} className={style.favourite} />
+          <AddToPlaylist source={album} className={style.playlist} />
+          <button
+            type="button"
+            className={style.play}
+            aria-label={t('albums.play', { title: album.title })}
+            onClick={(event) => {
+              event.stopPropagation();
               playAlbum(album);
             }}
+            onDoubleClick={(event) => event.stopPropagation()}
           >
-            <FontAwesomeIcon icon={faPlay} size="sm" />
-          </div>
+            <FaPlay aria-hidden />
+          </button>
         </div>
       </div>
-      <div className={style.meta}>
-        <div className={classNames(style.title)} title={album.title}>
-          {album.title}
-        </div>
-        <div className={classNames(style.artist)} title={album.artist}>
-          {album.artist}
-        </div>
-        <div className={classNames(style.duration)}>
-          <Time seconds={album.duration} />
-        </div>
+      <div className={style.title} title={album.title}>
+        {album.title}
+      </div>
+      <div className={style.artist} title={album.artist}>
+        {album.artist}
+      </div>
+      <div className={style.details}>
+        <span className={style.facts}>{facts}</span>
+        <span className={style.shortFacts}>{shortFacts}</span>
+        {format && <span className={style.format}>{format}</span>}
       </div>
     </div>
   );

@@ -24,16 +24,26 @@ const initialViewport: Viewport = { scrollTop: 0, height: 600, width: 800 };
 
 interface WindowedListOptions {
   itemCount: number;
-  rowHeight: number;
-  /** The width of an item, items are laid out in as many columns as fit; one column when omitted */
+  /** The height of a row in px, or how it follows the width of a column (square covers in a grid that fills the width) */
+  rowHeight: number | ((columnWidth: number) => number);
+  /** The least width of an item, items are laid out in as many columns as fit; one column when omitted */
   itemWidth?: number;
+  /** The space between the columns in px */
+  gap?: number;
   overscan?: number;
 }
 
 /** Render only the rows in view of a scrolling element: the rows are put in a box that is as high as the whole list, below an offset */
-export const useWindowedList = ({ itemCount, rowHeight, itemWidth, overscan = 4 }: WindowedListOptions) => {
+export const useWindowedList = ({ itemCount, rowHeight: heightOf, itemWidth, gap = 0, overscan = 4 }: WindowedListOptions) => {
   const listing = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState(initialViewport);
+
+  const columns = itemWidth ? Math.max(Math.floor((viewport.width + gap) / (itemWidth + gap)), 1) : 1;
+  const columnWidth = (viewport.width - (columns - 1) * gap) / columns;
+  const rowHeight = typeof heightOf === 'function' ? Math.floor(heightOf(columnWidth)) : heightOf;
+  // the listener below reads the height of the row it is on now, so a list that resizes does not start its effect again
+  const currentRowHeight = useRef(rowHeight);
+  currentRowHeight.current = rowHeight;
 
   useEffect(() => {
     const element = listing.current;
@@ -45,7 +55,7 @@ export const useWindowedList = ({ itemCount, rowHeight, itemWidth, overscan = 4 
       const { paddingLeft, paddingRight } = getComputedStyle(element);
       const next = {
         // the rows are measured at the granularity of a row, so a scroll inside a row does not render again
-        scrollTop: Math.floor(element.scrollTop / rowHeight) * rowHeight,
+        scrollTop: Math.floor(element.scrollTop / currentRowHeight.current) * currentRowHeight.current,
         height: element.clientHeight,
         width: element.clientWidth - (parseFloat(paddingLeft) || 0) - (parseFloat(paddingRight) || 0),
       };
@@ -64,15 +74,15 @@ export const useWindowedList = ({ itemCount, rowHeight, itemWidth, overscan = 4 
       element.removeEventListener('scroll', schedule);
       observer?.disconnect();
     };
-  }, [rowHeight]);
+  }, []);
 
-  const columns = itemWidth ? Math.max(Math.floor(viewport.width / itemWidth), 1) : 1;
   const rowCount = Math.ceil(itemCount / columns);
   const { first, last } = getRowWindow({ scrollTop: viewport.scrollTop, viewportHeight: viewport.height, rowHeight, rowCount, overscan });
 
   return {
     listing,
     columns,
+    rowHeight,
     firstRow: first,
     lastRow: last,
     firstIndex: first * columns,

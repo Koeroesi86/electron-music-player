@@ -22,8 +22,18 @@ describe('getRowWindow', () => {
 describe('useWindowedList', () => {
   afterEach(cleanup);
 
-  const Listing = ({ itemCount, itemWidth }: { itemCount: number; itemWidth?: number }) => {
-    const { listing, firstIndex, lastIndex, height, offsetTop, columns } = useWindowedList({ itemCount, rowHeight: 20, itemWidth, overscan: 1 });
+  const Listing = ({
+    itemCount,
+    itemWidth,
+    gap,
+    rowHeight = 20,
+  }: {
+    itemCount: number;
+    itemWidth?: number;
+    gap?: number;
+    rowHeight?: number | ((width: number) => number);
+  }) => {
+    const { listing, firstIndex, lastIndex, height, offsetTop, columns } = useWindowedList({ itemCount, rowHeight, itemWidth, gap, overscan: 1 });
     return (
       <div data-testid="listing" ref={listing}>
         <div data-testid="window" data-first={firstIndex} data-last={lastIndex} data-height={height} data-offset={offsetTop} data-columns={columns} />
@@ -62,5 +72,14 @@ describe('useWindowedList', () => {
     delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
 
     expect(read(getByTestId)).toMatchObject({ columns: '3', height: '680' });
+  });
+
+  it('counts the gaps between the columns, and sizes a row by the width a column ends up with', () => {
+    Object.defineProperty(HTMLElement.prototype, 'clientWidth', { value: 400, configurable: true });
+    // 400 px hold two columns of at least 150 px and a gap of 20 (2 * 150 + 20), which grow to 190 px each; the row is the cover and 10 px
+    const { getByTestId } = render(<Listing itemCount={10} itemWidth={150} gap={20} rowHeight={(width) => width + 10} />);
+    delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
+
+    expect(read(getByTestId)).toMatchObject({ columns: '2', height: '1000' });
   });
 });

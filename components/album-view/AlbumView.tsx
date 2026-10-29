@@ -1,22 +1,28 @@
 import { useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import classNames from 'classnames';
+import { FaTh, FaThLarge } from 'react-icons/fa';
 import type { Album, AlbumSummary, Folder, Track } from '../../types/library';
 import type { AlbumSort as AlbumSortValue } from '../../types/library-query';
 import { useTranslation } from '../../client/i18n';
 import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
 import { usePageLoader } from '../../client/hooks/use-page-loader';
 import { useWindowedList } from '../../client/hooks/use-windowed-list';
+import { coverSizes } from '../../client/cover-size';
 import { fetchAlbum } from '../../client/library-api';
 import { getCachedItem } from '../../client/redux/library/pages';
 import type { PageCache } from '../../client/redux/library/pages';
 import style from './AlbumView.scss';
 import AlbumViewThumbnail from '../album-view-thumbnail';
-import AlbumSort from '../album-sort';
 import { selectedFolders } from '../../client/library-query';
 
-/** The size of a thumbnail with its margin in px, matching .albumViewThumbnail in AlbumViewThumbnail.scss */
-const itemWidth = 112;
-const rowHeight = 160;
+/** The gap between two covers in px, the covers grow to fill the width; matching .row in AlbumView.scss */
+const columnGap = 18;
+/** The space under a thumbnail and the height of its lines of text in px, matching .albumViewThumbnail in AlbumViewThumbnail.scss */
+const rowGap = 22;
+const textHeight = 66;
+/** A row is a square cover and the text under it */
+const rowHeightOf = (coverWidth: number) => coverWidth + textHeight + rowGap;
 
 interface AlbumViewProps {
   albums: PageCache<AlbumSummary>;
@@ -29,14 +35,22 @@ interface AlbumViewProps {
   playTracks: (tracks: Track[]) => void;
   selectAlbum: (album: Album | null) => void;
   loadPage: (page: number) => void;
-  /** What the bar above the list holds, the sort of the albums when omitted */
+  /** The least width of a cover in px, which the slider of the bar below the list sets */
+  coverSize: number;
+  setCoverSize: (size: number) => void;
+  /** What the bar above the list holds, no bar when omitted (the sort of the albums is in the header of the library) */
   toolbar?: ReactNode;
 }
 
-const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, search, loadPage, toolbar = <AlbumSort /> }: AlbumViewProps) => {
+const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, search, coverSize, setCoverSize, loadPage, toolbar }: AlbumViewProps) => {
   const { t } = useTranslation();
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
-  const { listing, columns, firstIndex, lastIndex, offsetTop, height } = useWindowedList({ itemCount: albums.total ?? 0, rowHeight, itemWidth });
+  const { listing, columns, rowHeight, firstIndex, lastIndex, offsetTop, height } = useWindowedList({
+    itemCount: albums.total ?? 0,
+    rowHeight: rowHeightOf,
+    itemWidth: coverSize,
+    gap: columnGap,
+  });
   usePageLoader(albums, firstIndex, lastIndex, loadPage);
 
   const queryKey = JSON.stringify([sort, selectedFolders(selected, folders), search]);
@@ -68,14 +82,14 @@ const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, s
   );
 
   return (
-    <div className={style.albums}>
-      <div className={style.toolbar}>{toolbar}</div>
+    <div className={classNames(style.albums, { [style.withToolbar]: toolbar })}>
+      {toolbar && <div className={style.toolbar}>{toolbar}</div>}
       <div ref={separator} className={style.separator} />
       {search && albums.total === 0 && <div className={style.empty}>{t('library.noResults', { search })}</div>}
       <div className={style.listing} ref={setListing}>
         <div className={style.window} style={{ height, paddingTop: offsetTop }}>
           {rows.map((indexes) => (
-            <div key={indexes[0]} className={style.row}>
+            <div key={indexes[0]} className={style.row} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, height: rowHeight }}>
               {indexes.map((index) => {
                 const album = getCachedItem(albums, index);
                 return album ? (
@@ -88,7 +102,26 @@ const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, s
           ))}
         </div>
       </div>
-      <div className={style.footer}>{t('albums.count', { count: albums.total ?? 0 })}</div>
+      <div className={style.footer}>
+        <span>{t('albums.count', { count: albums.total ?? 0 })}</span>
+        <label className={style.coverSizeControl} title={t('albums.coverSize')}>
+          <span className={style.coverSizeLabel}>{t('albums.coverSize')}</span>
+          <FaTh className={style.coverSizeIcon} aria-hidden="true" />
+          <input
+            type="range"
+            className={style.coverSize}
+            aria-label={t('albums.coverSize')}
+            min={coverSizes.min}
+            max={coverSizes.max}
+            step={coverSizes.step}
+            value={coverSize}
+            style={{ backgroundSize: `${((coverSize - coverSizes.min) / (coverSizes.max - coverSizes.min)) * 100}% 4px, 100% 4px` }}
+            onChange={(event) => setCoverSize(Number(event.target.value))}
+          />
+          <FaThLarge className={style.coverSizeIcon} aria-hidden="true" />
+          <span className={style.coverSizeValue}>{coverSize} px</span>
+        </label>
+      </div>
     </div>
   );
 };
