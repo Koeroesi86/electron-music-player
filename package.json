@@ -55,14 +55,7 @@
     ],
     "win": {
       "icon": "icons/win/icon.ico",
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
+      "target": "nsis"
     },
     "mac": {
       "category": "public.app-category.music",
