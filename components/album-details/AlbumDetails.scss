@@ -1,13 +1,8 @@
+// it catches the click outside the dialog, and is only there while the dialog is open: a layer over the whole window that is always there keeps the title bar from dragging the window
 .backdrop {
   position: fixed;
   inset: 0;
   z-index: 99;
-  pointer-events: none;
-
-  // it catches the click outside the dialog while the dialog is open
-  &.hasAlbum {
-    pointer-events: auto;
-  }
 }
 
 .albumDetails {

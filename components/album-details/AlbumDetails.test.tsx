@@ -123,6 +123,14 @@ describe('AlbumDetails', () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
+  it('has no layer over the window while no album is open, so the title bar can drag it', () => {
+    const { container, rerender } = render(<AlbumDetails album={null} playTracks={vi.fn()} close={vi.fn()} />);
+    expect(container.children).toHaveLength(1);
+
+    rerender(<AlbumDetails album={album} playTracks={vi.fn()} close={vi.fn()} />);
+    expect(container.children).toHaveLength(2);
+  });
+
   it('closes with Escape while an album is open, and listens no more once it is closed', () => {
     const close = vi.fn();
     const { rerender } = render(<AlbumDetails album={album} playTracks={vi.fn()} close={close} />);

@@ -45,7 +45,7 @@ const AlbumDetails = ({ album, playTracks, close }: AlbumDetailsProps) => {
 
   return (
     <>
-      <div className={classNames(style.backdrop, { [style.hasAlbum]: album })} onClick={close} aria-hidden />
+      {album && <div className={style.backdrop} onClick={close} aria-hidden />}
       <div className={classNames(style.albumDetails, { [style.hasAlbum]: album })}>
         <div className={style.header} style={headerColor ? { background: `linear-gradient(135deg, ${headerColor}, #333333)` } : undefined}>
           <button type="button" className={style.close} aria-label={t('album.close')} onClick={close}>
