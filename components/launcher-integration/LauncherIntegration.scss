@@ -1,21 +1,13 @@
+@use '../../client/styles/settings-tile' as *;
+
 .launcherIntegration {
-  padding-left: 12px;
+  @include tile;
 
   .sectionTitle {
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 100;
-    padding: 12px 0;
+    @include tile-title;
   }
 
-  .toggle {
-    -webkit-app-region: no-drag;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-
-    &:hover {
-      text-decoration: underline;
-    }
+  .hint {
+    @include tile-hint;
   }
 }

@@ -89,6 +89,13 @@
   // the accent as a light fill, for the row that is selected; it follows --accent wherever that is set on the root
   --accent-tint: color-mix(in srgb, var(--accent) 14%, transparent);
 
+  // the pictures of the modes in the settings, which look the same in every theme
+  --mode-light-background: #f2f2f2;
+  --mode-light-text: #333333;
+  --mode-dark-background: #1f1f1f;
+  --mode-dark-text: #efefef;
+  --mode-system-text: #808080;
+
   // on the cover art, which looks the same in every theme: white on translucent dark
   --art-placeholder: #efefef;
   --art-text: #ffffff;

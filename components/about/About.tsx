@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import classNames from 'classnames';
 import type { UpdateState } from '../../types/update';
 import Confirm from '../confirm';
 import { useTranslation } from '../../client/i18n';
@@ -28,8 +29,7 @@ const About = ({ update, isPlaying, check, install, openReleases }: AboutProps) 
   );
 
   return (
-    <section className={style.about}>
-      <div className={style.sectionTitle}>{t('about.title')}</div>
+    <section className={classNames(style.about, style.wide)} aria-label={t('about.title')}>
       <div className={style.identity}>
         <img className={style.icon} src={appIcon} alt="" />
         <div>

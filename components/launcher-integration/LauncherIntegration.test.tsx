@@ -11,20 +11,21 @@ describe('LauncherIntegration', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('offers to add the app to the menu and asks for it', () => {
+  it('shows the app is not in the menu, and asks to add it', () => {
     const setEnabled = vi.fn();
     render(<LauncherIntegration available enabled={false} setEnabled={setEnabled} />);
 
-    fireEvent.click(screen.getByText('Add to application menu'));
+    expect(screen.getByRole('switch', { name: 'Application menu' }).getAttribute('aria-checked')).toBe('false');
+    fireEvent.click(screen.getByRole('switch', { name: 'Application menu' }));
 
     expect(setEnabled).toHaveBeenCalledExactlyOnceWith(true);
   });
 
-  it('offers to remove the app from the menu once it was added', () => {
+  it('asks to remove the app from the menu once it was added', () => {
     const setEnabled = vi.fn();
     render(<LauncherIntegration available enabled setEnabled={setEnabled} />);
 
-    fireEvent.click(screen.getByText('Remove from application menu'));
+    fireEvent.click(screen.getByRole('switch', { name: 'Application menu' }));
 
     expect(setEnabled).toHaveBeenCalledExactlyOnceWith(false);
   });

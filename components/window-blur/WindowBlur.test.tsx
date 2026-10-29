@@ -11,18 +11,18 @@ describe('WindowBlur', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('offers translucent panels and asks for them', () => {
+  it('asks for translucent panels', () => {
     const toggle = vi.fn();
     render(<WindowBlur available enabled={false} toggle={toggle} />);
 
-    fireEvent.click(screen.getByText('Use translucent panels'));
+    fireEvent.click(screen.getByRole('switch', { name: 'Window blur' }));
 
     expect(toggle).toHaveBeenCalledOnce();
   });
 
-  it('offers to go back to opaque panels once they are translucent', () => {
+  it('shows the panels as translucent once they are', () => {
     render(<WindowBlur available enabled toggle={vi.fn()} />);
 
-    expect(screen.getByText('Use opaque panels')).toBeTruthy();
+    expect(screen.getByRole('switch', { name: 'Window blur' }).getAttribute('aria-checked')).toBe('true');
   });
 });

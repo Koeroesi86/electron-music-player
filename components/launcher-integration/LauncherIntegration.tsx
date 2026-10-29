@@ -1,5 +1,6 @@
 import style from './LauncherIntegration.scss';
 import { useTranslation } from '../../client/i18n';
+import Switch from '../switch/Switch';
 
 interface LauncherIntegrationProps {
   available: boolean;
@@ -15,10 +16,11 @@ const LauncherIntegration = ({ available, enabled, setEnabled }: LauncherIntegra
 
   return (
     <section className={style.launcherIntegration}>
-      <div className={style.sectionTitle}>{t('launcher.title')}</div>
-      <div className={style.toggle} onClick={() => setEnabled(!enabled)}>
-        {enabled ? t('launcher.remove') : t('launcher.add')}
+      <div className={style.sectionTitle}>
+        {t('launcher.title')}
+        <Switch checked={enabled} label={t('launcher.title')} onChange={setEnabled} />
       </div>
+      <div className={style.hint}>{t('launcher.hint')}</div>
     </section>
   );
 };

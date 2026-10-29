@@ -1,27 +1,13 @@
+@use '../../client/styles/settings-tile' as *;
+
 .artistPhotos {
-  padding-left: 12px;
+  @include tile;
 
   .sectionTitle {
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 100;
-    padding: 12px 0;
+    @include tile-title;
   }
 
   .description {
-    margin-bottom: 6px;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-
-  .toggle {
-    -webkit-app-region: no-drag;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-
-    &:hover {
-      text-decoration: underline;
-    }
+    @include tile-hint;
   }
 }
