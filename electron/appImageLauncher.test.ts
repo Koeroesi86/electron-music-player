@@ -95,6 +95,16 @@ describe('launcher on disk', () => {
     expect((await stat(theme)).mtime.getTime()).toBeGreaterThan(past.getTime());
   });
 
+  it('removes the icon cache of the theme that lists the old icons', async () => {
+    const cache = join(folder, 'data/icons/hicolor/icon-theme.cache');
+    await enableLauncher(appImage(), options);
+    await writeFile(cache, 'stale');
+
+    await enableLauncher(appImage(), options);
+
+    await expect(exists(cache)).resolves.toBe(false);
+  });
+
   it('leaves nothing behind when the path can not be used', async () => {
     await expect(enableLauncher(join(folder, 'a"b.AppImage'), options)).rejects.toThrow('can not be used');
 

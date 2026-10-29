@@ -56,11 +56,13 @@ export const readLauncherTarget = (dataHome: string) =>
 
 export const isLauncherEnabled = (dataHome: string) => readLauncherTarget(dataHome).then((target) => target !== undefined);
 
-// the desktop reads the icons from a cache that is only dropped when the theme folder is newer than it, which a rewritten icon of the same name does not change
+// the desktop reads the icons from a cache that is only dropped when the theme folder is newer than it, which a rewritten icon of the same name does not change;
+// a cache of `gtk-update-icon-cache` that lists the old icons is removed, as the desktop scans the folders without one
 const invalidateIconCache = (dataHome: string) => {
   const now = new Date();
+  const theme = join(dataHome, 'icons/hicolor');
 
-  return utimes(join(dataHome, 'icons/hicolor'), now, now).catch(() => undefined);
+  return Promise.all([rm(join(theme, 'icon-theme.cache'), { force: true }), utimes(theme, now, now)]).catch(() => undefined);
 };
 
 const writeIcon = (size: number, { dataHome, iconsPath }: LauncherOptions) =>
