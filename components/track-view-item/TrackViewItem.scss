@@ -18,10 +18,22 @@
     }
   }
 
+  // flat labels over a hairline, the sorted column in the text colour
   &.header {
+    height: 28px;
+    line-height: 28px;
     font-weight: 600;
-    background: var(--overlay);
-    padding: 3px 0;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--overlay);
+
+    .field {
+      font-size: 11px;
+    }
+
+    .field[aria-sort='ascending'],
+    .field[aria-sort='descending'] {
+      color: var(--text);
+    }
   }
 
   &.selected,
