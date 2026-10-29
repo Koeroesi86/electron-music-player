@@ -43,11 +43,11 @@ describe('LocalCollection', () => {
     expect(screen.getByRole('button', { name: 'group sort' })).toBeTruthy();
   });
 
-  it('filters the genres by name too, which are sorted by their column headers', () => {
+  it('filters the genres by name too, and sorts them with the same chip', () => {
     renderPage('genres');
 
     expect(screen.getByRole('textbox', { name: 'Filter by name' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'group sort' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'group sort' })).toBeTruthy();
   });
 
   it('searches the albums of an open artist with the search of the library again', () => {

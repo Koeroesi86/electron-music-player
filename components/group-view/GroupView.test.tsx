@@ -10,13 +10,18 @@ vi.mock('../group-tile', () => ({
     <button onClick={() => open(group)}>{`tile ${group.name || unknownName}`}</button>
   ),
 }));
+vi.mock('../genre-card', () => ({
+  default: ({ group, unknownName, open }: { group: GroupSummary; unknownName: string; open: (group: GroupSummary) => void }) => (
+    <button onClick={() => open(group)}>{`card ${group.name || unknownName}`}</button>
+  ),
+}));
 vi.mock('../album-sort', () => ({ default: () => <div>album sort</div> }));
 vi.mock('../group-albums', () => ({ default: ({ toolbar }: { toolbar: ReactNode }) => <div>{toolbar}group albums</div> }));
 
-const group = (key: string, name: string, albumCount = 1, trackCount = 2): GroupSummary => ({ key, name, albumCount, trackCount, cover: null });
+const group = (key: string, name: string, albumCount = 1, trackCount = 2): GroupSummary => ({ key, name, albumCount, trackCount, cover: null, covers: [] });
 
 const renderView = (props: Partial<ComponentProps<typeof GroupView>> = {}) => {
-  const handlers = { loadPage: vi.fn(), setSort: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn() };
+  const handlers = { loadPage: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn() };
   const groups = storePage(createPageCache<GroupSummary>(), 0, [group('adam', 'Adam', 3, 12), group('', '')], 2);
 
   render(
@@ -40,25 +45,24 @@ const renderView = (props: Partial<ComponentProps<typeof GroupView>> = {}) => {
 describe('GroupView', () => {
   afterEach(cleanup);
 
-  it('lists the names with their albums and tracks, and the ones without a name as unknown', () => {
+  it('shows the genres as cards, the ones without a name as unknown', () => {
     renderView();
 
-    expect(screen.getByText('Adam')).toBeTruthy();
-    expect(screen.getByText('12')).toBeTruthy();
-    expect(screen.getByText('Unknown genre')).toBeTruthy();
+    expect(screen.getByText('card Adam')).toBeTruthy();
+    expect(screen.getByText('card Unknown genre')).toBeTruthy();
     expect(screen.getByText('2 genres')).toBeTruthy();
+    expect(screen.queryByRole('columnheader')).toBeNull();
   });
 
-  it('shows the artists and the album artists as tiles instead of the columns', () => {
+  it('shows the artists and the album artists as tiles', () => {
     renderView({ kind: 'albumArtist', groups: storePage(createPageCache<GroupSummary>(), 0, [group('adam', 'Adam'), group('', '')], 2) });
 
     expect(screen.getByText('tile Adam')).toBeTruthy();
     expect(screen.getByText('tile Unknown album artist')).toBeTruthy();
     expect(screen.getByText('2 album artists')).toBeTruthy();
-    expect(screen.queryByRole('columnheader')).toBeNull();
   });
 
-  it('sets the size of the tiles with a slider below them, and has none below the list of genres', () => {
+  it('sets the size of the tiles with a slider below them, and has none below the cards of the genres', () => {
     const setCoverSize = vi.fn();
     renderView({ kind: 'artist', coverSize: 180, setCoverSize });
 
@@ -80,24 +84,12 @@ describe('GroupView', () => {
     expect(openGroup).toHaveBeenCalledWith({ kind: 'artist', key: 'adam', name: 'Adam' });
   });
 
-  it('opens the group of a row, with the key the library compares by', () => {
+  it('opens the genre of a card, with the key the library compares by', () => {
     const { openGroup } = renderView();
 
-    fireEvent.click(screen.getByText('Adam'));
+    fireEvent.click(screen.getByText('card Adam'));
 
     expect(openGroup).toHaveBeenCalledWith({ kind: 'genre', key: 'adam', name: 'Adam' });
-  });
-
-  it('sorts by a column, then the other way, then back to the default order', () => {
-    const { setSort } = renderView({ sort: { field: 'trackCount', direction: 'asc' } });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Albums' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Tracks' }));
-
-    expect(setSort).toHaveBeenNthCalledWith(1, { field: 'albumCount', direction: 'asc' });
-    expect(setSort).toHaveBeenNthCalledWith(2, { field: 'trackCount', direction: 'desc' });
-    expect(screen.getByRole('columnheader', { name: 'Tracks' }).getAttribute('aria-sort')).toBe('ascending');
-    expect(screen.getByRole('columnheader', { name: 'Name' }).getAttribute('aria-sort')).toBe('none');
   });
 
   it('asks for the pages it shows', () => {
@@ -118,7 +110,7 @@ describe('GroupView', () => {
 
   it('listens to the scrolling of the list again when it comes back from the albums', () => {
     const groups = storePage(createPageCache<GroupSummary>(), 0, [group('adam', 'Adam')], 1);
-    const handlers = { loadPage: vi.fn(), setSort: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn() };
+    const handlers = { loadPage: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn() };
     const view = (open?: { kind: 'genre'; key: string; name: string }) => (
       <GroupView
         kind="genre"
