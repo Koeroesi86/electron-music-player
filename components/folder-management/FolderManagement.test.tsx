@@ -42,4 +42,19 @@ describe('FolderManagement', () => {
 
     expect(screen.getByText('Unavailable')).not.toBeNull();
   });
+
+  it('shows the name of a folder first and the folder it sits in beside it', () => {
+    render(<FolderManagement folders={[{ path: '/music/jazz', lastModified: 1 }]} offlineFolders={[]} addFolders={() => {}} removeFolder={() => {}} />);
+
+    expect(screen.getByText('jazz').textContent).toBe('jazz');
+    expect(screen.getByText('/music/')).not.toBeNull();
+  });
+
+  it('counts the folders', () => {
+    render(
+      <FolderManagement folders={[...folders, { path: '/music/b', lastModified: 2 }]} offlineFolders={[]} addFolders={() => {}} removeFolder={() => {}} />
+    );
+
+    expect(screen.getByText('2 folders')).not.toBeNull();
+  });
 });

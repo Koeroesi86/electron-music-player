@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import classNames from 'classnames';
+import { MdAdd, MdClose, MdFolder, MdWarningAmber } from 'react-icons/md';
 import type { Folder } from '../../types/library';
 import Confirm from '../confirm';
 import style from './FolderManagement.scss';
 import { useTranslation } from '../../client/i18n';
+import { splitFolderPath } from '../../client/folder-name';
 
 interface FolderManagementProps {
   folders: Folder[];
@@ -18,28 +20,41 @@ const FolderManagement = ({ folders, offlineFolders, addFolders, removeFolder }:
 
   return (
     <section className={style.folderManagement}>
-      <div className={style.sectionTitle}>{t('folders.title')}</div>
-      <div className={style.folders}>
-        {folders.map((folder) => (
-          <div key={`folder-${folder.path}`} className={classNames(style.folder, { [style.offline]: offlineFolders.includes(folder.path) })}>
-            <span className={style.path} title={folder.path}>
-              {folder.path}
-            </span>
-            {offlineFolders.includes(folder.path) && (
-              <span className={style.offlineLabel} title={t('folders.offlineHint')}>
-                {t('folders.offline')}
-              </span>
-            )}
-            <button className={style.remove} onClick={() => setRemoving(folder.path)}>
-              {t('folders.remove')}
-            </button>
-          </div>
-        ))}
+      <header className={style.header}>
+        <h2 className={style.sectionTitle}>{t('folders.title')}</h2>
+        <span className={style.count}>{t('folders.count', { count: folders.length })}</span>
         <button className={style.addItems} onClick={addFolders}>
+          <MdAdd aria-hidden="true" />
           {t('folders.add')}
         </button>
-        <div className={style.dropHint}>{t('folders.drop')}</div>
-      </div>
+      </header>
+      <ul className={style.folders}>
+        {folders.map((folder) => {
+          const offline = offlineFolders.includes(folder.path);
+          const { name, parent } = splitFolderPath(folder.path);
+
+          return (
+            <li key={`folder-${folder.path}`} className={classNames(style.folder, { [style.offline]: offline })}>
+              <MdFolder className={style.icon} aria-hidden="true" />
+              <span className={style.path} title={folder.path}>
+                <span className={style.name}>{name}</span>
+                {parent && <span className={style.parent}>{parent}</span>}
+              </span>
+              {offline && (
+                <span className={style.offlineLabel} title={t('folders.offlineHint')}>
+                  <MdWarningAmber aria-hidden="true" />
+                  {t('folders.offline')}
+                </span>
+              )}
+              <button className={style.remove} onClick={() => setRemoving(folder.path)}>
+                <MdClose aria-hidden="true" />
+                {t('folders.remove')}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <div className={style.dropHint}>{t('folders.drop')}</div>
       <Confirm
         message={removing ? t('folders.removeConfirm', { path: removing }) : null}
         confirmLabel={t('folders.removeLabel')}
