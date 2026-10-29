@@ -76,12 +76,13 @@ const PlaylistView = ({ playlist, playTracks, rename, remove, removeEntry, moveE
       <div className={style.header}>
         <Title key={`${playlist.id}/${playlist.name}`} playlist={playlist} rename={rename} />
         <span className={style.count}>{t('playlists.trackCount', { count: playlist.entries.length })}</span>
-        <button type="button" disabled={playable.length === 0} onClick={() => playTracks(playable)}>
+        <button type="button" className={style.playAll} disabled={playable.length === 0} onClick={() => playTracks(playable)}>
+          <PlayIcon size="16px" aria-hidden />
           {t('playlists.playAll')}
         </button>
         <button
           type="button"
-          className={classNames({ [style.danger]: confirming })}
+          className={classNames(style.delete, { [style.danger]: confirming })}
           onClick={() => (confirming ? remove(playlist.id) : setConfirming(true))}
           onBlur={() => setConfirming(false)}
         >
@@ -98,11 +99,12 @@ const PlaylistView = ({ playlist, playTracks, rename, remove, removeEntry, moveE
             onDoubleClick={() => available && playTracks(getPlaylistTracks({ ...playlist, entries: playlist.entries.slice(index) }))}
             {...itemProps(id, index)}
           >
+            <span className={style.number}>{index + 1}</span>
             <span className={style.title} title={track.title}>
               {track.title}
             </span>
-            <AudioFormatBadge className={style.format} track={track} />
             <span className={style.details}>{available ? [track.artist, track.album].filter(Boolean).join(' · ') : t('playlists.unavailable')}</span>
+            <AudioFormatBadge className={style.format} track={track} />
             <button
               type="button"
               className={style.action}

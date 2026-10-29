@@ -49,6 +49,12 @@ describe('PlaylistView', () => {
   };
   const rows = () => Array.from(document.querySelectorAll<HTMLElement>('.entry'));
 
+  it('numbers the rows in the order of the playlist', () => {
+    renderView();
+
+    expect(rows().map((row) => row.querySelector('.number')?.textContent)).toEqual(['1', '2', '3']);
+  });
+
   it('shows the format of a track', () => {
     renderView({ ...playlist, entries: [{ id: 1, track: { ...track('One'), codec: 'FLAC', lossless: 1, bitDepth: 24, sampleRate: 96000 }, available: true }] });
 
