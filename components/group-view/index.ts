@@ -13,6 +13,7 @@ const mapState = (state: RootState, { kind }: OwnProps) => ({
   groups: state.library.groups[kind],
   sort: state.uiState.groupSort,
   filter: state.uiState.groupFilter,
+  coverSize: state.uiState.coverSize,
   selected: state.uiState.libraryFolders,
   folders: state.folders,
   open: state.uiState.openGroup?.kind === kind ? state.uiState.openGroup : undefined,
@@ -21,7 +22,7 @@ const mapState = (state: RootState, { kind }: OwnProps) => ({
 const mapDispatch = (dispatch: Dispatch<AppAction>, { kind }: OwnProps) => ({
   loadPage: (page: number) => dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind, page } }),
   setSort: (sort: GroupSort | undefined) => dispatch({ type: 'SET_GROUP_SORT', payload: { sort } }),
-  setFilter: (filter: string) => dispatch({ type: 'SET_GROUP_FILTER', payload: { filter } }),
+  setCoverSize: (size: number) => dispatch({ type: 'SET_COVER_SIZE', payload: { size } }),
   openGroup: (group: OpenGroup) => dispatch({ type: 'OPEN_GROUP', payload: { group } }),
   closeGroup: () => dispatch({ type: 'CLOSE_GROUP', payload: {} }),
 });

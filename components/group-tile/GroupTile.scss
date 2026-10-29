@@ -1,35 +1,64 @@
 .groupTile {
-  display: inline-block;
+  display: block;
   box-sizing: border-box;
-  width: 100px;
-  margin-right: 12px;
-  margin-bottom: 16px;
+  min-width: 0;
   padding: 0;
   font: inherit;
-  color: var(--art-text);
+  color: var(--text);
   text-align: left;
   background: none;
   border: 0;
   cursor: pointer;
-  vertical-align: top;
+  user-select: none;
+  -webkit-user-select: none;
 
-  .cover {
+  // the photo is a square as wide as the column, GroupView.tsx sizes the row by it
+  .frame {
+    position: relative;
     display: block;
-    width: 100px;
-    height: 100px;
-    background: var(--art-placeholder) url(../../assets/album-placeholder.svg) no-repeat center center;
-    background-size: cover;
-    border-radius: 3px;
-    box-shadow: 0 0 3px var(--art-shadow), inset 0 0 0 2px var(--art-edge);
-    transition: box-shadow .2s ease-in-out;
+    aspect-ratio: 1;
+    transition: transform .2s cubic-bezier(.2, .8, .2, 1);
   }
 
-  &:hover .cover {
-    box-shadow: 0 0 5px var(--art-glow);
+  &:hover .frame,
+  &:focus-visible .frame {
+    transform: translateY(-3px);
+  }
+
+  // the shadow in the colours of the photo: the photo again, blurred, a little smaller and lower than the photo
+  .glow {
+    position: absolute;
+    inset: 0;
+    background: center / cover;
+    border-radius: 10px;
+    filter: blur(14px) saturate(1.3);
+    opacity: .45;
+    transform: translateY(10px) scale(.9);
+    transition: opacity .2s ease-in-out;
+  }
+
+  &:hover .glow {
+    opacity: .75;
+  }
+
+  .cover {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--art-placeholder) url(../../assets/album-placeholder.svg) no-repeat center center;
+    background-size: cover;
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 1px var(--art-edge);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: none;
+
+    .cover {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
   }
 
   .name,
@@ -38,18 +67,27 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: 0 0 3px var(--art-text-shadow);
-    user-select: none;
-    -webkit-user-select: none;
   }
 
+  // the two lines are 46px high together (GroupView.tsx), and the name has the gap to the photo above it
   .name {
-    margin-top: 3px;
-    line-height: 16px;
-    font-size: 12px;
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
   }
 
   .counts {
-    font-size: 10px;
+    margin-top: 2px;
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--text-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .frame {
+      transition: none;
+      transform: none;
+    }
   }
 }

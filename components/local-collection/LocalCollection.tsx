@@ -10,6 +10,8 @@ import style from './LocalCollection.scss';
 import FolderManagement from '../folder-management';
 import FolderFilter from '../folder-filter';
 import LibrarySearch from '../library-search';
+import GroupFilter from '../group-filter';
+import GroupSort from '../group-sort';
 import ViewSwitcher from '../view-switcher/ViewSwitcher';
 import type { ViewItem } from '../view-switcher/ViewSwitcher';
 import { useTranslation } from '../../client/i18n';
@@ -17,12 +19,14 @@ import { useTranslation } from '../../client/i18n';
 interface LocalCollectionProps {
   view: LibraryView;
   scanningFolder: string | null;
+  /** An artist, album artist or genre is open, so the page shows its albums */
+  groupOpen: boolean;
   setView: (view: LibraryView) => void;
   rescanLibrary: () => void;
   addFiles: (files: FileList) => void;
 }
 
-const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFiles }: LocalCollectionProps) => {
+const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, groupOpen, addFiles }: LocalCollectionProps) => {
   const { t } = useTranslation();
 
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
@@ -30,6 +34,9 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFile
     event.stopPropagation();
     addFiles(event.dataTransfer.files);
   };
+
+  // the lists of names are filtered by their names, in the field of the header
+  const groupList = ['artists', 'albumArtists', 'genres'].includes(view) && !groupOpen;
 
   const views: ViewItem<LibraryView>[] = [
     { view: 'albums', label: t('library.albums'), panel: <AlbumView /> },
@@ -50,10 +57,11 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, addFile
         tabs={false}
         controls={
           <div className={style.libraryControls}>
-            {view !== 'folders' && <LibrarySearch key={view} />}
+            {view !== 'folders' && (groupList ? <GroupFilter key={view} label={t('groups.filter')} /> : <LibrarySearch key={view} />)}
             <div className={style.filters}>
               {view !== 'folders' && <FolderFilter />}
               {view === 'albums' && <AlbumSort />}
+              {groupList && view !== 'genres' && <GroupSort />}
               <button
                 type="button"
                 title={t('library.rescan')}

@@ -46,4 +46,10 @@ describe('LibrarySearch', () => {
     expect(setSearch).toHaveBeenCalledWith('bey');
     expect(() => unmount()).not.toThrow();
   });
+
+  it('is called by the label it is given', () => {
+    render(<LibrarySearch search="" setSearch={vi.fn()} label="Filter by name" />);
+
+    expect(screen.getByRole('searchbox', { name: 'Filter by name' }).getAttribute('placeholder')).toBe('Filter by name');
+  });
 });
