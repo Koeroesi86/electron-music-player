@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'fs/promises';
+import { mkdir, mkdtemp, readFile, readlink, rm, stat, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { posix } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -72,7 +72,8 @@ describe('registerLauncherListeners', () => {
     listeners.get('SET_LAUNCHER')?.(event, { enabled: true });
 
     await expect(state).resolves.toEqual({ available: true, enabled: true, offered: true });
-    await expect(readFile(desktopFile(), 'utf8')).resolves.toContain(`Exec="${appImage()}"`);
+    await expect(readFile(desktopFile(), 'utf8')).resolves.toContain(`Exec="${join(home, 'data/emusic/eMusic.AppImage')}"`);
+    await expect(readlink(join(home, 'data/emusic/eMusic.AppImage')).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(appImage());
   });
 
   it('remembers it was asked when the user declines, and adds nothing', async () => {

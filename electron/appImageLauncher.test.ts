@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from 'fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, readlink, rm, stat, utimes, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { normalize, posix } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,6 +6,7 @@ import {
   buildDesktopEntry,
   disableLauncher,
   enableLauncher,
+  getLauncherLink,
   isLauncherEnabled,
   markLauncherOffered,
   readLauncherTarget,
@@ -51,6 +52,7 @@ describe('launcher on disk', () => {
   const appImage = () => join(folder, 'Apps/eMusic.AppImage');
 
   const createAppImage = (path: string) => mkdir(join(path, '..'), { recursive: true }).then(() => writeFile(path, ''));
+  const link = () => getLauncherLink(options.dataHome);
   const desktopFile = () => join(folder, 'data/applications/emusic.desktop');
   const exists = (path: string) =>
     stat(path).then(
@@ -76,7 +78,7 @@ describe('launcher on disk', () => {
   it('adds the entry and the icons, and tells the desktop', async () => {
     await enableLauncher(appImage(), options);
 
-    await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(buildDesktopEntry(appImage()));
+    await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(buildDesktopEntry(link()));
     await expect(readFile(join(folder, 'data/icons/hicolor/256x256/apps/emusic.png'), 'utf8')).resolves.toBe('icon 256');
     await expect(readdir(join(folder, 'data/icons/hicolor'))).resolves.toHaveLength(sizes.length);
     await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(true);
@@ -95,10 +97,28 @@ describe('launcher on disk', () => {
     expect((await stat(theme)).mtime.getTime()).toBeGreaterThan(past.getTime());
   });
 
-  it('leaves nothing behind when the path can not be used', async () => {
-    await expect(enableLauncher(join(folder, 'a"b.AppImage'), options)).rejects.toThrow('can not be used');
+  it('keeps the entry as it is when the AppImage changes, as the desktop shell keeps the entry it read first', async () => {
+    await enableLauncher(appImage(), options);
+    const entry = await readFile(desktopFile(), 'utf8');
+    await enableLauncher(join(folder, 'other/eMusic-26.10.7.AppImage'), options);
 
-    await expect(exists(join(folder, 'data'))).resolves.toBe(false);
+    await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(entry);
+    await expect(readlink(link()).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(join(folder, 'other/eMusic-26.10.7.AppImage'));
+    await expect(readdir(join(folder, 'data/emusic'))).resolves.toEqual(['eMusic.AppImage']);
+  });
+
+  it('starts an AppImage with a path the entry can not hold, through the link', async () => {
+    await enableLauncher(join(folder, 'a"b$c.AppImage'), options);
+
+    await expect(readLauncherTarget(options.dataHome)).resolves.toBe(join(folder, 'a"b$c.AppImage'));
+  });
+
+  it('leaves nothing behind when the folder of the link can not be used', async () => {
+    const unsafe = { ...options, dataHome: join(folder, 'a"b') };
+
+    await expect(enableLauncher(appImage(), unsafe)).rejects.toThrow('can not be used');
+
+    await expect(exists(join(folder, 'a"b'))).resolves.toBe(false);
     expect(refresh).not.toHaveBeenCalled();
   });
 
@@ -110,6 +130,7 @@ describe('launcher on disk', () => {
     await disableLauncher(options);
 
     await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(false);
+    await expect(exists(link())).resolves.toBe(false);
     await expect(exists(join(folder, 'data/icons/hicolor/512x512/apps/emusic.png'))).resolves.toBe(false);
     await expect(readFile(other, 'utf8')).resolves.toBe('keep');
     expect(refresh).toHaveBeenCalledTimes(2);
@@ -152,13 +173,52 @@ describe('launcher on disk', () => {
     it('rewrites the entry of the running AppImage when its content changed', async () => {
       await createAppImage(appImage());
       await enableLauncher(appImage(), options);
-      await writeFile(desktopFile(), buildDesktopEntry(appImage()).replace('Icon=emusic', 'Icon=old'));
+      await writeFile(desktopFile(), buildDesktopEntry(link()).replace('Icon=emusic', 'Icon=old'));
       refresh.mockClear();
 
       await syncLauncher(appImage(), options);
 
-      await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(buildDesktopEntry(appImage()));
+      await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(buildDesktopEntry(link()));
       expect(refresh).toHaveBeenCalledOnce();
+    });
+
+    it('moves an entry that starts the running AppImage directly to the link', async () => {
+      await createAppImage(appImage());
+      await enableLauncher(appImage(), options);
+      await writeFile(desktopFile(), buildDesktopEntry(appImage()));
+
+      await syncLauncher(appImage(), options);
+
+      await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(buildDesktopEntry(link()));
+    });
+
+    it('leaves a link at the path of an entry that started a removed AppImage, as the desktop may keep that path', async () => {
+      const old = join(folder, 'old/eMusic-26.10.6.AppImage');
+      await mkdir(join(old, '..'));
+      await enableLauncher(old, options);
+      await writeFile(desktopFile(), buildDesktopEntry(old));
+
+      await syncLauncher(appImage(), options);
+
+      await expect(readlink(old).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(link());
+      await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
+    });
+
+    it('does not point the link to itself', async () => {
+      await enableLauncher(appImage(), options);
+
+      await enableLauncher(link(), options);
+
+      await expect(readlink(link()).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(appImage());
+    });
+
+    it('restores a link that went missing', async () => {
+      await enableLauncher(appImage(), options);
+      await rm(link());
+
+      await syncLauncher(appImage(), options);
+
+      await expect(readlink(link()).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(appImage());
     });
 
     it('rewrites the icons of the running AppImage when they changed', async () => {
