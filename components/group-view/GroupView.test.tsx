@@ -20,7 +20,21 @@ const renderView = (props: Partial<ComponentProps<typeof GroupView>> = {}) => {
   const handlers = { loadPage: vi.fn(), setSort: vi.fn(), setFilter: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn() };
   const groups = storePage(createPageCache<GroupSummary>(), 0, [group('adam', 'Adam', 3, 12), group('', '')], 2);
 
-  render(<GroupView kind="genre" groups={groups} sort={undefined} filter="" selected={[]} folders={[]} open={undefined} {...handlers} {...props} />);
+  render(
+    <GroupView
+      kind="genre"
+      groups={groups}
+      sort={undefined}
+      filter=""
+      coverSize={160}
+      setCoverSize={vi.fn()}
+      selected={[]}
+      folders={[]}
+      open={undefined}
+      {...handlers}
+      {...props}
+    />
+  );
   return handlers;
 };
 
@@ -45,6 +59,20 @@ describe('GroupView', () => {
     expect(screen.getByText('2 album artists')).toBeTruthy();
     expect(screen.getByText('group sort')).toBeTruthy();
     expect(screen.queryByRole('columnheader')).toBeNull();
+  });
+
+  it('sets the size of the tiles with a slider below them, and has none below the list of genres', () => {
+    const setCoverSize = vi.fn();
+    renderView({ kind: 'artist', coverSize: 180, setCoverSize });
+
+    const slider = screen.getByRole<HTMLInputElement>('slider', { name: 'Cover size' });
+    expect(slider.value).toBe('180');
+    fireEvent.change(slider, { target: { value: '220' } });
+    expect(setCoverSize).toHaveBeenCalledWith(220);
+
+    cleanup();
+    renderView();
+    expect(screen.queryByRole('slider')).toBeNull();
   });
 
   it('opens the group of a tile', () => {
@@ -116,7 +144,18 @@ describe('GroupView', () => {
     const groups = storePage(createPageCache<GroupSummary>(), 0, [group('adam', 'Adam')], 1);
     const handlers = { loadPage: vi.fn(), setSort: vi.fn(), setFilter: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn() };
     const view = (open?: { kind: 'genre'; key: string; name: string }) => (
-      <GroupView kind="genre" groups={groups} sort={undefined} filter="" selected={[]} folders={[]} open={open} {...handlers} />
+      <GroupView
+        kind="genre"
+        groups={groups}
+        sort={undefined}
+        filter=""
+        coverSize={160}
+        setCoverSize={vi.fn()}
+        selected={[]}
+        folders={[]}
+        open={open}
+        {...handlers}
+      />
     );
     const listened = vi.spyOn(HTMLElement.prototype, 'addEventListener');
     const { rerender } = render(view({ kind: 'genre', key: 'adam', name: 'Adam' }));

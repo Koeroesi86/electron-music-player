@@ -21,4 +21,16 @@ describe('GroupTile', () => {
 
     expect(screen.getByText('Unknown artist')).toBeTruthy();
   });
+
+  it('shows the photo of a group as the picture and as the glow behind it', () => {
+    const { container } = render(<GroupTile group={{ ...group, cover: '/albumart/adam.jpg' }} unknownName="Unknown artist" open={vi.fn()} />);
+
+    expect(container.querySelectorAll('[style*="adam-optimized.png"]')).toHaveLength(2);
+  });
+
+  it('shows the placeholder, without a glow, for a group with no picture', () => {
+    const { container } = render(<GroupTile group={group} unknownName="Unknown artist" open={vi.fn()} />);
+
+    expect(container.querySelectorAll('[style*="background-image"]')).toHaveLength(0);
+  });
 });

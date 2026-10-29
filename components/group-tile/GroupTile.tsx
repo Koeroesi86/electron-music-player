@@ -10,14 +10,18 @@ interface GroupTileProps {
   open: (group: GroupSummary) => void;
 }
 
-/** An artist or album artist as a tile: the cover, the name and how many albums and tracks it has */
+/** An artist or album artist as a tile: the photo or cover, the name and how many albums and tracks it has */
 const GroupTile = ({ group, unknownName, open }: GroupTileProps) => {
   const { t } = useTranslation();
   const name = group.name || unknownName;
+  const image = group.cover ? `url("${getCoverUrl(group.cover)}")` : undefined;
 
   return (
     <button type="button" className={style.groupTile} onClick={() => open(group)}>
-      <span className={style.cover} style={group.cover ? { backgroundImage: `url("${getCoverUrl(group.cover)}")` } : undefined} />
+      <span className={style.frame}>
+        {image && <span className={style.glow} style={{ backgroundImage: image }} aria-hidden="true" />}
+        <span className={style.cover} style={image ? { backgroundImage: image } : undefined} />
+      </span>
       <span className={style.name} title={name}>
         {name}
       </span>
