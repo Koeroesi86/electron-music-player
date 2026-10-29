@@ -12,6 +12,7 @@ const run = (hook, toolInput, env = {}) => {
   const { status, stderr } = spawnSync('bash', [join(hooks, hook)], {
     input: JSON.stringify({ tool_input: toolInput }),
     encoding: 'utf8',
+    cwd: project,
     env: { ...process.env, CLAUDE_PROJECT_DIR: project, ...env },
   })
   return { status, stderr }
