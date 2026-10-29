@@ -5,6 +5,7 @@ import { resolveAlbumArt } from './albumArt';
 import { findTrackPath } from './libraryRepository';
 import { libraryRoutes } from './libraryRoutes';
 import { serveRadio } from './radioProtocol';
+import { stationUuid } from './radioProxy';
 import type { RadioStreamDeps } from './radioProxy';
 import type { RadioArtImage } from './radioArt';
 import { notFound, serveFile } from './serveFile';
@@ -21,7 +22,7 @@ export const registerEmusicScheme = () =>
 
 export interface EmusicDeps {
   getDatabase: () => Database | undefined;
-  radio: RadioStreamDeps & { getArt?: (key: string) => RadioArtImage | undefined };
+  radio: RadioStreamDeps & { getArt?: (key: string) => RadioArtImage | undefined; getLogo?: (uuid: string) => Promise<RadioArtImage | undefined> };
   /** The folder of the built page */
   appRoot: string;
   /** The origin of the dev server, the page of a development run is not served from here and asks across origins */
@@ -47,12 +48,16 @@ const route = async (request: Request, { getDatabase, radio, appRoot }: EmusicDe
     return trackPath ? serveFile(trackPath, request) : notFound();
   }
 
-  const [, kind, name] = pathname.match(/^\/(albumart|radio-art|radio)\/([^/]+)$/) ?? [];
+  const [, kind, name] = pathname.match(/^\/(albumart|radio-art|radio-logo|radio)\/([^/]+)$/) ?? [];
   const key = name && decodeURIComponent(name);
   if (kind === 'radio') return serveRadio(key, request.signal, radio);
   if (kind === 'radio-art') {
     const art = artKey.test(key) ? radio.getArt?.(key) : undefined;
     return art ? new Response(new Uint8Array(art.data), { headers: { 'Content-Type': art.type, 'Cache-Control': 'max-age=3600' } }) : notFound();
+  }
+  if (kind === 'radio-logo') {
+    const logo = stationUuid.test(key) ? await radio.getLogo?.(key) : undefined;
+    return logo ? new Response(new Uint8Array(logo.data), { headers: { 'Content-Type': logo.type, 'Cache-Control': 'max-age=86400' } }) : notFound();
   }
   if (kind === 'albumart') {
     const albumArt = await resolveAlbumArt(path.basename(key));

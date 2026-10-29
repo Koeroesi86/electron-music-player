@@ -104,6 +104,13 @@ describe('HomeView', () => {
     expect(Array.from(document.querySelectorAll('.current')).map((row) => row.querySelector('.name')?.textContent)).toEqual(['Jazz FM']);
   });
 
+  it('shows the logo of a station in its tile, and the radio icon for one without', () => {
+    renderView([played(stationFavourite({ ...station, hasLogo: true })), played(stationFavourite({ ...station, uuid: 'other', name: 'Rock FM' }))]);
+
+    const tiles = Array.from(document.querySelectorAll('button[title="Play"]'));
+    expect(tiles.map((tile) => tile.querySelector('img')?.getAttribute('src')?.includes('/radio-logo/abc'))).toEqual([true, undefined]);
+  });
+
   it('plays a station as the radio plays it', () => {
     const { playStation, playTracks } = renderView([played(stationFavourite(station))]);
 

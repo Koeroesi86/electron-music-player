@@ -42,7 +42,15 @@ const LocalCollection = ({ view, setView, groupOpen, addFiles }: LocalCollection
     { view: 'albumArtists', label: t('library.albumArtists'), panel: view === 'albumArtists' && <GroupView kind="albumArtist" /> },
     { view: 'genres', label: t('library.genres'), panel: view === 'genres' && <GroupView kind="genre" /> },
     { view: 'tracks', label: t('library.songs'), panel: <TrackView /> },
-    { view: 'folders', label: t('library.folders'), panel: <FolderManagement /> },
+    {
+      view: 'folders',
+      label: t('library.folders'),
+      panel: (
+        <div className={style.folders}>
+          <FolderManagement />
+        </div>
+      ),
+    },
   ];
 
   return (

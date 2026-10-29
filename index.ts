@@ -14,6 +14,7 @@ import setupListeners from './electron/setupListeners';
 import { emusicOrigin, handleEmusicProtocol, registerEmusicScheme } from './electron/emusicProtocol';
 import { createRadioBrowser } from './electron/radioBrowser';
 import { createRadioArt } from './electron/radioArt';
+import { createRadioLogos } from './electron/radioLogos';
 import { getAppUserModelId } from './electron/appUserModelId';
 import { registerDevDesktopEntry, removeDevDesktopEntry } from './electron/devDesktopEntry';
 import closeDatabase from './electron/closeDatabase';
@@ -126,6 +127,8 @@ const radio = createRadioBrowser(`eMusic/${app.getVersion()}`, process.env.EMUSI
 
 const radioArt = createRadioArt();
 
+const radioLogos = createRadioLogos(radio.getLogoUrl);
+
 const serveApp = () =>
   handleEmusicProtocol({
     getDatabase: () => global._database,
@@ -134,6 +137,7 @@ const serveApp = () =>
     radio: {
       resolveStream: radio.resolveStream,
       getArt: radioArt.get,
+      getLogo: radioLogos.get,
       onTitle: (uuid, title, streamUrl) => {
         windows.main?.webContents.send('RADIO_STREAM_TITLE', { uuid, title });
         radioArt

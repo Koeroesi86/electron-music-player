@@ -1,8 +1,9 @@
+@use '../../client/styles/scrollbar' as *;
+@use '../../client/styles/overlay' as *;
+
 // it catches the click outside the dialog, and is only there while the dialog is open: a layer over the whole window that is always there keeps the title bar from dragging the window
 .backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 99;
+  @include scrim;
 }
 
 .albumDetails {
@@ -17,10 +18,8 @@
   max-height: 90vh;
   flex-direction: column;
   overflow: hidden;
-  color: var(--text);
-  background: var(--panel-solid);
+  @include popover-surface;
   border-radius: 16px;
-  box-shadow: 0 24px 60px var(--shadow), 0 0 0 1px var(--overlay);
   opacity: 0;
   transition: opacity .2s ease-in-out, transform .2s ease-in-out, top 0s linear .2s;
   will-change: opacity, transform;
@@ -32,14 +31,7 @@
     transition: opacity .2s ease-in-out, transform .1s ease-in-out;
   }
 
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    border-radius: 3px;
-  }
+  @include thin-scrollbar;
 
   .header {
     position: relative;

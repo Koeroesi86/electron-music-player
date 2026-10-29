@@ -121,9 +121,13 @@ const TrackView = ({ currentSong, playTracks, tracks, offlineFolders, sort, sele
       <div className={style.footer}>
         <span className={style.count}>{t('tracks.count', { count: tracks.total ?? 0 })}</span>
         <div className={style.controls}>
-          <button onClick={() => setSelectedTracks(new Map())}>{t('tracks.clearSelection')}</button>
+          <button disabled={selectedTracks.size === 0} onClick={() => setSelectedTracks(new Map())}>
+            {t('tracks.clearSelection')}
+          </button>
           <button onClick={selectAll}>{t('tracks.selectAll')}</button>
-          <button onClick={() => playTracks([...selectedTracks.values()])}>{t('tracks.playSelected')}</button>
+          <button className={style.play} disabled={selectedTracks.size === 0} onClick={() => playTracks([...selectedTracks.values()])}>
+            {t('tracks.playSelected')}
+          </button>
         </div>
       </div>
     </div>

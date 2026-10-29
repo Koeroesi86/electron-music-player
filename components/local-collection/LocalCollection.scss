@@ -4,6 +4,14 @@
   overflow: hidden;
   position: absolute;
 
+  // the tile of the folders, with the room the tiles of the settings have
+  .folders {
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    padding: 16px 20px 20px;
+  }
+
   // the search takes the left, the chips and the rescan the right
   .libraryControls {
     flex-grow: 1;

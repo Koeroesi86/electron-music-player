@@ -11,6 +11,7 @@ import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { stationFavourite } from '../../client/favourites';
 import type { Translator } from '../../locales/translate';
 import FavouriteButton from '../favourite-button';
+import StationLogo from '../station-logo';
 import style from './RadioStations.scss';
 
 interface RadioStationsProps {
@@ -214,7 +215,10 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
             <span className={style.playButton} onClick={() => play(station)}>
               <PlayIcon size={'14px'} />
             </span>
-            <span className={style.name}>{station.name}</span>
+            <span className={style.name}>
+              <StationLogo uuid={station.uuid} hasLogo={station.hasLogo} className={style.logo} />
+              <span className={style.nameText}>{station.name}</span>
+            </span>
             <span className={style.genres}>{genresOf(station)}</span>
             <span>
               {station.codec && (

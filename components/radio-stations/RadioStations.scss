@@ -6,7 +6,10 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  // the columns of the list follow the width of the panel, not the window (the sidebar takes some of it)
+  container-type: inline-size;
 
+  // the search and the sort on the first row, the filters under them: the same however wide the window is, the filters wrap among themselves
   // one row of chips: the search, the filters and the sort, wrapping when the window is narrow
   .controls {
     -webkit-app-region: no-drag;
@@ -25,7 +28,12 @@
       align-items: center;
       gap: 8px;
 
+      order: 3;
+      flex: 1 1 100%;
+
       &.sorting {
+        order: 2;
+        flex: 0 0 auto;
         margin-left: auto;
       }
     }
@@ -43,6 +51,7 @@
     }
 
     .search {
+      order: 1;
       flex: 1 1 160px;
       max-width: 260px;
       padding: 0 14px;
@@ -213,7 +222,25 @@
       }
 
       .name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         font-weight: 500;
+      }
+
+      .nameText {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .logo {
+        flex: none;
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+        border-radius: 4px;
+        background-color: var(--overlay);
       }
 
       .genres,
@@ -282,6 +309,37 @@
         > [aria-sort='descending'] {
           color: var(--text);
         }
+      }
+    }
+  }
+
+  // the narrower the panel, the fewer columns: first the genres, then the country and the bitrate
+  // (the play button, the name, the genres, the codec, the bitrate, the country and the heart are the cells of a row, in this order)
+  @container (max-width: 760px) {
+    .stations .station {
+      grid-template-columns: 26px minmax(0, 1fr) 64px 56px minmax(0, 0.7fr) 30px;
+
+      > :nth-child(3) {
+        display: none;
+      }
+    }
+  }
+
+  @container (max-width: 540px) {
+    .stations .station {
+      grid-template-columns: 26px minmax(0, 1fr) 64px 30px;
+
+      > :nth-child(5),
+      > :nth-child(6) {
+        display: none;
+      }
+    }
+
+    .controls {
+      padding: 10px 12px;
+
+      .search {
+        max-width: none;
       }
     }
   }

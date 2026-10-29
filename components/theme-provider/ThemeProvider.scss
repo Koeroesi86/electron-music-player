@@ -27,16 +27,14 @@
   --overlay-faint: rgba(255, 255, 255, 0.05);
   --overlay: rgba(255, 255, 255, 0.1);
   --overlay-strong: rgba(255, 255, 255, 0.2);
-  --scrollbar-thumb: rgba(255, 255, 255, 0.65);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.28);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.55);
 
+  --scrim: rgba(0, 0, 0, 0.5);
   --shadow-soft: rgba(0, 0, 0, 0.4);
   --shadow: rgba(0, 0, 0, 0.6);
   --shadow-hard: #000000;
 
-  --control-background: #797979;
-  --control-background-hover: #888888;
-  --control-text: #efefef;
-  --control-text-hover: #ffffff;
 
   --popup-header: #5b3d7a;
 
@@ -67,16 +65,14 @@
   --overlay-faint: rgba(0, 0, 0, 0.04);
   --overlay: rgba(0, 0, 0, 0.08);
   --overlay-strong: rgba(0, 0, 0, 0.16);
-  --scrollbar-thumb: rgba(0, 0, 0, 0.45);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.28);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.55);
 
+  --scrim: rgba(0, 0, 0, 0.3);
   --shadow-soft: rgba(0, 0, 0, 0.18);
   --shadow: rgba(0, 0, 0, 0.28);
   --shadow-hard: rgba(0, 0, 0, 0.45);
 
-  --control-background: #d6d6d6;
-  --control-background-hover: #c6c6c6;
-  --control-text: #333333;
-  --control-text-hover: #000000;
 
   --popup-header: #dccdee;
 
@@ -149,7 +145,6 @@
   --favourite: #ff6b81;
 
   // the shades of the accent
-  --accent-glow: color-mix(in srgb, var(--accent) 35%, transparent);
   --accent-soft: color-mix(in srgb, var(--accent) 60%, transparent);
   --accent-muted: color-mix(in srgb, var(--accent) 75%, var(--panel-solid));
   --accent-deep: color-mix(in srgb, var(--accent) 45%, var(--popup-header));

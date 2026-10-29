@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
-import type { GroupSummary } from '../../types/library';
+import type { GroupSummary, Track } from '../../types/library';
 import { createPageCache, storePage } from '../../client/redux/library/pages';
+import { fetchGroupTracks } from '../../client/group-tracks';
 import GroupView from './GroupView';
 
 vi.mock('../group-tile', () => ({
@@ -15,13 +16,14 @@ vi.mock('../genre-card', () => ({
     <button onClick={() => open(group)}>{`card ${group.name || unknownName}`}</button>
   ),
 }));
+vi.mock('../../client/group-tracks', () => ({ fetchGroupTracks: vi.fn() }));
 vi.mock('../album-sort', () => ({ default: () => <div>album sort</div> }));
 vi.mock('../group-albums', () => ({ default: ({ toolbar }: { toolbar: ReactNode }) => <div>{toolbar}group albums</div> }));
 
 const group = (key: string, name: string, albumCount = 1, trackCount = 2): GroupSummary => ({ key, name, albumCount, trackCount, cover: null, covers: [] });
 
 const renderView = (props: Partial<ComponentProps<typeof GroupView>> = {}) => {
-  const handlers = { loadPage: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn() };
+  const handlers = { loadPage: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn(), playTracks: vi.fn() };
   const groups = storePage(createPageCache<GroupSummary>(), 0, [group('adam', 'Adam', 3, 12), group('', '')], 2);
 
   render(
@@ -108,9 +110,23 @@ describe('GroupView', () => {
     expect(closeGroup).toHaveBeenCalled();
   });
 
+  it('plays all the tracks of the open group in the selected folders, or shuffled', async () => {
+    const tracks = [{ path: 'a' }, { path: 'b' }, { path: 'c' }] as Track[];
+    vi.mocked(fetchGroupTracks).mockResolvedValue(tracks);
+    const { playTracks } = renderView({ open: { kind: 'genre', key: 'jazz', name: 'Jazz' }, selected: [], folders: [] });
+
+    fireEvent.click(screen.getByText('Play all'));
+    await waitFor(() => expect(playTracks).toHaveBeenCalledWith(tracks));
+    expect(fetchGroupTracks).toHaveBeenCalledWith({ kind: 'genre', key: 'jazz', name: 'Jazz' }, []);
+
+    fireEvent.click(screen.getByText('Shuffle'));
+    await waitFor(() => expect(playTracks).toHaveBeenCalledTimes(2));
+    expect(playTracks.mock.calls[1][0]).toHaveLength(3);
+  });
+
   it('listens to the scrolling of the list again when it comes back from the albums', () => {
     const groups = storePage(createPageCache<GroupSummary>(), 0, [group('adam', 'Adam')], 1);
-    const handlers = { loadPage: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn() };
+    const handlers = { loadPage: vi.fn(), openGroup: vi.fn(), closeGroup: vi.fn(), playTracks: vi.fn() };
     const view = (open?: { kind: 'genre'; key: string; name: string }) => (
       <GroupView
         kind="genre"

@@ -27,6 +27,30 @@ describe('radio-browser client', () => {
     expect(requestedUrls(fetchMock)).toEqual(['http://127.0.0.1:9999/json/servers', 'http://127.0.0.1:9999/json/url/abc-1']);
   });
 
+  describe('logos', () => {
+    it('flags the stations with a plain http(s) logo and keeps the address in the main process', async () => {
+      fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(
+        json([
+          { ...station, favicon: 'https://logo.example/jazz.png' },
+          { ...station, stationuuid: 'abc-2', favicon: 'javascript:alert(1)' },
+          { ...station, stationuuid: 'abc-3', favicon: '' },
+        ])
+      );
+      const browser = createRadioBrowser('eMusic/1.0.0');
+
+      const { stations } = await browser.searchStations({});
+
+      expect(stations.map(({ uuid, hasLogo }) => [uuid, hasLogo])).toEqual([
+        ['abc-1', true],
+        ['abc-2', false],
+        ['abc-3', false],
+      ]);
+      expect(JSON.stringify(stations)).not.toContain('logo.example');
+      expect(browser.getLogoUrl('abc-1')).toBe('https://logo.example/jazz.png');
+      expect(browser.getLogoUrl('abc-2')).toBeUndefined();
+    });
+  });
+
   describe('searchStations', () => {
     it('lists the stations of a query, the most popular first', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([station]));
@@ -34,7 +58,7 @@ describe('radio-browser client', () => {
       const { stations, hasMore } = await createRadioBrowser('eMusic/1.0.0').searchStations({ name: 'jazz', tag: 'smooth' });
 
       expect(hasMore).toBe(false);
-      expect(stations).toEqual([{ uuid: 'abc-1', name: 'Jazz FM', country: 'Hungary', tags: ['jazz', 'smooth'], codec: 'MP3', bitrate: 128 }]);
+      expect(stations).toEqual([{ uuid: 'abc-1', name: 'Jazz FM', country: 'Hungary', tags: ['jazz', 'smooth'], codec: 'MP3', bitrate: 128, hasLogo: false }]);
       const url = new URL(requestedUrls(fetchMock)[1]);
       expect(url.pathname).toBe('/json/stations/search');
       expect(Object.fromEntries(url.searchParams)).toMatchObject({

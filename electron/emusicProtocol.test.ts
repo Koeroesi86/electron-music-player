@@ -34,6 +34,7 @@ describe('emusic protocol', () => {
       radio: {
         resolveStream: () => Promise.reject(new Error('no radio')),
         onTitle: () => {},
+        getLogo: async (uuid) => (uuid === 'abc-1' ? { type: 'image/png', data: Buffer.from('logo') } : undefined),
         getArt: (key) => (key === 'abcdef0123456789' ? { type: 'image/png', data: Buffer.from('cover') } : undefined),
       },
     });
@@ -208,6 +209,18 @@ describe('emusic protocol', () => {
 
       expect(sizes).toEqual(Array.from({ length: 8 }, () => ({ status: 200, type: 'image/png', width: 250 })));
       expect(fs.readdirSync(albumArt).filter((file) => file.endsWith('.part'))).toEqual([]);
+    });
+  });
+
+  describe('radio logos', () => {
+    it('serves the logo of a station by its uuid and answers 404 to anything else', async () => {
+      const found = await get('/radio-logo/abc-1');
+
+      expect(found.status).toBe(200);
+      expect(found.headers.get('content-type')).toContain('image/png');
+      expect(await found.text()).toBe('logo');
+      expect((await get('/radio-logo/other')).status).toBe(404);
+      expect((await get('/radio-logo/..%2Fsecret')).status).toBe(404);
     });
   });
 
