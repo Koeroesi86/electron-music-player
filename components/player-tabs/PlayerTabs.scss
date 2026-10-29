@@ -1,3 +1,5 @@
+@use '../../client/styles/tab-motion' as *;
+
 .collection {
   flex: 1 1 auto;
   height: 100%;
@@ -6,35 +8,11 @@
   background-color: var(--panel-background);
   box-shadow: 0 0 6px var(--shadow-soft);
 
-  // every tab stays mounted, so the one that goes fades out quickly and the one that comes
-  // fades in while it settles up from 10px below
   .tab {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    background-color: var(--panel-background);
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateY(10px);
-    transition: opacity .09s ease-out, transform 0s linear .09s, visibility 0s linear .09s;
+    @include tab-panel;
 
     &.active {
-      z-index: 1;
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transform: translateY(0);
-      transition: opacity .24s cubic-bezier(.2, .8, .2, 1), transform .24s cubic-bezier(.2, .8, .2, 1), visibility 0s;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .tab,
-    .tab.active {
-      transition: none;
-      transform: none;
+      @include tab-panel-active;
     }
   }
 }
