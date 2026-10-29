@@ -35,6 +35,14 @@ describe('serveRadio', () => {
         response.end(`asked for metadata: ${request.headers['icy-metadata']}`);
         return;
       }
+      if (request.url === '/moved') {
+        response.writeHead(302, { location: '/plain' }).end();
+        return;
+      }
+      if (request.url === '/loop') {
+        response.writeHead(302, { location: '/loop' }).end();
+        return;
+      }
       if (request.url === '/endless') {
         connections.open += 1;
         response.writeHead(200, { 'content-type': 'audio/aac', 'icy-metaint': '4' });
@@ -71,6 +79,18 @@ describe('serveRadio', () => {
     resolved.plain = `${stationUrl}/plain`;
 
     expect(await (await serve('plain')).text()).toBe('asked for metadata: 1');
+  });
+
+  it('follows a redirect of the station', async () => {
+    resolved.moved = `${stationUrl}/moved`;
+
+    expect(await (await serve('moved')).text()).toBe('asked for metadata: 1');
+  });
+
+  it('answers 502 when the station redirects forever', async () => {
+    resolved.loop = `${stationUrl}/loop`;
+
+    expect((await serve('loop')).status).toBe(502);
   });
 
   it('streams the audio of a station that never ends and closes the station when the player cancels', async () => {
