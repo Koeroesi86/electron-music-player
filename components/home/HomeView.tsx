@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import classNames from 'classnames';
-import { MdDeleteSweep as ClearIcon, MdFavorite as LikedIcon, MdPlayArrow as PlayIcon } from 'react-icons/md';
+import { MdDeleteSweep as ClearIcon, MdFavorite as LikedIcon, MdPlayArrow as PlayIcon, MdRadio as RadioIcon } from 'react-icons/md';
 import type { Favourite, HistoryItem } from '../../types/favourites';
 import type { Track } from '../../types/library';
 import type { Playlist } from '../../types/playlists';
@@ -13,6 +13,7 @@ import { getPlaylistTracks } from '../../client/playlists';
 import { radioUuidOf, toRadioTrack } from '../../client/radio-track';
 import style from './HomeView.scss';
 import AudioFormatBadge from '../audio-format-badge';
+import StationLogo from '../station-logo';
 import Confirm from '../confirm';
 import FavouriteButton from '../favourite-button';
 import Time from '../time';
@@ -200,9 +201,17 @@ const HomeView = ({
               <div className={style.stationTiles}>
                 {stations.map((station) => (
                   <button key={station.uuid} type="button" className={style.stationTile} title={t('player.play')} onClick={() => playStation(station)}>
-                    <span className={style.led} />
-                    <span className={style.stationName}>{station.name}</span>
+                    <span className={style.stationLogo}>
+                      <StationLogo uuid={station.uuid} hasLogo={station.hasLogo} fallback={<RadioIcon size="18px" aria-hidden />} />
+                    </span>
+                    <span className={style.stationText}>
+                      <span className={style.stationName}>{station.name}</span>
+                      <span className={style.stationDetails}>{station.country || t('home.station')}</span>
+                    </span>
                     <AudioFormatBadge track={toRadioTrack(station)} />
+                    <span className={style.stationPlay} aria-hidden>
+                      <PlayIcon size="12px" />
+                    </span>
                   </button>
                 ))}
               </div>

@@ -1,5 +1,6 @@
 import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
+import type { Track } from '../../types/library';
 import type { GroupKind } from '../../types/library-query';
 import type { RootState } from '../../client/redux/reducers';
 import type { AppAction, OpenGroup } from '../../client/redux/types';
@@ -24,6 +25,7 @@ const mapDispatch = (dispatch: Dispatch<AppAction>, { kind }: OwnProps) => ({
   setCoverSize: (size: number) => dispatch({ type: 'SET_COVER_SIZE', payload: { size } }),
   openGroup: (group: OpenGroup) => dispatch({ type: 'OPEN_GROUP', payload: { group } }),
   closeGroup: () => dispatch({ type: 'CLOSE_GROUP', payload: {} }),
+  playTracks: (tracks: Track[]) => dispatch({ type: 'PLAY_TRACKS', payload: { tracks } }),
 });
 
 export default connect(mapState, mapDispatch)(GroupView);

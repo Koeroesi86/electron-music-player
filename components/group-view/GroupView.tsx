@@ -1,13 +1,16 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { FaChevronLeft } from 'react-icons/fa';
-import type { Folder, GroupSummary } from '../../types/library';
+import { MdPlayArrow as PlayIcon, MdShuffle as ShuffleIcon } from 'react-icons/md';
+import type { Folder, GroupSummary, Track } from '../../types/library';
 import type { GroupKind, GroupSort } from '../../types/library-query';
 import { useTranslation } from '../../client/i18n';
 import { usePageLoader } from '../../client/hooks/use-page-loader';
 import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
 import { useWindowedList } from '../../client/hooks/use-windowed-list';
+import { fetchGroupTracks } from '../../client/group-tracks';
 import { selectedFolders } from '../../client/library-query';
+import { shuffled } from '../../client/shuffled';
 import { getCachedItem } from '../../client/redux/library/pages';
 import type { PageCache } from '../../client/redux/library/pages';
 import type { OpenGroup } from '../../client/redux/types';
@@ -45,6 +48,7 @@ interface GroupViewProps {
   /** The group whose albums are shown instead of the list */
   open: OpenGroup | undefined;
   loadPage: (page: number) => void;
+  playTracks: (tracks: Track[]) => void;
   setCoverSize: (size: number) => void;
   openGroup: (group: OpenGroup) => void;
   closeGroup: () => void;
@@ -62,7 +66,7 @@ const GroupList = ({
   loadPage,
   setCoverSize,
   openGroup,
-}: Omit<GroupViewProps, 'open' | 'closeGroup'>) => {
+}: Omit<GroupViewProps, 'open' | 'closeGroup' | 'playTracks'>) => {
   const { t } = useTranslation();
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
   // the artists and the album artists are photo tiles of the size of the slider, the genres are cards of one size
@@ -126,9 +130,21 @@ const GroupList = ({
   );
 };
 
-const GroupView = ({ open, closeGroup, ...list }: GroupViewProps) => {
+const GroupView = ({ open, closeGroup, playTracks, ...list }: GroupViewProps) => {
   const { t } = useTranslation();
+  const [busy, setBusy] = useState(false);
   const openName = open && (open.name || t(`groups.unknown.${open.kind}`));
+
+  // the albums of the group are fetched for the queue, which can take a moment for a big group
+  const play = (shuffle: boolean) => {
+    if (!open) return;
+
+    setBusy(true);
+    fetchGroupTracks(open, selectedFolders(list.selected, list.folders))
+      .then((tracks) => playTracks(shuffle ? shuffled(tracks) : tracks))
+      .catch(console.error)
+      .finally(() => setBusy(false));
+  };
 
   return open ? (
     <GroupAlbums
@@ -140,6 +156,14 @@ const GroupView = ({ open, closeGroup, ...list }: GroupViewProps) => {
           <span className={style.openName} title={openName}>
             {openName}
           </span>
+          <button type="button" className={classNames(style.action, style.primary)} disabled={busy} onClick={() => play(false)}>
+            <PlayIcon size="14px" aria-hidden />
+            {t('playlists.playAll')}
+          </button>
+          <button type="button" className={style.action} disabled={busy} onClick={() => play(true)}>
+            <ShuffleIcon size="14px" aria-hidden />
+            {t('favourites.shuffle')}
+          </button>
           <AlbumSort />
         </div>
       }

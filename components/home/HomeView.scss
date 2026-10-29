@@ -383,21 +383,65 @@
     gap: 8px;
   }
 
+  // a station: its logo (the radio icon without one), the name over the country, the format and a play button that shows on hover
   .stationTile {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+    padding: 8px 10px;
 
-    .led {
-      width: 9px;
-      height: 9px;
-      border: 2px solid var(--accent);
-      border-radius: 50%;
+    .stationLogo {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      overflow: hidden;
+      color: var(--text-muted);
+      border-radius: 8px;
+      background: var(--overlay);
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+
+    .stationText {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
     }
 
     .stationName {
       max-width: 100%;
     }
+
+    .stationDetails {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .stationPlay {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      color: var(--accent-contrast);
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity .15s ease-in-out;
+    }
+
+    &:hover .stationPlay,
+    &:focus-visible .stationPlay {
+      opacity: 1;
+    }
+
   }
 
   @media (max-width: 900px) {
