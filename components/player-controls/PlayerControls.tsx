@@ -20,7 +20,6 @@ import { useAudioListener } from '../../client/hooks/use-audio-listener';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { useTranslation } from '../../client/i18n';
 import style from './PlayerControls.scss';
-import ScanProgress from '../scan-progress';
 import LiveWave from '../live-wave';
 import AudioFormatBadge from '../audio-format-badge';
 import Time from '../time';
@@ -223,7 +222,6 @@ const PlayerControls = (props: PlayerControlsProps) => {
         )}
       </div>
       <div className={style.right}>
-        <ScanProgress />
         <VolumeControls volume={props.volume} setVolume={props.setVolume} openEqualizer={props.openEqualizer} />
       </div>
     </div>

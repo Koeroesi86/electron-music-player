@@ -1,0 +1,153 @@
+.rescanButton {
+  -webkit-app-region: no-drag;
+  position: relative;
+  flex: 0 0 auto;
+
+  .button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 14px;
+    color: var(--text-soft);
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: color .2s ease-in-out, background-color .2s ease-in-out;
+
+    &:hover:not(:disabled) {
+      background: var(--overlay);
+      color: var(--text);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+    }
+
+    &:disabled {
+      cursor: default;
+      background: var(--overlay);
+    }
+
+    // the icon turns inside the ring, which stays where it is
+    &.spinning > svg:last-child {
+      font-size: 12px;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  .ring {
+    position: absolute;
+    inset: 1px;
+    fill: none;
+    transform: rotate(-90deg);
+  }
+
+  .ringTrack {
+    stroke: var(--overlay-strong);
+  }
+
+  .ringFill {
+    stroke: var(--accent);
+    stroke-linecap: round;
+    transition: stroke-dashoffset .2s ease-out;
+  }
+
+  // shown over the page while the pointer or the focus is on the button, so it does not push the toolbar around
+  .popover {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 8px);
+    right: 0;
+    display: grid;
+    gap: 7px;
+    width: 240px;
+    padding: 10px 12px 12px;
+    font-size: 12px;
+    background: var(--panel-solid);
+    border: 1px solid var(--overlay-strong);
+    border-radius: 10px;
+    box-shadow: 0 12px 30px var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition: opacity .15s ease-out, transform .15s ease-out;
+  }
+
+  &:hover .popover,
+  &:focus-within .popover {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  .heading {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .percent {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bar {
+    height: 3px;
+    overflow: hidden;
+    background: var(--overlay-strong);
+    border-radius: 3px;
+  }
+
+  .barFill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width .2s ease-out;
+  }
+
+  .muted {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .folder {
+    padding: 0;
+    overflow: hidden;
+    font: inherit;
+    color: var(--accent);
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rescanButton .button.spinning > svg:last-child {
+    animation: none;
+  }
+}

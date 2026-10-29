@@ -1,6 +1,4 @@
 import type { DragEvent } from 'react';
-import classNames from 'classnames';
-import { FaSyncAlt } from 'react-icons/fa';
 import AlbumSort from '../album-sort';
 import type { LibraryView } from '../../client/redux/types';
 import AlbumView from '../album-view';
@@ -12,21 +10,20 @@ import FolderFilter from '../folder-filter';
 import LibrarySearch from '../library-search';
 import GroupFilter from '../group-filter';
 import GroupSort from '../group-sort';
+import RescanButton from '../rescan-button';
 import ViewSwitcher from '../view-switcher/ViewSwitcher';
 import type { ViewItem } from '../view-switcher/ViewSwitcher';
 import { useTranslation } from '../../client/i18n';
 
 interface LocalCollectionProps {
   view: LibraryView;
-  scanningFolder: string | null;
   /** An artist, album artist or genre is open, so the page shows its albums */
   groupOpen: boolean;
   setView: (view: LibraryView) => void;
-  rescanLibrary: () => void;
   addFiles: (files: FileList) => void;
 }
 
-const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, groupOpen, addFiles }: LocalCollectionProps) => {
+const LocalCollection = ({ view, setView, groupOpen, addFiles }: LocalCollectionProps) => {
   const { t } = useTranslation();
 
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
@@ -62,16 +59,7 @@ const LocalCollection = ({ view, setView, rescanLibrary, scanningFolder, groupOp
               {view !== 'folders' && <FolderFilter />}
               {view === 'albums' && <AlbumSort />}
               {groupList && <GroupSort />}
-              <button
-                type="button"
-                title={t('library.rescan')}
-                aria-label={t('library.rescan')}
-                onClick={rescanLibrary}
-                disabled={!!scanningFolder}
-                className={classNames(style.rescan, { [style.spinning]: scanningFolder })}
-              >
-                <FaSyncAlt />
-              </button>
+              <RescanButton />
             </div>
           </div>
         }

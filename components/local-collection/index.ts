@@ -6,12 +6,10 @@ import LocalCollection from './LocalCollection';
 
 const mapState = (state: RootState) => ({
   view: state.uiState.view,
-  scanningFolder: state.uiState.scanningFolder,
   groupOpen: state.uiState.openGroup !== undefined,
 });
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
   setView: (view: LibraryView) => dispatch({ type: 'SET_VIEW', payload: { view } }),
-  rescanLibrary: () => dispatch({ type: 'RESCAN_LIBRARY', payload: {} }),
 });
 
 export default connect(mapState, mapDispatch)(LocalCollection);
