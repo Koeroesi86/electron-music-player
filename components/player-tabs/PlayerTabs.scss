@@ -1,3 +1,5 @@
+@use '../../client/styles/tab-motion' as *;
+
 .collection {
   flex: 1 1 auto;
   height: 100%;
@@ -7,24 +9,10 @@
   box-shadow: 0 0 6px var(--shadow-soft);
 
   .tab {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    overflow: hidden;
-    transform: translateX(-100%);
-    transition: transform 0s linear .8s, left 0s linear 1s;
-    will-change: transform, left;
-    background-color: var(--panel-background);
+    @include tab-panel;
 
     &.active {
-      left: 0;
-      transform: translateX(0);
-      z-index: 1;
-      transition: transform .8s ease-in-out 0s, left 0s linear;
-      will-change: transform, left;
+      @include tab-panel-active;
     }
   }
 }
