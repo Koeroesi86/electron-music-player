@@ -216,8 +216,8 @@ const run = async home => {
     // what the window showed when a step did not work out
     const text = await evaluate(window, 'document.body.innerText').catch(() => 'no answer')
     const { data } = await window.send('Page.captureScreenshot', { format: 'webp' }).catch(() => ({ data: '' }))
-    // not in the folder of the pictures, which is in the repository, and not in the one of the run, which is removed
-    const failed = join(tmpdir(), 'emusic-screenshots-failed.webp')
+    // not in the folder of the pictures, which is in the repository, and in a folder of its own, as the one of the run is removed
+    const failed = join(mkdtempSync(join(tmpdir(), 'emusic-screenshots-failed-')), 'failed.webp')
     writeFileSync(failed, Buffer.from(data, 'base64'))
     console.error(`The window showed:\n${text}\n(and ${failed})`)
     throw error

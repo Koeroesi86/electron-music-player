@@ -23,7 +23,8 @@ describe('writeLibrary', () => {
     expect(tracks.every(({ common }) => common.picture?.length === 1)).toBe(true)
     // the pictures show these, so a change of them is a change of the pictures
     expect(tracks.map(({ format }) => Math.round(format.duration)).slice(0, 4)).toEqual(expect.arrayContaining([167, 184, 201, 218]))
-  })
+    // the covers are drawn pixel by pixel, which a runner with coverage on takes its time for
+  }, 30000)
 })
 
 describe('startDirectory', () => {
