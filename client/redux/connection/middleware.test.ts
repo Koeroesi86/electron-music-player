@@ -237,6 +237,7 @@ describe('connection middleware', () => {
       store.dispatch({ type: 'SET_TRACK_SORT', payload: { sort: { field: 'year', direction: 'desc' } } });
       store.dispatch({ type: 'SET_ALBUM_SORT', payload: { sort: { field: 'title', direction: 'asc' } } });
       store.dispatch({ type: 'SET_LIBRARY_FOLDERS', payload: { folders: ['/m'] } });
+      store.dispatch({ type: 'SET_COVER_SIZE', payload: { size: 200 } });
       store.dispatch({ type: 'SAVE_SETTINGS', payload: {} });
 
       expect(send).toHaveBeenLastCalledWith(
@@ -244,6 +245,7 @@ describe('connection middleware', () => {
         expect.objectContaining({
           trackSort: { field: 'year', direction: 'desc' },
           albumSort: { field: 'title', direction: 'asc' },
+          coverSize: 200,
           libraryFolders: ['/m'],
         })
       );

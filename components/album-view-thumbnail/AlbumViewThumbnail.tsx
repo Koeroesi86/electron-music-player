@@ -24,9 +24,11 @@ const AlbumViewThumbnail = ({ album, offlineFolders, selectAlbum, playAlbum }: A
   const cover = album.cover ? { backgroundImage: `url("${getCoverUrl(album.cover)}")` } : undefined;
   const format = albumFormatLabel(album);
   // the year is missing on a track that has none
-  const details = [Number(album.year) > 0 && `${Number(album.year)}`, t('tracks.count', { count: album.trackCount }), formatLength(album.duration)].filter(
-    Boolean
-  );
+  const year = Number(album.year) > 0 ? `${Number(album.year)}` : undefined;
+  const length = formatLength(album.duration);
+  const facts = [year, t('tracks.count', { count: album.trackCount }), length].filter(Boolean).join(' · ');
+  // a narrow cover has no room for the number of tracks
+  const shortFacts = [year, length].filter(Boolean).join(' · ');
 
   return (
     <div
@@ -63,7 +65,8 @@ const AlbumViewThumbnail = ({ album, offlineFolders, selectAlbum, playAlbum }: A
         {album.artist}
       </div>
       <div className={style.details}>
-        <span className={style.facts}>{details.join(' · ')}</span>
+        <span className={style.facts}>{facts}</span>
+        <span className={style.shortFacts}>{shortFacts}</span>
         {format && <span className={style.format}>{format}</span>}
       </div>
     </div>

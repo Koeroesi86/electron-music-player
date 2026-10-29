@@ -1,4 +1,5 @@
 import type { Reducer } from 'redux';
+import { coverSizes, restoreCoverSize } from '../../cover-size';
 import { knownFolders, parseFolders, restoreAlbumSort, restoreGroupSort, restoreTrackSort } from '../../../types/library-query';
 import { parseRadioQuery } from '../../../types/radio-query';
 import { isAppAction } from '../types';
@@ -37,6 +38,7 @@ const initialState: UiState = {
   theme: { ...defaultTheme, accent: autoAccent },
   trackSort: undefined,
   albumSort: undefined,
+  coverSize: coverSizes.default,
   groupSort: undefined,
   artistPhotos: true,
   openGroup: undefined,
@@ -64,6 +66,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, trackSort: action.payload.sort };
     case 'SET_ALBUM_SORT':
       return { ...state, albumSort: action.payload.sort };
+    case 'SET_COVER_SIZE':
+      return { ...state, coverSize: restoreCoverSize(action.payload.size) };
     case 'SET_LIBRARY_SEARCH':
       return { ...state, librarySearch: action.payload.search };
     case 'SET_ARTIST_PHOTOS':
@@ -196,6 +200,7 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
         // a saved value that is not valid gives the default order and all folders
         ...('trackSort' in settings && { trackSort: restoreTrackSort(settings.trackSort) }),
         ...('albumSort' in settings && { albumSort: restoreAlbumSort(settings.albumSort) }),
+        ...('coverSize' in settings && { coverSize: restoreCoverSize(settings.coverSize) }),
         // only a saved off turns the photos off
         ...('artistPhotos' in settings && { artistPhotos: settings.artistPhotos !== false }),
         ...('groupSort' in settings && { groupSort: restoreGroupSort(settings.groupSort) }),

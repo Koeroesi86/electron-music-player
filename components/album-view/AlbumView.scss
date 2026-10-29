@@ -42,14 +42,24 @@
     position: absolute;
     bottom: 0;
     left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     box-sizing: border-box;
     width: 100%;
     height: 40px;
     padding: 0 20px;
     font-size: 12px;
-    line-height: 40px;
     color: var(--text-muted);
     border-top: 1px solid var(--overlay);
+
+    // the size of the covers
+    .coverSize {
+      -webkit-app-region: no-drag;
+      width: 120px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
   }
 
   .empty {

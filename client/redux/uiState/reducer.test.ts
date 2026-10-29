@@ -371,6 +371,17 @@ describe('uiState reducer', () => {
       expect(run({ type: 'STORE_FOLDERS', payload: { folders: folders(['/a', '/b']) } }, selected)).toBe(selected);
     });
 
+    it('starts with the default size of the covers, sets it and keeps it in the range', () => {
+      expect(initial.coverSize).toBe(160);
+      expect(run({ type: 'SET_COVER_SIZE', payload: { size: 200 } }).coverSize).toBe(200);
+      expect(run({ type: 'SET_COVER_SIZE', payload: { size: 900 } }).coverSize).toBe(240);
+    });
+
+    it('restores a saved size of the covers, and the default for one that is not a number', () => {
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { coverSize: 140 } } }).coverSize).toBe(140);
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { coverSize: 'big' } as never } }, { ...initial, coverSize: 200 }).coverSize).toBe(160);
+    });
+
     it('restores a saved sort and selection', () => {
       const settings: Partial<PersistedSettings> = {
         trackSort: { field: 'artist', direction: 'desc' },

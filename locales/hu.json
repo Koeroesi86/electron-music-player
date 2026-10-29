@@ -142,6 +142,7 @@
   "albums.count_one": "{count} album",
   "albums.count_other": "{count} album",
   "albums.play": "{title} lejátszása",
+  "albums.coverSize": "Borító mérete",
   "albums.sortField": "Albumok rendezése",
   "albums.sortDirection": "Rendezés iránya",
   "albums.sort.default": "Alapértelmezett sorrend",

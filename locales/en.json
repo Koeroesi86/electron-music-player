@@ -142,6 +142,7 @@
   "albums.count_one": "{count} album",
   "albums.count_other": "{count} albums",
   "albums.play": "Play {title}",
+  "albums.coverSize": "Cover size",
   "albums.sortField": "Sort albums by",
   "albums.sortDirection": "Sort direction",
   "albums.sort.default": "Default order",

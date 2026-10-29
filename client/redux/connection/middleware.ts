@@ -150,6 +150,7 @@ const persistedKeys = [
   'theme',
   'trackSort',
   'albumSort',
+  'coverSize',
   'groupSort',
   'artistPhotos',
   'libraryFolders',

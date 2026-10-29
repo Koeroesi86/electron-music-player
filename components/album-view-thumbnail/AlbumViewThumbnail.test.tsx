@@ -35,6 +35,12 @@ describe('AlbumViewThumbnail', () => {
     expect(screen.getByText('2021 · 9 tracks · 48:12')).toBeTruthy();
   });
 
+  it('has the line without the tracks for a cover too narrow to hold them', () => {
+    renderTile();
+
+    expect(screen.getByText('2021 · 48:12')).toBeTruthy();
+  });
+
   it('says one track in the singular and leaves out a year that is not known', () => {
     renderTile({ album: { ...album, year: '', trackCount: 1, duration: 61 } });
 

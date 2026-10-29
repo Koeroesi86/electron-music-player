@@ -1,5 +1,6 @@
 .albumViewThumbnail {
   position: relative;
+  container-type: inline-size;
   min-width: 0;
   cursor: pointer;
   user-select: none;
@@ -159,6 +160,25 @@
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .shortFacts {
+    display: none;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // under this width the line has the year and the length only, and the badge keeps its place
+  @container (max-width: 149px) {
+    .facts {
+      display: none;
+    }
+
+    .shortFacts {
+      display: block;
+    }
   }
 
   .format {

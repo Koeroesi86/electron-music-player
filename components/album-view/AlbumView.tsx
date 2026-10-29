@@ -7,6 +7,7 @@ import { useTranslation } from '../../client/i18n';
 import { useScrollSeparator } from '../../client/hooks/use-scroll-separator';
 import { usePageLoader } from '../../client/hooks/use-page-loader';
 import { useWindowedList } from '../../client/hooks/use-windowed-list';
+import { coverSizes } from '../../client/cover-size';
 import { fetchAlbum } from '../../client/library-api';
 import { getCachedItem } from '../../client/redux/library/pages';
 import type { PageCache } from '../../client/redux/library/pages';
@@ -14,8 +15,7 @@ import style from './AlbumView.scss';
 import AlbumViewThumbnail from '../album-view-thumbnail';
 import { selectedFolders } from '../../client/library-query';
 
-/** The least width of a cover and the gap between two in px, the covers grow to fill the width; matching .row in AlbumView.scss */
-const minCoverWidth = 160;
+/** The gap between two covers in px, the covers grow to fill the width; matching .row in AlbumView.scss */
 const columnGap = 18;
 /** The space under a thumbnail and the height of its lines of text in px, matching .albumViewThumbnail in AlbumViewThumbnail.scss */
 const rowGap = 22;
@@ -34,17 +34,20 @@ interface AlbumViewProps {
   playTracks: (tracks: Track[]) => void;
   selectAlbum: (album: Album | null) => void;
   loadPage: (page: number) => void;
+  /** The least width of a cover in px, which the slider of the bar below the list sets */
+  coverSize: number;
+  setCoverSize: (size: number) => void;
   /** What the bar above the list holds, no bar when omitted (the sort of the albums is in the header of the library) */
   toolbar?: ReactNode;
 }
 
-const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, search, loadPage, toolbar }: AlbumViewProps) => {
+const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, search, coverSize, setCoverSize, loadPage, toolbar }: AlbumViewProps) => {
   const { t } = useTranslation();
   const { separator, listing: scrolled } = useScrollSeparator(style.scrolled);
   const { listing, columns, rowHeight, firstIndex, lastIndex, offsetTop, height } = useWindowedList({
     itemCount: albums.total ?? 0,
     rowHeight: rowHeightOf,
-    itemWidth: minCoverWidth,
+    itemWidth: coverSize,
     gap: columnGap,
   });
   usePageLoader(albums, firstIndex, lastIndex, loadPage);
@@ -98,7 +101,20 @@ const AlbumView = ({ playTracks, selectAlbum, albums, sort, selected, folders, s
           ))}
         </div>
       </div>
-      <div className={style.footer}>{t('albums.count', { count: albums.total ?? 0 })}</div>
+      <div className={style.footer}>
+        <span>{t('albums.count', { count: albums.total ?? 0 })}</span>
+        <input
+          type="range"
+          className={style.coverSize}
+          aria-label={t('albums.coverSize')}
+          title={t('albums.coverSize')}
+          min={coverSizes.min}
+          max={coverSizes.max}
+          step={coverSizes.step}
+          value={coverSize}
+          onChange={(event) => setCoverSize(Number(event.target.value))}
+        />
+      </div>
     </div>
   );
 };
