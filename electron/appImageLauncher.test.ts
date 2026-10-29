@@ -103,7 +103,7 @@ describe('launcher on disk', () => {
     await enableLauncher(join(folder, 'other/eMusic-26.10.7.AppImage'), options);
 
     await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(entry);
-    await expect(readlink(link())).resolves.toBe(join(folder, 'other/eMusic-26.10.7.AppImage'));
+    await expect(readlink(link()).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(join(folder, 'other/eMusic-26.10.7.AppImage'));
     await expect(readdir(join(folder, 'data/emusic'))).resolves.toEqual(['eMusic.AppImage']);
   });
 
@@ -200,7 +200,7 @@ describe('launcher on disk', () => {
 
       await syncLauncher(appImage(), options);
 
-      await expect(readlink(old)).resolves.toBe(link());
+      await expect(readlink(old).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(link());
       await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
     });
 
@@ -209,7 +209,7 @@ describe('launcher on disk', () => {
 
       await enableLauncher(link(), options);
 
-      await expect(readlink(link())).resolves.toBe(appImage());
+      await expect(readlink(link()).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(appImage());
     });
 
     it('restores a link that went missing', async () => {
@@ -218,7 +218,7 @@ describe('launcher on disk', () => {
 
       await syncLauncher(appImage(), options);
 
-      await expect(readlink(link())).resolves.toBe(appImage());
+      await expect(readlink(link()).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(appImage());
     });
 
     it('rewrites the icons of the running AppImage when they changed', async () => {

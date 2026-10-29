@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import { copyFile, mkdir, readFile, readlink, rename, rm, stat, symlink, utimes, writeFile } from 'fs/promises';
-import { join } from 'path';
+import { join, posix } from 'path';
 import { catalog } from '../locales';
 
 const launcherName = 'emusic';
@@ -20,7 +20,7 @@ const updateDesktopDatabase = (applicationsPath: string) => new Promise<void>((d
 const getApplicationsPath = (dataHome: string) => join(dataHome, 'applications');
 const getDesktopFile = (dataHome: string) => join(getApplicationsPath(dataHome), `${launcherName}.desktop`);
 // the desktop shell keeps the entry it read first and fails every start of an old path, so the entry always starts this link and the link follows the AppImage
-export const getLauncherLink = (dataHome: string) => join(dataHome, launcherName, 'eMusic.AppImage');
+export const getLauncherLink = (dataHome: string) => posix.join(dataHome, launcherName, 'eMusic.AppImage');
 const getIconFile = (dataHome: string, size: number) => join(dataHome, 'icons/hicolor', `${size}x${size}`, 'apps', `${launcherName}.png`);
 
 // the characters that would need escaping in the Exec key of a desktop entry; such a path is not worth the risk of a broken launcher
@@ -56,9 +56,12 @@ const readExec = (dataHome: string) =>
     .then((entry) => entry.match(/^Exec="([^"]*)"/m)?.[1])
     .catch(() => undefined);
 
+// Windows hands a link target back with backslashes, an entry never holds one
+const forwardSlashes = (path: string) => path.replaceAll('\\', '/');
+
 export const readLauncherTarget = (dataHome: string) =>
   readExec(dataHome)
-    .then((exec) => (exec === getLauncherLink(dataHome) ? readlink(exec).catch(() => exec) : exec))
+    .then((exec) => (exec === getLauncherLink(dataHome) ? readlink(exec).then(forwardSlashes, () => exec) : exec))
     .catch(() => undefined);
 
 export const isLauncherEnabled = (dataHome: string) => readLauncherTarget(dataHome).then((target) => target !== undefined);
