@@ -8,6 +8,7 @@ import NowPlaying from './NowPlaying';
 const mapState = (state: RootState) => ({
   streamTitle: state.uiState.streamTitle,
   streamArt: state.uiState.streamArt,
+  isPlaying: state.uiState.isPlaying,
   station: state.radio.playing,
   currentSong: state.uiState.currentSong,
   nowPlaying: state.uiState.nowPlaying,
@@ -15,6 +16,7 @@ const mapState = (state: RootState) => ({
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
   playTrack: (track: Track) => dispatch({ type: 'FORCE_PLAY_TRACK', payload: { track } }),
+  openLibrary: () => dispatch({ type: 'SET_TAB', payload: { tab: 'local' } }),
 });
 
 export default connect(mapState, mapDispatch)(NowPlaying);
