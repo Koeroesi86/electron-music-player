@@ -43,6 +43,8 @@ const renderPage = (props: Partial<Parameters<typeof NowPlaying>[0]> = {}) =>
       streamArt={null}
       isPlaying
       playTrack={vi.fn()}
+      moveTrack={vi.fn()}
+      removeTrack={vi.fn()}
       openLibrary={vi.fn()}
       {...props}
     />
@@ -91,7 +93,17 @@ describe('NowPlaying', () => {
     expect(container.querySelector('[class*="paused"]')).not.toBeNull();
 
     rerender(
-      <NowPlaying nowPlaying={[flac, mp3]} currentSong={flac} streamTitle={null} streamArt={null} isPlaying playTrack={vi.fn()} openLibrary={vi.fn()} />
+      <NowPlaying
+        nowPlaying={[flac, mp3]}
+        currentSong={flac}
+        streamTitle={null}
+        streamArt={null}
+        isPlaying
+        playTrack={vi.fn()}
+        moveTrack={vi.fn()}
+        removeTrack={vi.fn()}
+        openLibrary={vi.fn()}
+      />
     );
 
     expect(container.querySelector('[class*="paused"]')).toBeNull();
@@ -123,6 +135,34 @@ describe('NowPlaying', () => {
     } finally {
       originals.forEach(([name, descriptor]) => descriptor && Object.defineProperty(HTMLElement.prototype, name, descriptor));
     }
+  });
+
+  it('removes the track of a row from the queue', () => {
+    const removeTrack = vi.fn();
+    renderPage({ removeTrack });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Two from the queue' }));
+
+    expect(removeTrack).toHaveBeenCalledWith(1);
+  });
+
+  it('keeps the song that plays in the queue', () => {
+    renderPage();
+
+    expect((screen.getByRole('button', { name: 'Remove One from the queue' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Remove Two from the queue' }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('moves a track to the place of the row it is dropped on', () => {
+    const moveTrack = vi.fn();
+    renderPage({ moveTrack });
+    const [first, second] = [screen.getByTitle('#1 One'), screen.getByTitle('#2 Two')];
+
+    fireEvent.dragStart(first, { dataTransfer: { setData: vi.fn(), effectAllowed: '' } });
+    fireEvent.dragOver(second);
+    fireEvent.drop(second);
+
+    expect(moveTrack).toHaveBeenCalledWith(0, 1);
   });
 
   it('shows a message and a way into the library when nothing is loaded', () => {

@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import classNames from 'classnames';
 import slugify from 'slugify';
-import { MdMusicNote as NoteIcon, MdPlayArrow as PlayIcon } from 'react-icons/md';
+import { MdClose as RemoveIcon, MdMusicNote as NoteIcon, MdPlayArrow as PlayIcon } from 'react-icons/md';
 import type { Track } from '../../types/library';
 import { toNowPlaying } from '../../client/now-playing';
 import type { RadioStation } from '../../types/radio';
 import { useTranslation } from '../../client/i18n';
+import { useDragReorder } from '../../client/hooks/use-drag-reorder';
 import { trackFavourite } from '../../client/favourites';
 import style from './NowPlaying.scss';
 import AudioFormatBadge from '../audio-format-badge';
@@ -22,14 +23,29 @@ interface NowPlayingProps {
   /** The station that was played last */
   station?: RadioStation;
   playTrack: (track: Track) => void;
+  moveTrack: (from: number, to: number) => void;
+  removeTrack: (index: number) => void;
   openLibrary: () => void;
 }
 
-const NowPlaying = ({ nowPlaying, currentSong, streamTitle, streamArt, isPlaying, station, playTrack, openLibrary }: NowPlayingProps) => {
+const NowPlaying = ({
+  nowPlaying,
+  currentSong,
+  streamTitle,
+  streamArt,
+  isPlaying,
+  station,
+  playTrack,
+  moveTrack,
+  removeTrack,
+  openLibrary,
+}: NowPlayingProps) => {
   const { t } = useTranslation();
   const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt) : undefined;
   const list = useRef<HTMLDivElement>(null);
   const current = useRef<HTMLDivElement>(null);
+  // a track is identified by its place in the queue, it can be in it more than once
+  const { itemProps, overIndex } = useDragReorder(moveTrack);
 
   // the list opens, and follows the song, with the current track in the middle
   useEffect(() => {
@@ -84,9 +100,10 @@ const NowPlaying = ({ nowPlaying, currentSong, streamTitle, streamArt, isPlaying
                 <div
                   key={`now-playing-track-${slugify(track.path, { remove: /[*+~./()'",!:@\\]/g, lower: true })}`}
                   ref={isCurrent ? current : undefined}
-                  className={classNames(style.track, { [style.current]: isCurrent })}
+                  className={classNames(style.track, { [style.current]: isCurrent, [style.dropTarget]: overIndex === index })}
                   onDoubleClick={() => playTrack(track)}
                   title={`#${track.track ? track.track + ' ' : ''}${track.title}`}
+                  {...itemProps(index, index)}
                 >
                   <span className={style.number}>
                     <span className={style.numberText}>
@@ -114,6 +131,17 @@ const NowPlaying = ({ nowPlaying, currentSong, streamTitle, streamArt, isPlaying
                     <AudioFormatBadge track={track} />
                   </span>
                   <span className={style.duration}>{track.duration ? <Time seconds={track.duration} /> : null}</span>
+                  {/* the song that plays stays: taking it out would make the next one start from the top of the queue */}
+                  <button
+                    type="button"
+                    className={style.removeButton}
+                    disabled={isCurrent}
+                    aria-label={t('nowPlaying.remove', { title: track.title })}
+                    title={t('nowPlaying.remove', { title: track.title })}
+                    onClick={() => removeTrack(index)}
+                  >
+                    <RemoveIcon size="14px" />
+                  </button>
                 </div>
               );
             })}

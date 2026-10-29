@@ -17,6 +17,7 @@
   "nav.settings": "Settings",
   "nowPlaying.title": "Now playing",
   "nowPlaying.upNext": "Up next",
+  "nowPlaying.remove": "Remove {title} from the queue",
   "nowPlaying.play": "Play {title}",
   "nowPlaying.nothing": "Nothing is playing",
   "nowPlaying.nothingHint": "Pick an album or a station and it shows up here.",

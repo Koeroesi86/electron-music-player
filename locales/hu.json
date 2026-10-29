@@ -17,6 +17,7 @@
   "nav.settings": "Beállítások",
   "nowPlaying.title": "Most szól",
   "nowPlaying.upNext": "Következik",
+  "nowPlaying.remove": "{title} eltávolítása a sorból",
   "nowPlaying.play": "{title} lejátszása",
   "nowPlaying.nothing": "Most nem szól semmi",
   "nowPlaying.nothingHint": "Válassz egy albumot vagy rádióadót, és itt jelenik meg.",

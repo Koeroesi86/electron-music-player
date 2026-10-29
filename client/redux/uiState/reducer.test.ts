@@ -61,6 +61,36 @@ describe('uiState reducer', () => {
     expect(state.played).toEqual([]);
   });
 
+  describe('the queue', () => {
+    const queue = { ...initial, nowPlaying: [track('a'), track('b'), track('c')] };
+    const paths = (state: UiState) => state.nowPlaying.map(({ path }) => path);
+
+    it.each([
+      [0, 2, ['b', 'c', 'a']],
+      [2, 0, ['c', 'a', 'b']],
+      [1, 0, ['b', 'a', 'c']],
+    ])('moves the track at %i to %i', (from, to, expected) => {
+      expect(paths(run({ type: 'MOVE_QUEUE_TRACK', payload: { from, to } }, queue))).toEqual(expected);
+    });
+
+    it.each([
+      [1, 1],
+      [5, 0],
+      [0, 3],
+      [0, -1],
+    ])('leaves the queue as it is for a move from %i to %i', (from, to) => {
+      expect(run({ type: 'MOVE_QUEUE_TRACK', payload: { from, to } }, queue)).toBe(queue);
+    });
+
+    it('removes the track at an index and keeps the others in order', () => {
+      expect(paths(run({ type: 'REMOVE_FROM_QUEUE', payload: { index: 1 } }, queue))).toEqual(['a', 'c']);
+    });
+
+    it('leaves the queue as it is when there is no track at the index', () => {
+      expect(run({ type: 'REMOVE_FROM_QUEUE', payload: { index: 3 } }, queue)).toBe(queue);
+    });
+  });
+
   it('starts playing on PLAY_TRACK and falls back to no song', () => {
     const playing = run({ type: 'PLAY_TRACK', payload: { track: track('a') } });
     expect(playing).toMatchObject({ currentSong: track('a'), isPlaying: true });

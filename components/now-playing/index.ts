@@ -16,6 +16,8 @@ const mapState = (state: RootState) => ({
 
 const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
   playTrack: (track: Track) => dispatch({ type: 'FORCE_PLAY_TRACK', payload: { track } }),
+  moveTrack: (from: number, to: number) => dispatch({ type: 'MOVE_QUEUE_TRACK', payload: { from, to } }),
+  removeTrack: (index: number) => dispatch({ type: 'REMOVE_FROM_QUEUE', payload: { index } }),
   openLibrary: () => dispatch({ type: 'SET_TAB', payload: { tab: 'local' } }),
 });
 
