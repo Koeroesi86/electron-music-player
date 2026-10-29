@@ -51,7 +51,7 @@ describe('TrackView', () => {
     expect(queryByText('Title 0')).not.toBeNull();
     expect(queryByText('Title 99')).toBeNull();
     expect(container.querySelectorAll('[class]').length).toBeLessThan(400);
-    expect(container.querySelector<HTMLElement>('.window')?.style.height).toBe('1000000px');
+    expect(container.querySelector<HTMLElement>('.window')?.style.height).toBe('1400000px');
   });
 
   it('tells how many tracks the whole list has', () => {
@@ -77,6 +77,19 @@ describe('TrackView', () => {
     const { getByText } = render(<TrackView {...baseProps} tracks={firstPage} offlineFolders={['/music']} />);
 
     expect(getByText('Title 0').closest('[title]')?.getAttribute('title')).toMatch(/cannot be reached/);
+  });
+
+  it('shows the title before the artist and the album, and the duration last', () => {
+    render(<TrackView {...baseProps} tracks={firstPage} />);
+
+    expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['#', 'Title', 'Artist', 'Album', 'Year', 'Duration']);
+  });
+
+  it('marks the track that plays, and no other', () => {
+    const { container } = render(<TrackView {...baseProps} tracks={firstPage} currentSong={track(2)} />);
+
+    expect(container.querySelectorAll('.bars')).toHaveLength(1);
+    expect(screen.getByText('Title 2').closest('.trackViewItem')?.classList.contains('current')).toBe(true);
   });
 
   describe('sorting by a column header', () => {

@@ -16,7 +16,7 @@ import TrackViewItem from '../track-view-item';
 import type { TrackLabels } from '../track-view-item/TrackViewItem';
 
 /** The height of a row in px, matching .trackViewItem in TrackViewItem.scss */
-const rowHeight = 20;
+const rowHeight = 28;
 
 interface TrackViewProps {
   tracks: PageCache<Track>;
