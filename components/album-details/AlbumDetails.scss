@@ -1,3 +1,15 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  pointer-events: none;
+
+  // it catches the click outside the dialog while the dialog is open
+  &.hasAlbum {
+    pointer-events: auto;
+  }
+}
+
 .albumDetails {
   display: flex;
   position: fixed;
@@ -136,8 +148,10 @@
     }
   }
 
+  // above the text of the header, whose opacity makes each line a layer over the button
   .close {
     position: absolute;
+    z-index: 1;
     top: 12px;
     right: 12px;
     display: flex;
