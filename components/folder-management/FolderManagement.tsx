@@ -19,7 +19,7 @@ const FolderManagement = ({ folders, offlineFolders, addFolders, removeFolder }:
   const [removing, setRemoving] = useState<string>();
 
   return (
-    <section className={style.folderManagement}>
+    <section className={classNames(style.folderManagement, style.wide)}>
       <header className={style.header}>
         <h2 className={style.sectionTitle}>{t('folders.title')}</h2>
         <span className={style.count}>{t('folders.count', { count: folders.length })}</span>

@@ -78,13 +78,15 @@ function PlayerTabs({ tab = 'home', addFiles = () => {} }: PlayerTabsProps) {
           [style.active]: tab === 'settings',
         })}
       >
-        <LanguageSelect />
-        <ThemeSelect />
-        <FolderManagement />
-        <ArtistPhotos />
-        <LauncherIntegration />
-        <WindowBlur />
-        <About />
+        <div className={style.settings}>
+          <About />
+          <ThemeSelect />
+          <LanguageSelect />
+          <FolderManagement />
+          <ArtistPhotos />
+          <WindowBlur />
+          <LauncherIntegration />
+        </div>
       </div>
     </div>
   );

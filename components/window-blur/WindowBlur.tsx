@@ -1,4 +1,5 @@
 import { useTranslation } from '../../client/i18n';
+import Switch from '../switch/Switch';
 import style from './WindowBlur.scss';
 
 interface WindowBlurProps {
@@ -15,9 +16,9 @@ const WindowBlur = ({ available, enabled, toggle }: WindowBlurProps) => {
 
   return (
     <section className={style.windowBlur}>
-      <div className={style.sectionTitle}>{t('blur.title')}</div>
-      <div className={style.toggle} onClick={toggle}>
-        {enabled ? t('blur.opaque') : t('blur.translucent')}
+      <div className={style.sectionTitle}>
+        {t('blur.title')}
+        <Switch checked={enabled} label={t('blur.title')} onChange={toggle} />
       </div>
       <div className={style.hint}>{t('blur.hint')}</div>
     </section>

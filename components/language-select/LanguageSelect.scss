@@ -1,22 +1,25 @@
+@use '../../client/styles/settings-tile' as *;
+
 .languageSelect {
-  padding-left: 12px;
+  @include tile;
 
   .sectionTitle {
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 100;
-    padding: 12px 0;
+    @include tile-title;
   }
 
   .select {
     -webkit-app-region: no-drag;
     height: 28px;
-    padding: 0 8px;
+    padding: 0 10px;
     color: inherit;
     font-size: 12px;
     border: 0;
-    border-radius: 3px;
+    border-radius: 8px;
     background-color: var(--overlay);
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+    }
 
     option {
       color: var(--text);

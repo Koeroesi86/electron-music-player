@@ -1,0 +1,72 @@
+// A tile of the settings page: a card with a title row (the title, and a control at the right) and the content under it
+@mixin tile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background-color: var(--overlay-faint);
+
+  // the tile takes the whole row of the grid
+  &.wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@mixin tile-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@mixin tile-hint {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+// a round button on the tile
+@mixin tile-button {
+  -webkit-app-region: no-drag;
+  height: 28px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  color: inherit;
+  border: 0;
+  border-radius: 14px;
+  background-color: var(--overlay);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background-color: var(--overlay-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.4;
+  }
+}
+
+// text only, for the small actions in a row
+@mixin tile-quiet-button {
+  @include tile-button;
+  padding: 0 8px;
+  color: var(--text-muted);
+  background: none;
+
+  &:hover:not(:disabled) {
+    color: var(--text);
+    background: none;
+  }
+}

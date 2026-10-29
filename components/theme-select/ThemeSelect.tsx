@@ -28,7 +28,7 @@ const ThemeSelect = ({ theme: { mode, accent }, setMode, setAccent }: ThemeSelec
             type="button"
             role="radio"
             aria-checked={option === mode}
-            className={classNames(style.mode, { [style.selected]: option === mode })}
+            className={classNames(style.mode, style[option], { [style.selected]: option === mode })}
             onClick={() => setMode(option)}
           >
             {t(`theme.${option}`)}

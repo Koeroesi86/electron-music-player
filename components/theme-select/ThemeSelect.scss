@@ -1,44 +1,61 @@
+@use '../../client/styles/settings-tile' as *;
+
 .themeSelect {
-  padding-left: 12px;
+  @include tile;
 
   .sectionTitle {
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 100;
-    padding: 12px 0;
+    @include tile-title;
   }
 
   .label {
-    margin: 12px 0 6px;
-    font-size: 12px;
-    color: var(--text-muted);
+    @include tile-hint;
   }
 
+  // a small picture of each mode
   .modes {
-    display: inline-flex;
-    border-radius: 3px;
-    overflow: hidden;
-    background-color: var(--overlay);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
   }
 
   .mode {
     -webkit-app-region: no-drag;
-    height: 28px;
-    padding: 0 12px;
-    color: inherit;
-    font-size: 12px;
-    border: 0;
-    background: transparent;
+    height: 54px;
+    padding: 0;
+    font: inherit;
+    font-size: 11px;
+    border: 1px solid var(--overlay);
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color .2s ease-in-out, color .2s ease-in-out;
+    transition: border-color .2s ease-in-out;
 
     &:hover {
-      background-color: var(--overlay);
+      border-color: var(--overlay-strong);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
     }
 
     &.selected {
-      color: var(--accent-contrast);
-      background-color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    // the colours of the two themes are the same whatever theme is on
+    &.light {
+      color: var(--mode-light-text);
+      background: var(--mode-light-background);
+    }
+
+    &.dark {
+      color: var(--mode-dark-text);
+      background: var(--mode-dark-background);
+    }
+
+    &.system {
+      color: var(--mode-system-text);
+      background: linear-gradient(90deg, var(--mode-light-background) 50%, var(--mode-dark-background) 50%);
     }
   }
 
@@ -51,29 +68,30 @@
 
   .swatch {
     -webkit-app-region: no-drag;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     padding: 0;
-    border: 2px solid transparent;
+    border: 0;
     border-radius: 50%;
     cursor: pointer;
     box-shadow: inset 0 0 0 1px var(--overlay-strong);
 
     &.selected {
-      border-color: var(--text);
+      box-shadow: 0 0 0 2px var(--panel-background), 0 0 0 4px var(--text);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
     }
   }
 
   .auto {
-    -webkit-app-region: no-drag;
-    height: 24px;
-    padding: 0 8px;
-    color: inherit;
-    font-size: 12px;
-    border: 0;
-    border-radius: 3px;
-    background-color: var(--overlay);
-    cursor: pointer;
+    @include tile-button;
+    height: 20px;
+    padding: 0 10px;
+    font-size: 11px;
+    border-radius: 10px;
 
     &.selected {
       color: var(--accent-contrast);
@@ -83,8 +101,8 @@
 
   .custom {
     -webkit-app-region: no-drag;
-    width: 32px;
-    height: 24px;
+    width: 28px;
+    height: 20px;
     padding: 0;
     border: 0;
     background: transparent;
@@ -92,19 +110,9 @@
   }
 
   .reset {
-    -webkit-app-region: no-drag;
-    height: 24px;
-    padding: 0 8px;
-    color: inherit;
-    font-size: 12px;
-    border: 0;
-    border-radius: 3px;
-    background-color: var(--overlay);
-    cursor: pointer;
-
-    &:disabled {
-      opacity: .4;
-      cursor: default;
-    }
+    @include tile-quiet-button;
+    margin-left: auto;
+    height: 20px;
+    font-size: 11px;
   }
 }
