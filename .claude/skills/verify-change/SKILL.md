@@ -7,18 +7,10 @@ allowed-tools: Read, Bash, Skill
 
 Run what `CLAUDE.md` requires before something is called done. The report feeds the Verification and **Not verified** sections of the pull request (`open-pr`).
 
-If `npm` is not found, prefix commands with `export PATH=$HOME/.nvm/versions/node/<node version>/bin:$PATH` (version folder in `~/.nvm/versions/node/`).
-
 ## Checks
 Changed files: `git diff --name-only origin/master...HEAD` and `git status --short`.
 
-From the root, in order, fixing a failure before going on:
-1. `npm run lint`
-2. `npm run fallow`
-3. `npm run typecheck`
-4. `npm run test:coverage`
-5. `npm run security:electron`
-6. `npm run build`
+From the root run `node scripts/verify.js`: lint, fallow, typecheck, test:coverage, security:electron and build in order, stopping at the first failure. It prints one line per check and the end of the output of the failed one; fix the failure and continue with `node scripts/verify.js --from <check>`. Its last line lists what did not run.
 
 - `npm run dist` packages the app for the current OS only; run it when packaging, `build/`, `scripts/` or `package.json` `build` changed, otherwise leave it to CI. After it, `npm run check:dist` and `npm run smoke:packaged` (with `xvfb-run` when there is no display).
 - A change to UI or playback cannot be proven by the checks: say it was **Not run** by hand unless the app was started (`npm run dev`).

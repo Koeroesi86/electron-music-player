@@ -17,7 +17,11 @@ Pull requests also run `fallow audit --base` (findings of the changed files), Co
 
 Releases come from `release.yml`: Monday and Thursday 06:00 UTC and by hand, from `master` only. A scheduled run skips when only docs or `.github/` changed since the latest `vYY.M.N` tag. The version is `YY.M.<run number>` (`scripts/version.js`, stamped into `package.json` in the packaging job; never edit `version` by hand, no zero padded month and no prerelease part, electron-updater would take it for a channel), the plan job refuses a version that is not greater than the latest tag, and `release.yml` must not be renamed or recreated (its run number would restart), and the published release is what installed apps update from. `EMUSIC_NO_UPDATE=1` turns the updater off and `EMUSIC_RADIO_DIRECTORY=<url>` replaces the station directory (the smoke tests set both, the second to a station of their own).
 
-If `node` is not found, use `~/.nvm/versions/node/<version>/bin` directly.
+`node scripts/verify.js` runs 1, 2, 3, 4, 5 and the build of 6 in order and prints only the end of the failed check. A SessionStart hook puts Node 24 of nvm on `PATH` for Claude.
+
+## Guards
+
+Claude Code hooks (`.claude/hooks/`, wired in `.claude/settings.json`, tested in `scripts/claude-hooks.test.js`) block what the rules below forbid: `--no-verify`, `prettier --write`, `continue-on-error`, renaming `release.yml`, pushing to `master`, editing `version` of `package.json` or a migration that has shipped. `git push` and `gh pr create` run lint and typecheck first. `scripts/workflows.test.js` checks the workflow rules, and `pr-description.yml` fails a pull request without **Not verified:**.
 
 ## Conventions
 

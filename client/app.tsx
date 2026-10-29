@@ -8,7 +8,10 @@ import { store } from './redux/store';
 if (typeof document !== 'undefined') {
   store.dispatch({ type: 'APP_INIT' });
 
-  createRoot(document.getElementById('root') as HTMLElement).render(
+  const root = document.getElementById('root');
+  if (!root) throw new Error('The page has no #root element');
+
+  createRoot(root).render(
     <Provider store={store}>
       <ThemeProvider>
         <LanguageProvider>
