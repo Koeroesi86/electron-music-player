@@ -16,8 +16,7 @@
     flex-shrink: 0;
     align-items: center;
     gap: 8px;
-    // the room of the scrollbar of the list below is kept, so the chips end where the table does; the padding on top keeps the outline of a focused chip from being cut
-    margin-top: -3px;
+    // the room of the scrollbar of the list below is kept, so the chips end where the table does; the padding on top keeps the outline of a focused chip from being cut by this box or by the panel
     padding: 3px 12px 10px;
     overflow-y: hidden;
     scrollbar-gutter: stable;
