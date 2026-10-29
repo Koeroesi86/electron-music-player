@@ -76,9 +76,12 @@ const hidePaths = `(() => {
 // the version and the update line of a development run are not what the picture is about
 const hideAbout = `document.querySelector('[class*="About__about"]').style.display = 'none'`
 
+// a value written into a script of the page: JSON, with what could end the script or its line escaped
+const literal = value => JSON.stringify(value).replace(/[<>\u2028\u2029]/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`)
+
 // types a name into a field of the app and submits it, as a person does
 const typeInto = (label, text) =>
-  `(() => { const input = document.querySelector('[aria-label=${JSON.stringify(label)}]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event('input', { bubbles: true })); input.form.requestSubmit() })()`
+  `(() => { const input = document.querySelector('[aria-label=${literal(label)}]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${literal(text)}); input.dispatchEvent(new Event('input', { bubbles: true })); input.form.requestSubmit() })()`
 
 // a playlist of the albums, built through the dialog of each: the dialog is the last of the page, so is its menu
 const playlist = (name, listed) => [
@@ -100,7 +103,7 @@ const playlist = (name, listed) => [
 const like = text => ({
   run: `(() => {
     const heart = '[aria-label="Add to favourites"]'
-    let element = [...document.body.querySelectorAll('*')].find(candidate => !candidate.children.length && candidate.textContent.trim() === ${JSON.stringify(text)})
+    let element = [...document.body.querySelectorAll('*')].find(candidate => !candidate.children.length && candidate.textContent.trim() === ${literal(text)})
     while (element && element.querySelectorAll(heart).length !== 1) element = element.parentElement
     element.querySelector(heart).click()
   })()`
