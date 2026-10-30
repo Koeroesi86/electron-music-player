@@ -1,4 +1,5 @@
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, dialog } from 'electron';
+import type { BrowserWindow } from 'electron';
 import { join, resolve } from 'path';
 import fs from 'fs';
 import minimist from 'minimist';
@@ -17,6 +18,7 @@ import { createRadioLogos } from './electron/radioLogos';
 import { getAppUserModelId } from './electron/appUserModelId';
 import { registerDevDesktopEntry, removeDevDesktopEntry } from './electron/devDesktopEntry';
 import closeDatabase from './electron/closeDatabase';
+import closeSplash from './electron/closeSplash';
 import releaseWindows from './electron/releaseWindows';
 import { getMainTranslator, setPickedLanguage } from './electron/language';
 import { applyThemeMode } from './electron/theme';
@@ -220,8 +222,8 @@ app
       closeDatabase(d).then(() => app.quit());
     });
 
-    // a window that is still open (the app waits for it to close before it quits) goes with the quit
-    app.on('before-quit', () => BrowserWindow.getAllWindows().forEach((window) => window.destroy()));
+    // the app waits for its windows to close before it quits; the main window closes on its own, as the page saves its settings on the way out
+    app.on('before-quit', () => closeSplash(windows));
 
     app.on('window-all-closed', () => {
       if (!isMac) {
