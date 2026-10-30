@@ -1,6 +1,6 @@
 name: Test
 
-# lint, dead code, types, unit tests with coverage and the Electron security scan, used by the workflows that package the app
+# lint, dead code, types, unit tests with coverage, the end to end tests of the built app and the Electron security scan, used by the workflows that package the app
 on:
   workflow_call:
 
@@ -28,6 +28,11 @@ jobs:
       - run: npm run fallow
       - run: npm run typecheck
       - run: npm run test:coverage
+      # the built app is started and driven (e2e/); the audio goes to a sink that plays nothing (--disable-audio-output), so the runners need no sound device, and Linux draws the window headless
+      - run: npm run build
+      - name: End to end tests
+        timeout-minutes: 20
+        run: npm run test:e2e
       - name: Electron security scan
         if: matrix.os == 'ubuntu-latest'
         run: npm run security:electron
@@ -43,4 +48,13 @@ jobs:
         with:
           name: coverage
           path: coverage/lcov-report
+          if-no-files-found: ignore
+      # the report has the steps, the screenshots and the traces of the tests that failed
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: e2e-report-${{ matrix.os }}
+          path: |
+            playwright-report
+            test-results
           if-no-files-found: ignore

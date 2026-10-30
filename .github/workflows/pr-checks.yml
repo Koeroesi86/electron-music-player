@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Tests, audit, packaging, security scans and CodeQL passed
+      - name: Tests (with the end to end tests), audit, packaging, security scans and CodeQL passed
         env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |

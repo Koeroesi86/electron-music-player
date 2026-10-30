@@ -38,10 +38,17 @@ describe('workflows', () => {
 
   it('test.yml runs the cheap checks first', () => {
     const text = read('test.yml')
-    const order = ['npm run lint', 'npm run fallow', 'npm run typecheck', 'npm run test:coverage'].map((command) => text.indexOf(command))
+    const order = ['npm run lint', 'npm run fallow', 'npm run typecheck', 'npm run test:coverage', 'npm run build', 'npm run test:e2e'].map((command) => text.indexOf(command))
 
     expect(order.every((index) => index >= 0)).toBe(true)
     expect(order).toEqual([...order].sort((a, b) => a - b))
+  })
+
+  it('test.yml keeps the report of the end to end tests', () => {
+    const text = read('test.yml')
+
+    expect(text).toMatch(/name: e2e-report-/)
+    expect(text).toMatch(/playwright-report/)
   })
 
   it('dist.yml builds before it packages', () => {

@@ -45,5 +45,6 @@ describe('generateIcons', () => {
     expect(readFileSync(resolve(output, 'icons/png/1024x1024.png')).subarray(1, 4).toString()).toBe('PNG')
     expect(readFileSync(resolve(output, 'icons/win/icon.ico')).readUInt16LE(4)).toBe(7)
     expect(readFileSync(resolve(output, 'icons/mac/icon.icns')).subarray(0, 4).toString()).toBe('icns')
-  })
+    // it resizes the image to every size of the icons, which took 6 s on a slow Windows runner, over the 5 s of the default
+  }, 30000)
 })
