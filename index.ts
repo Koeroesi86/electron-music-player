@@ -18,6 +18,7 @@ import { createRadioLogos } from './electron/radioLogos';
 import { getAppUserModelId } from './electron/appUserModelId';
 import { registerDevDesktopEntry, removeDevDesktopEntry } from './electron/devDesktopEntry';
 import closeDatabase from './electron/closeDatabase';
+import releaseWindows from './electron/releaseWindows';
 import { getMainTranslator, setPickedLanguage } from './electron/language';
 import { applyThemeMode } from './electron/theme';
 import { getSettings } from './electron/settingsRepository';
@@ -110,10 +111,7 @@ const initWindow = () => {
   windows.main = createWindow();
   windows.main.loadURL(windowLocation);
 
-  windows.main.on('closed', () => {
-    windows.main = null;
-    windows.loading = null;
-  });
+  windows.main.on('closed', () => releaseWindows(windows));
 };
 
 if (!fs.existsSync(appDataPath)) {
