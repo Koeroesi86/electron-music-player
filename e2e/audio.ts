@@ -67,6 +67,21 @@ export const levelNow = async (page: Page) => {
   return (await heardLately(page)).rms;
 };
 
+/** The level once two readings apart agree, as a reading right after a track began or a setting changed can be of the change itself */
+export const steadyLevel = async (page: Page) => {
+  let before = await levelNow(page);
+  let steady = before;
+  await expect
+    .poll(async () => {
+      steady = await levelNow(page);
+      const settled = Math.abs(steady - before) <= before * 0.05;
+      before = steady;
+      return settled;
+    })
+    .toBe(true);
+  return steady;
+};
+
 /** The longest stretch of silence, in seconds, between the first and the last sound of what was heard since the probe was cleared */
 export const longestGap = async (page: Page) => {
   const { sampleRate, windows } = await probeOf(page);

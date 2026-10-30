@@ -68,7 +68,8 @@ describe('writeFlac', () => {
     // two channels of 16 bit samples for a second, plus the headers
     expect(writeFlac(options).length).toBeGreaterThan(44100 * 4)
     expect(writeFlac(options).equals(writeFlac({ ...options, frequency: 882 }))).toBe(false)
-  })
+    // writes the file three times and reads it once, which takes longer than the default on a slow runner
+  }, 30000)
 
   afterAll(() => rmSync(folder, { recursive: true, force: true }))
 })

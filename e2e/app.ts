@@ -31,6 +31,12 @@ const tracksInLibrary = albums.flatMap((album) => album.tracks).length;
 
 const root = resolve(__dirname, '..');
 
+// an app that does not close in time (macOS has been seen to wait on a quit) is killed, as the profile is thrown away anyway
+const quit = async (app: ElectronApplication) => {
+  const closed = await Promise.race([app.close().then(() => true), new Promise<boolean>((done) => setTimeout(() => done(false), 10_000))]).catch(() => true);
+  if (!closed) app.process().kill('SIGKILL');
+};
+
 const pageUrl = 'emusic://app/index.html';
 
 // the splash window opens first, then the page: the one that has loaded the page is the one the tests use
@@ -105,7 +111,7 @@ export const test = base.extend<Fixtures>({
       return { app, page };
     });
 
-    await Promise.all(running.map((app) => app.close().catch(() => undefined)));
+    await Promise.all(running.map(quit));
     rmSync(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   },
 });

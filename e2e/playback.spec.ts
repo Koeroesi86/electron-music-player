@@ -1,5 +1,5 @@
 import { expect, navigate, test } from './app';
-import { clearProbe, expectSilence, expectTone, levelNow, longestGap } from './audio';
+import { clearProbe, expectSilence, expectTone, levelNow, longestGap, steadyLevel } from './audio';
 import { player } from './player';
 
 // the audio is measured where it leaves the app (e2e/audio-probe.ts): the pitch says which track plays, the level says how loud, the clock says when
@@ -112,7 +112,7 @@ test('changes the level of a bass tone with the equalizer presets', async ({ ses
   await controls.next();
   await controls.next();
   await expectTone(page, 100);
-  const flat = await levelNow(page);
+  const flat = await steadyLevel(page);
 
   await navigate(page, 'Equalizer');
   await page.getByRole('button', { name: 'Bass boost' }).click();
