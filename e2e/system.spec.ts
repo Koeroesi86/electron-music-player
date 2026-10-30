@@ -62,7 +62,7 @@ test('closes the window with the close button, and quits the app where closing t
   await windowClosed;
   // macOS keeps the app running without a window (index.ts), so it is quit here, as the test run would wait for it otherwise
   if (process.platform === 'darwin') await app.evaluate(({ app: electronApp }) => electronApp.quit());
-  await app.waitForEvent('close');
+  await app.waitForEvent('close', { timeout: 60_000 });
 });
 
 test('speaks the language that is picked, and keeps it after a restart', async ({ start, session }) => {

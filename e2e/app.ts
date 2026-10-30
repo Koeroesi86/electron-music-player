@@ -32,7 +32,7 @@ const tracksInLibrary = albums.flatMap((album) => album.tracks).length;
 
 const root = resolve(__dirname, '..');
 
-/** Closes the app, and kills it (with its processes) when it has not closed in ten seconds: the profile is thrown away anyway, and a quit that hangs would take the whole run with it */
+/** Closes the app, and kills it (with its processes) when it has not closed in thirty seconds: the profile is thrown away anyway, and a quit that hangs would take the whole run with it */
 export const quit = async (app: ElectronApplication) => {
   // the handle is gone once the app has closed, which a test that restarts the app has done before the end
   const child = (() => {
@@ -44,7 +44,7 @@ export const quit = async (app: ElectronApplication) => {
   })();
   if (!child) return;
 
-  const closed = await Promise.race([app.close().then(() => true), new Promise<boolean>((done) => setTimeout(() => done(false), 10_000))]).catch(() => true);
+  const closed = await Promise.race([app.close().then(() => true), new Promise<boolean>((done) => setTimeout(() => done(false), 30_000))]).catch(() => true);
   if (closed || !child.pid) return;
 
   if (process.platform === 'win32') spawnSync('taskkill', ['/pid', `${child.pid}`, '/T', '/F']);

@@ -9,7 +9,8 @@ export default defineConfig({
   fullyParallel: false,
   // a retry would hide the test that fails now and then
   retries: 0,
-  timeout: 90_000,
+  // the Intel macOS runner has taken more than a minute to start the app
+  timeout: process.env.CI ? 180_000 : 90_000,
   expect: { timeout: 15_000 },
   reporter: process.env.CI ? [['github'], ['list'], ['html', { open: 'never' }]] : [['list']],
   use: { trace: 'retain-on-failure' },
