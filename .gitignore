@@ -11,3 +11,5 @@ icons
 out
 .cache
 coverage
+test-results
+playwright-report

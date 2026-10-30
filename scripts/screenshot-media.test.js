@@ -60,5 +60,15 @@ describe('writeFlac', () => {
     expect(writeFlac({ seconds: 218, tags: {}, cover: drawCover(spec, 8) }).length).toBeLessThan(100000)
   })
 
+  it('holds the samples of a sine when it has a frequency, and still reads as a file of the length asked for', async () => {
+    const options = { seconds: 1, tags: {}, cover: drawCover(spec, 8), frequency: 441 }
+    const { format } = await read(options)
+
+    expect(format.duration).toBe(1)
+    // two channels of 16 bit samples for a second, plus the headers
+    expect(writeFlac(options).length).toBeGreaterThan(44100 * 4)
+    expect(writeFlac(options).equals(writeFlac({ ...options, frequency: 882 }))).toBe(false)
+  })
+
   afterAll(() => rmSync(folder, { recursive: true, force: true }))
 })

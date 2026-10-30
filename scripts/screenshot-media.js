@@ -64,15 +64,23 @@ const crc16 = bytes => bytes.reduce((crc, byte) => Array.from({ length: 8 }).red
 const sampleRate = 44100
 const blockSize = 4096
 
-// one block of silence: two constant subframes of 16 bits, the whole block is a few bytes
-const silentFrame = (number, samples) => {
+// the samples of a sine of the frequency (half of the full scale) from the position of the first one, as 16 bit big endian
+const toneSamples = (frequency, first, samples) => {
+  const bytes = Buffer.alloc(samples * 2)
+  Array.from({ length: samples }).forEach((_, index) => bytes.writeInt16BE(Math.round(16383 * Math.sin((2 * Math.PI * frequency * (first + index)) / sampleRate)), index * 2))
+  return bytes
+}
+
+// one block: silence is two constant subframes of 16 bits and the whole block a few bytes, a tone is two verbatim subframes with the samples of the sine in both channels
+const silentFrame = (number, samples, frequency) => {
   const last = samples !== blockSize
   const header = Buffer.concat([
     Buffer.from([0xff, 0xf8, (last ? 0x70 : 0xc0) | 0x09, 0x18]),
     Buffer.from(String.fromCodePoint(number)),
     last ? Buffer.from([(samples - 1) >> 8, (samples - 1) & 255]) : Buffer.alloc(0)
   ])
-  const body = Buffer.concat([header, Buffer.from([crc8(header), 0, 0, 0, 0, 0, 0])])
+  const channel = frequency ? Buffer.concat([Buffer.from([0x02]), toneSamples(frequency, number * blockSize, samples)]) : Buffer.alloc(3)
+  const body = Buffer.concat([header, Buffer.from([crc8(header)]), channel, channel])
   return Buffer.concat([body, Buffer.from([crc16(body) >> 8, crc16(body) & 255])])
 }
 
@@ -80,8 +88,8 @@ const metadataBlock = (type, body, last) => Buffer.concat([Buffer.from([(last ? 
 
 const lengthPrefixed = (text, order) => Buffer.concat([uint32(Buffer.byteLength(text), order), Buffer.from(text)])
 
-/** A stereo 16 bit 44.1 kHz FLAC of silence that lasts the given seconds, with the tags (an object of Vorbis comments) and the PNG as its front cover */
-const writeFlac = ({ seconds, tags, cover }) => {
+/** A stereo 16 bit 44.1 kHz FLAC that lasts the given seconds, silent or a sine of the frequency (Hz), with the tags (an object of Vorbis comments) and the PNG as its front cover */
+const writeFlac = ({ seconds, tags, cover, frequency }) => {
   const total = seconds * sampleRate
   const streamInfo = Buffer.alloc(34)
   streamInfo.writeUInt16BE(blockSize, 0)
@@ -101,7 +109,7 @@ const writeFlac = ({ seconds, tags, cover }) => {
     uint32(cover.length),
     cover
   ])
-  const frames = Array.from({ length: Math.ceil(total / blockSize) }, (_, number) => silentFrame(number, Math.min(blockSize, total - number * blockSize)))
+  const frames = Array.from({ length: Math.ceil(total / blockSize) }, (_, number) => silentFrame(number, Math.min(blockSize, total - number * blockSize), frequency))
 
   return Buffer.concat([Buffer.from('fLaC'), metadataBlock(0, streamInfo), metadataBlock(4, vorbis), metadataBlock(6, picture, true), ...frames])
 }

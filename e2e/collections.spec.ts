@@ -1,0 +1,59 @@
+import { expect, navigate, test } from './app';
+import { player } from './player';
+
+// what the listener builds up in the app and expects to find again: playlists, favourites, the history, the settings
+test('keeps a playlist of an album, and plays it', async ({ start, session }) => {
+  const { page } = session;
+  await navigate(page, 'Albums');
+  // the menu of the album creates the playlist with the album in it
+  await page.getByRole('button', { name: 'Add to a playlist' }).first().click();
+  await page.getByRole('menu').getByPlaceholder('Playlist name').fill('Evening');
+  await page.getByRole('menu').getByRole('button', { name: 'Create' }).click();
+  await expect(page.getByText('Evening', { exact: true }).first()).toBeVisible();
+  await session.app.close();
+
+  const restarted = await start();
+  await restarted.page.getByText('Evening', { exact: true }).first().click();
+  await expect(restarted.page.locator('[class*="PlaylistView__count"]')).toHaveText('3 tracks');
+  await restarted.page.getByRole('button', { name: 'Play all' }).click();
+  await expect(player(restarted.page).title()).toHaveText('Concert A');
+});
+
+test('lists a liked album under Liked, and keeps it after a restart', async ({ start, session }) => {
+  const { page } = session;
+  await navigate(page, 'Albums');
+  await page.getByRole('button', { name: 'Add to favourites' }).first().click();
+  await navigate(page, 'Liked');
+  await expect(page.getByText('Pitch Perfect').filter({ visible: true }).first()).toBeVisible();
+  await session.app.close();
+
+  const restarted = await start();
+  await navigate(restarted.page, 'Liked');
+  await expect(restarted.page.getByText('Pitch Perfect').filter({ visible: true }).first()).toBeVisible();
+});
+
+test('shows what was played under Recently played, and clears it', async ({ session: { page } }) => {
+  const controls = player(page);
+  await controls.playAlbum('Single Note');
+  await expect(controls.title()).toHaveText('Hold It');
+  await controls.pause();
+
+  await navigate(page, 'Home');
+  await expect(page.getByText('Recently played')).toBeVisible();
+  await expect(page.getByText('Hold It').filter({ visible: true }).first()).toBeVisible();
+
+  await page.getByRole('button', { name: 'Clear history' }).click();
+  await page.locator('[class*="Confirm"]').filter({ hasText: 'Clear the list' }).getByRole('button', { name: 'Yes' }).click();
+  await expect(page.getByText('Nothing was played yet')).toBeVisible();
+});
+
+test('keeps the equalizer preset after a restart', async ({ start, session }) => {
+  await navigate(session.page, 'Equalizer');
+  await session.page.getByRole('button', { name: 'Vocal' }).click();
+  await expect(session.page.getByRole('button', { name: 'Vocal' })).toHaveAttribute('aria-pressed', 'true');
+  await session.app.close();
+
+  const restarted = await start();
+  await navigate(restarted.page, 'Equalizer');
+  await expect(restarted.page.getByRole('button', { name: 'Vocal' })).toHaveAttribute('aria-pressed', 'true');
+});
