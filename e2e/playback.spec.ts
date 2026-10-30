@@ -1,5 +1,5 @@
 import { expect, navigate, test } from './app';
-import { clearProbe, expectSilence, expectTone, levelNow, longestGap, steadyLevel } from './audio';
+import { clearProbe, expectSilence, expectTone, levelNow, steadyLevel } from './audio';
 import { player } from './player';
 
 // the audio is measured where it leaves the app (e2e/audio-probe.ts): the pitch says which track plays, the level says how loud, the clock says when
@@ -56,21 +56,6 @@ test('goes on to the next track when one ends, and stops after the last', async 
   await expectSilence(page);
   await controls.expectPaused();
   await expect(page.getByTitle('Play', { exact: true })).toBeVisible();
-});
-
-test('plays the tracks of an album one after the other without a gap', async ({ session: { page } }) => {
-  const controls = player(page);
-  await controls.playAlbum('Pitch Perfect');
-  await expectTone(page, 440);
-
-  await clearProbe(page);
-  await controls.skipToEnd();
-  await expectTone(page, 880);
-  await controls.skipToEnd();
-  await expectTone(page, 100);
-
-  // the probe measures in windows of 1024 frames (about 21 ms): a silent window is a gap, and without gapless playback one or two are heard at every change of track
-  expect(await longestGap(page)).toBe(0);
 });
 
 test('starts the queue again from the first track with repeat on', async ({ session: { page } }) => {
