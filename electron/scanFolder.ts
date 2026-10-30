@@ -11,7 +11,7 @@ import type { Database } from 'sqlite3';
 import type { WebContents } from 'electron';
 import type { Track } from '../types/library';
 import addTrack from './addTrack';
-import { getLibrary } from './libraryRepository';
+import { getTracksInside } from './libraryRepository';
 import isSupported from './isSupported';
 import { quitSignal } from './scanCancellation';
 
@@ -62,15 +62,15 @@ const isEqual = (a: Track, b: Track) => {
   return Object.entries(a).every(([key, value]) => `${value}` === `${other.get(key)}`);
 };
 
-/** Collect the supported audio files of a folder tree, one folder at a time, symbolic links are skipped */
-const findFiles = async (directory: string): Promise<string[]> => {
+/** Collect the supported audio files of a folder tree, or of the folder itself when it is not deep, one folder at a time, symbolic links are skipped */
+const findFiles = async (directory: string, deep: boolean): Promise<string[]> => {
   const entries = await fs.promises.readdir(directory, { withFileTypes: true });
   const found: string[] = [];
 
   for (const entry of entries) {
     const entryPath = path.join(directory, entry.name);
     // an entry that is a symbolic link is neither a directory nor a file here
-    if (entry.isDirectory()) found.push(...(await findFiles(entryPath)));
+    if (entry.isDirectory() && deep) found.push(...(await findFiles(entryPath, deep)));
     else if (entry.isFile() && isSupported(entryPath)) found.push(entryPath);
   }
 
@@ -95,15 +95,15 @@ const writeMeta = async (fileName: string, existingTracks: Map<string, Track>, d
   await Promise.race([store(), timedOut]);
 };
 
-/** Scan a defined folder for tracks; an aborted signal ends the scan with its error, so the caller does not take the folder for scanned */
-const scanFolder = async (folderPath: string, sender: WebContents, signal: AbortSignal = quitSignal) => {
+/** Scan a defined folder for tracks, and the folders below it unless it is not deep; an aborted signal ends the scan with its error, so the caller does not take the folder for scanned */
+const scanFolder = async (folderPath: string, sender: WebContents, deep = true, signal: AbortSignal = quitSignal) => {
   if (!global._database) throw new Error('Database is not connected');
   const database = global._database;
   const appDataPath = global._appDataPath;
 
-  const files = (await findFiles(folderPath)).sort();
+  const files = (await findFiles(folderPath, deep)).sort();
   signal.throwIfAborted();
-  const library = await getLibrary(database);
+  const library = await getTracksInside(database, folderPath);
   const existingTracks = new Map(library.map((track) => [track.path, track]));
   let currentFolder = folderPath;
 

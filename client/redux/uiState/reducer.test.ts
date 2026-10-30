@@ -345,6 +345,17 @@ describe('uiState reducer', () => {
       expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.1 } } }, track).normalization).toBe('track');
     });
 
+    it('watches the library folders unless it is turned off, and keeps what was saved', () => {
+      const off = run({ type: 'SET_WATCH_FOLDERS', payload: { enabled: false } });
+
+      expect(initial.watchFolders).toBe(true);
+      expect(off.watchFolders).toBe(false);
+      expect(run({ type: 'SET_WATCH_FOLDERS', payload: { enabled: true } }, off).watchFolders).toBe(true);
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { watchFolders: false } } }).watchFolders).toBe(false);
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { watchFolders: 'x' as never } } }, off).watchFolders).toBe(true);
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.1 } } }, off).watchFolders).toBe(false);
+    });
+
     it('looks up the photos of the artists unless it is turned off, and keeps what was saved', () => {
       const off = run({ type: 'SET_ARTIST_PHOTOS', payload: { enabled: false } });
 

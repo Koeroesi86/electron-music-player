@@ -55,7 +55,7 @@ describe('scanFolder', () => {
     const controller = new AbortController();
     send.mockImplementation((channel) => channel === 'SCANNING_FILE' && controller.abort());
 
-    await expect(scanFolder(root, sender, controller.signal)).rejects.toThrow();
+    await expect(scanFolder(root, sender, true, controller.signal)).rejects.toThrow();
 
     expect(scanningFiles()).toHaveLength(1);
   });
