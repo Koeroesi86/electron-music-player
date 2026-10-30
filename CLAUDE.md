@@ -10,7 +10,7 @@ CI (`.github/workflows/`: `test.yml`, `dist.yml`, wired together by `pr-checks.y
 2. `npm run fallow` (dead code, unused dependencies and stale suppressions fail; complexity and duplication are reported)
 3. `npm run typecheck`
 4. `npm run test:coverage` (Vitest with coverage thresholds in `vitest.config.ts`, `--project backend` or `--project frontend` for one side with `npm test`)
-5. `npm run test:e2e` (Playwright in `e2e/`, run by `e2e.yml` on every system: it starts the built `out/`, so `npm run build` first, and measures the audio the app sends out, see Testing the app)
+5. `npm run test:e2e` (Playwright in `e2e/`, run by `test.yml` on every system, after the build, with the Playwright report kept as an artifact: it starts the built `out/`, so `npm run build` first, and measures the audio the app sends out, see Testing the app)
 6. `npm run security:electron` (Electronegativity on `electron/`; fails on a finding that is not in `electronegativity-baseline.json`, `node scripts/security-scan.js --update` after fixing one)
 7. `npm run build`, then `npm run dist`, `npm run check:dist` (nothing that must not ship is in the package) and `npm run smoke:packaged` (the packaged app opens and answers; needs a display, `xvfb-run` on a headless Linux; `npm run smoke` does the same for `out/`)
 

@@ -27,7 +27,7 @@ describe('workflows', () => {
     expect(interpolated).toEqual([])
   })
 
-  it.each(['test.yml', 'dist.yml', 'e2e.yml'])('%s runs on Linux, macOS and Windows without fail-fast', (name) => {
+  it.each(['test.yml', 'dist.yml'])('%s runs on Linux, macOS and Windows without fail-fast', (name) => {
     const text = read(name)
 
     expect(text).toMatch(/fail-fast: false/)
@@ -38,21 +38,17 @@ describe('workflows', () => {
 
   it('test.yml runs the cheap checks first', () => {
     const text = read('test.yml')
-    const order = ['npm run lint', 'npm run fallow', 'npm run typecheck', 'npm run test:coverage'].map((command) => text.indexOf(command))
+    const order = ['npm run lint', 'npm run fallow', 'npm run typecheck', 'npm run test:coverage', 'npm run build', 'npm run test:e2e'].map((command) => text.indexOf(command))
 
     expect(order.every((index) => index >= 0)).toBe(true)
     expect(order).toEqual([...order].sort((a, b) => a - b))
   })
 
-  it('e2e.yml builds the app before it drives it', () => {
-    const text = read('e2e.yml')
+  it('test.yml keeps the report of the end to end tests', () => {
+    const text = read('test.yml')
 
-    expect(text.indexOf('npm run build')).toBeGreaterThan(-1)
-    expect(text.indexOf('npm run build')).toBeLessThan(text.indexOf('npm run test:e2e'))
-  })
-
-  it.each(['pr-checks.yml', 'build.yml'])('%s runs the end to end tests', (name) => {
-    expect(read(name)).toMatch(/uses: \.\/\.github\/workflows\/e2e\.yml/)
+    expect(text).toMatch(/name: e2e-report-/)
+    expect(text).toMatch(/playwright-report/)
   })
 
   it('dist.yml builds before it packages', () => {

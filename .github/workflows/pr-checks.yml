@@ -15,9 +15,6 @@ jobs:
   test:
     uses: ./.github/workflows/test.yml
 
-  e2e:
-    uses: ./.github/workflows/e2e.yml
-
   # the findings that the change itself introduces; the whole-repository check runs in the test job
   audit:
     runs-on: ubuntu-latest
@@ -54,11 +51,11 @@ jobs:
   # so the jobs and the operating systems can change without touching the branch protection
   required-checks:
     if: always()
-    needs: [test, e2e, audit, dist, security, codeql]
+    needs: [test, audit, dist, security, codeql]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Tests, end to end tests, audit, packaging, security scans and CodeQL passed
+      - name: Tests (with the end to end tests), audit, packaging, security scans and CodeQL passed
         env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
