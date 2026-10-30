@@ -20,18 +20,12 @@ export interface Probe {
 declare global {
   interface Window {
     audioProbe?: Probe;
-    /** The audio element that plays now: the player may hold a second one for the track that follows */
-    activeAudio?: () => HTMLAudioElement | undefined;
   }
 }
 
 export const installAudioProbe = () => {
   const probe: Probe = { sampleRate: 0, windows: [] };
   window.audioProbe = probe;
-  window.activeAudio = () => {
-    const elements = Array.from(document.querySelectorAll('audio'));
-    return elements.find((element) => !element.paused) ?? elements[0];
-  };
 
   const processorSource = `
     registerProcessor('probe', class extends AudioWorkletProcessor {

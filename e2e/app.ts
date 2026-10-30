@@ -4,10 +4,11 @@ import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 import { startDirectory } from '../scripts/screenshot-fixtures';
+import { installActiveAudio } from './active-audio';
 import { installAudioProbe } from './audio-probe';
 import { albums, writeLibrary } from './library';
 
-interface Session {
+export interface Session {
   app: ElectronApplication;
   page: Page;
 }
@@ -86,43 +87,11 @@ export const test = base.extend<Fixtures>({
     // a clean profile, so the run does not touch the library of the machine
     const home = mkdtempSync(join(tmpdir(), 'emusic-e2e-'));
     const running: ElectronApplication[] = [];
-    const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env;
-    // Windows keeps its profile folders (chromium needs them, and the app data folder does not follow the variables there)
-    const profile: Record<string, string> =
-      process.platform === 'win32' ? {} : { HOME: home, XDG_CONFIG_HOME: home, LANG: 'en_US.UTF-8', LC_ALL: 'en_US.UTF-8' };
 
     await use(async () => {
-      const app = await electron.launch({
-        args: [
-          join(root, 'out/index.js'),
-          // the audio runs with its clock and its graph, to a sink that plays nothing: the tests measure what the app sends to it
-          '--disable-audio-output',
-          '--autoplay-policy=no-user-gesture-required',
-          '--lang=en-US',
-          `--user-data-dir=${join(home, 'user-data')}`,
-          ...(process.platform === 'linux' ? ['--no-sandbox', '--ozone-platform=headless'] : []),
-        ],
-        env: {
-          ...Object.fromEntries(Object.entries(inherited).filter((entry): entry is [string, string] => entry[1] !== undefined)),
-          ...profile,
-          NODE_ENV: 'production',
-          EMUSIC_NO_UPDATE: '1',
-          EMUSIC_NO_ARTIST_PHOTOS: '1',
-          // the library is in the profile of the run on every system, not in the app data folder of the user (macOS and Windows do not follow HOME there)
-          EMUSIC_APP_DATA: home,
-          EMUSIC_RADIO_DIRECTORY: directory.origin,
-        },
-      });
-      running.push(app);
-      // before the page loads, so the first context of the app is tapped
-      await app.context().addInitScript(installAudioProbe);
-      const page = await findPage(app);
-      // a window of the same size on every system, or the layout of a small display moves the controls out of reach
-      await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach((window) => window.setContentSize(1360, 850)));
-      // the init script runs on the next load; the first one may have been before it
-      if (!(await page.evaluate(() => Boolean(window.audioProbe)))) await page.reload();
-      await page.waitForFunction(() => (document.getElementById('root')?.childElementCount ?? 0) > 0);
-      return { app, page };
+      const session = await launchApp({ home, radioDirectory: directory.origin, initScripts: [installActiveAudio, installAudioProbe] });
+      running.push(session.app);
+      return session;
     });
 
     await Promise.all(running.map(quit));
@@ -134,6 +103,54 @@ export const test = base.extend<Fixtures>({
     }
   },
 });
+
+interface LaunchOptions {
+  /** The profile of the app: its user data, and where the system looks for the profile of the user */
+  home: string;
+  /** The station directory the app is pointed to */
+  radioDirectory: string;
+  /** Added to the page before its own code runs, so the first audio context of the app is seen by them */
+  /** The first one installs window.activeAudio, which says whether they ran */
+  initScripts: (() => void)[];
+}
+
+/** Starts the built app (npm run build first) on a profile, and answers when its window shows the page */
+export const launchApp = async ({ home, radioDirectory, initScripts }: LaunchOptions): Promise<Session> => {
+  const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env;
+  // Windows keeps its profile folders (chromium needs them, and the app data folder does not follow the variables there)
+  const profile: Record<string, string> = process.platform === 'win32' ? {} : { HOME: home, XDG_CONFIG_HOME: home, LANG: 'en_US.UTF-8', LC_ALL: 'en_US.UTF-8' };
+
+  const app = await electron.launch({
+    args: [
+      join(root, 'out/index.js'),
+      // the audio runs with its clock and its graph, to a sink that plays nothing: the tests measure what the app sends to it
+      '--disable-audio-output',
+      '--autoplay-policy=no-user-gesture-required',
+      '--lang=en-US',
+      `--user-data-dir=${join(home, 'user-data')}`,
+      // Linux draws without a display server: a window on a desktop session gets no frames while the compositor does not ask for them (a locked screen, another workspace)
+      ...(process.platform === 'linux' ? ['--no-sandbox', '--ozone-platform=headless'] : []),
+    ],
+    env: {
+      ...Object.fromEntries(Object.entries(inherited).filter((entry): entry is [string, string] => entry[1] !== undefined)),
+      ...profile,
+      NODE_ENV: 'production',
+      EMUSIC_NO_UPDATE: '1',
+      EMUSIC_NO_ARTIST_PHOTOS: '1',
+      // the library is in the profile of the run on every system, not in the app data folder of the user (macOS and Windows do not follow HOME there)
+      EMUSIC_APP_DATA: home,
+      EMUSIC_RADIO_DIRECTORY: radioDirectory,
+    },
+  });
+  await Promise.all(initScripts.map((script) => app.context().addInitScript(script)));
+  const page = await findPage(app);
+  // a window of the same size on every system, or the layout of a small display moves the controls out of reach
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach((window) => window.setContentSize(1360, 850)));
+  // the init scripts run on the next load; the first one may have been before them
+  if (!(await page.evaluate(() => Boolean(window.activeAudio)))) await page.reload();
+  await page.waitForFunction(() => (document.getElementById('root')?.childElementCount ?? 0) > 0);
+  return { app, page };
+};
 
 export { expect };
 
