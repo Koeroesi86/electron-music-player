@@ -3,6 +3,7 @@ import type { Folder, Track } from '../../../types/library';
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../../../types/radio';
 import type { GroupSummary } from '../../../types/library';
 import type { GroupKind } from '../../../types/library-query';
+import { parseRadioQuery } from '../../../types/radio-query';
 import type { UpdateState } from '../../../types/update';
 import { electronAPI } from '../../electron-api';
 import { debounce } from '../../utils/debounce';
@@ -36,7 +37,11 @@ function addListeners(store: Store) {
     store.dispatch({ type: 'LAUNCHER_STATE', payload })
   );
   electronAPI.on<UpdateState>('UPDATE_STATE', (payload) => store.dispatch({ type: 'UPDATE_STATE', payload }));
-  electronAPI.on<{ settings: Partial<PersistedSettings> }>('RESTORE_SETTINGS', (payload) => store.dispatch({ type: 'RESTORE_SETTINGS', payload }));
+  electronAPI.on<{ settings: Partial<PersistedSettings> }>('RESTORE_SETTINGS', (payload) => {
+    store.dispatch({ type: 'RESTORE_SETTINGS', payload });
+    // the list that opened before the settings arrived was asked for without the saved filters, and its answer is dropped
+    if ('radioQuery' in payload.settings) store.dispatch({ type: 'SEARCH_RADIO', payload: { query: parseRadioQuery(payload.settings.radioQuery) } });
+  });
   electronAPI.on<{ fileName: string; progress: number; totalCount: number }>('SCANNING_FILE', (payload) => store.dispatch({ type: 'SCANNING_FILE', payload }));
   electronAPI.on<{ query: RadioQuery; stations: RadioStation[]; hasMore?: boolean; error?: string }>('RADIO_STATIONS', (payload) =>
     store.dispatch({ type: 'RADIO_STATIONS', payload })

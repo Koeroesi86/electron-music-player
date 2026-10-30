@@ -419,6 +419,23 @@ describe('connection middleware', () => {
       expect(send).toHaveBeenLastCalledWith('SAVE_SETTINGS', expect.objectContaining({ groupSort: { field: 'name', direction: 'desc' } }));
     });
 
+    it('searches the radio with the saved filters when the settings arrive', async () => {
+      const { store, send, listen } = await setup();
+
+      listen('RESTORE_SETTINGS', { settings: { radioQuery: { tag: 'jazz', country: 'Hungary' } } });
+
+      expect(send).toHaveBeenCalledWith('RADIO_SEARCH', { tag: 'jazz', country: 'Hungary' });
+      expect(store.getState().radio).toMatchObject({ query: { tag: 'jazz', country: 'Hungary' }, loading: true });
+    });
+
+    it('does not search the radio when the settings have no filters saved', async () => {
+      const { send, listen } = await setup();
+
+      listen('RESTORE_SETTINGS', { settings: { coverSize: 150 } });
+
+      expect(send).not.toHaveBeenCalledWith('RADIO_SEARCH', expect.anything());
+    });
+
     it('limits the lists to the selected folders the library has, and ignores a stale one', async () => {
       const { store, listen, fetchMock } = await setup(emptyPage);
       store.dispatch({ type: 'STORE_TRACK_PAGE', payload: { page: 0, items: [], total: 500 } });
