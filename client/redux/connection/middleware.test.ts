@@ -392,6 +392,14 @@ describe('connection middleware', () => {
         expect(send).toHaveBeenLastCalledWith('ARTIST_PHOTOS_WANTED', { artists: [{ key: 'adam', name: 'Adam' }] });
       });
 
+      it('saves the setting that turns the watching of the library folders off', async () => {
+        const { store, send } = await setup();
+
+        store.dispatch({ type: 'SET_WATCH_FOLDERS', payload: { enabled: false } });
+
+        expect(send).toHaveBeenCalledWith('SAVE_SETTINGS', expect.objectContaining({ watchFolders: false }));
+      });
+
       it('fetches the covers again when the main process has stored photos', async () => {
         const { store, listen } = await setup();
         store.dispatch(page('artist'));

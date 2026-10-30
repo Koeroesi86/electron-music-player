@@ -159,6 +159,7 @@ const persistedKeys = [
   'coverSize',
   'groupSort',
   'artistPhotos',
+  'watchFolders',
   'libraryFolders',
   'radioQuery',
 ] satisfies (keyof PersistedSettings)[];
@@ -238,6 +239,7 @@ const handleActions = actionMiddleware((store) => [
 
     photoKinds.forEach((kind) => Object.values(library.groups[kind].pages).forEach(requestPhotos));
   }),
+  onAction('SET_WATCH_FOLDERS', ({ payload }) => saveSettings({ ...store.getState().uiState, watchFolders: payload.enabled })),
   onAction('LOAD_LIBRARY_PAGE', ({ payload }) => void loadPage(store, payload.kind, payload.page)),
   // the cached pages are fetched again when they are shown, not all at once
   ...(['RESCAN_COMPLETE', 'TRACKS_ADDED_TO_LIBRARY', 'FOLDER_REMOVED_FROM_LIBRARY'] as const).map((type) =>

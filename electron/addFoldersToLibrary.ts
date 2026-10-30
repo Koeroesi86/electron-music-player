@@ -3,6 +3,7 @@ import type { Database } from 'sqlite3';
 import type { WebContents } from 'electron';
 import { deleteFolders, getFolders, getFoldersInside, saveFolders } from './libraryRepository';
 import scanFolders from './scanFolders';
+import { refreshLibraryWatching } from './libraryWatching';
 
 interface AddedFile {
   path: string;
@@ -35,6 +36,7 @@ async function addFoldersToLibrary(database: Database, payload: unknown, sender:
   sender.send('STORE_FOLDERS', { folders: await getFolders(database) });
   sender.send('FOLDERS_ADDED_TO_LIBRARY', { folders });
 
+  await refreshLibraryWatching();
   await scanFolders(folders, sender);
   sender.send('TRACKS_ADDED_TO_LIBRARY', {});
 }

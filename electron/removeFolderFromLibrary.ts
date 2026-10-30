@@ -1,5 +1,6 @@
 import type { Database } from 'sqlite3';
 import type { WebContents } from 'electron';
+import { refreshLibraryWatching } from './libraryWatching';
 import { deleteFolders, deleteTracksInside, getFolders, getFoldersInside } from './libraryRepository';
 
 /** Remove a library folder, the folders below it and their tracks from the library, the files stay on disk */
@@ -11,6 +12,7 @@ async function removeFolderFromLibrary(database: Database, target: unknown, send
   await deleteTracksInside(database, target);
   sender.send('STORE_FOLDERS', { folders: await getFolders(database) });
   sender.send('FOLDER_REMOVED_FROM_LIBRARY', {});
+  await refreshLibraryWatching();
 }
 
 export default removeFolderFromLibrary;

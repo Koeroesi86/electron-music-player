@@ -123,7 +123,10 @@ if (!fs.existsSync(appDataPath)) {
 const libraryLocation = resolve(appDataPath, './library.sqlite');
 
 // a test run asks a directory of its own, the real one needs the network
-const radio = createRadioBrowser(`eMusic/${app.getVersion()}`, process.env.EMUSIC_RADIO_DIRECTORY);
+const radio = createRadioBrowser(`eMusic/${app.getVersion()}`, process.env.EMUSIC_RADIO_DIRECTORY, {
+  cachePath: resolve(appDataPath, './radio-mirrors.json'),
+  streamsPath: resolve(appDataPath, './radio-streams.json'),
+});
 
 const radioArt = createRadioArt();
 

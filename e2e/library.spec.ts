@@ -1,4 +1,4 @@
-import { rename } from 'fs/promises';
+import { rename, rm } from 'fs/promises';
 import { join } from 'path';
 import { addFolder, expect, libraryTracks, navigate, quit, test } from './app';
 import { albums, writeTrack } from './library';
@@ -43,6 +43,17 @@ test('picks up a file that was added to the folder with a rescan', async ({ sess
   await page.getByRole('button', { name: 'Rescan' }).click();
 
   await expect.poll(async () => (await libraryTracks(page)).length).toBe(5);
+});
+
+test('picks up files that were added to and removed from a folder without a rescan', async ({ session: { page }, music }) => {
+  const album = { ...albums[1], title: 'Fresh Start', tracks: [{ title: 'New Note', frequency: 330 }] };
+  writeTrack(join(music, 'fresh-start', 'disc-1'), album, 0);
+
+  await expect.poll(async () => (await libraryTracks(page)).length, { timeout: 20_000 }).toBe(5);
+
+  await rm(join(music, 'fresh-start'), { recursive: true });
+
+  await expect.poll(async () => (await libraryTracks(page)).length, { timeout: 20_000 }).toBe(4);
 });
 
 test('removes a folder from the library and leaves its files', async ({ session: { page }, music }) => {

@@ -24,8 +24,16 @@ export const withTimeout = <T>(promise: Promise<T>, fallback: T, timeout = folde
     );
   });
 
-/** Whether a file is in a folder or below it */
-export const isInsideFolder = (folderPath: string, filePath: string) => filePath.startsWith(folderPath.replace(/[\\/]+$/, '') + path.sep);
+/** Whether a file is in a folder or below it; the scan stores the paths of tracks with forward slashes, the folder keeps the ones it was picked with */
+export const isInsideFolder = (folderPath: string, filePath: string) => {
+  const trimmed = folderPath.replace(/[\\/]+$/, '');
+
+  return [`${trimmed.replace(/\\/g, '/')}/`, `${trimmed}${path.sep}`].some((prefix) => filePath.startsWith(prefix));
+};
+
+/** Whether a file is in a folder itself, not in a folder below it */
+export const isDirectlyInside = (folderPath: string, filePath: string) =>
+  isInsideFolder(folderPath, filePath) && !/[\\/]/.test(filePath.slice(folderPath.replace(/[\\/]+$/, '').length + 1));
 
 const hasEntries = async (folderPath: string) => {
   const directory = await fs.promises.opendir(folderPath);

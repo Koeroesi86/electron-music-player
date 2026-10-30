@@ -113,12 +113,14 @@ describe('rescanLibrary', () => {
   });
 
   it('still removes the track that is missing from a folder that can be read', async () => {
+    // the scan stores the paths of tracks with forward slashes, on every system
+    const stored = (name: string) => path.join(root, name).replace(/\\/g, '/');
     fs.writeFileSync(path.join(root, 'kept.flac'), '');
     await addFolder(root, 0);
-    await addTrack(database, track(path.join(root, 'kept.flac')));
-    await addTrack(database, track(path.join(root, 'deleted.flac')));
+    await addTrack(database, track(stored('kept.flac')));
+    await addTrack(database, track(stored('deleted.flac')));
     await rescan();
 
-    expect((await getLibrary(database)).map((item) => item.path)).toEqual([path.join(root, 'kept.flac')]);
+    expect((await getLibrary(database)).map((item) => item.path)).toEqual([stored('kept.flac')]);
   });
 });

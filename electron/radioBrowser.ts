@@ -1,8 +1,16 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve4, resolve6, reverse } from 'node:dns/promises';
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../types/radio';
 import { parseRadioSearch, radioPageSize, radioSortOrders } from '../types/radio-query';
 
 const defaultDirectoryUrl = 'https://all.api.radio-browser.info';
+const directoryHost = 'all.api.radio-browser.info';
+// used when neither the directory, the DNS nor the cached list names a mirror
+const knownMirrors = ['https://de1.api.radio-browser.info', 'https://de2.api.radio-browser.info', 'https://fi1.api.radio-browser.info'];
 const requestTimeout = 10000;
+// the mirrors asked at once, the first answer wins
+const raceSize = 3;
+const maxStoredStreams = 500;
 const optionLimit = { countries: 300, languages: 300, codecs: 20 };
 const tagLimit = 40;
 const maxLogos = 2000;
@@ -43,6 +51,18 @@ const toTag = (value: unknown): RadioTag | undefined =>
   isRecord(value) && text(value.name) ? { name: text(value.name), stationCount: count(value.stationcount) } : undefined;
 
 const toServer = (value: unknown) => (isRecord(value) && text(value.name) ? `https://${text(value.name)}` : undefined);
+
+const isMirrorHost = (name: string) => name.endsWith('.api.radio-browser.info');
+
+/** The mirrors behind the round robin host, from the reverse records of its addresses (the way the directory documents) */
+const resolveMirrors = async (host = directoryHost) => {
+  const addresses = (await Promise.allSettled([resolve4(host), resolve6(host)])).flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+  const names = (await Promise.allSettled(addresses.map((address) => reverse(address)))).flatMap((result) =>
+    result.status === 'fulfilled' ? result.value : []
+  );
+
+  return [...new Set(names.filter(isMirrorHost))].map((name) => `https://${name}`);
+};
 
 const toList = <T>(value: unknown, convert: (item: unknown) => T | undefined) => {
   if (!Array.isArray(value)) throw new Error('Unexpected answer of the station directory');
@@ -97,31 +117,60 @@ const optionSources = {
 } satisfies Record<RadioOptionKind, { path: string; order: string; valueKey: string }>;
 
 /** Client of the radio-browser.info API: it has no single host, so a server is picked at random and the next one is tried when it fails */
-export const createRadioBrowser = (userAgent: string, directoryUrl = defaultDirectoryUrl) => {
+export const createRadioBrowser = (
+  userAgent: string,
+  directoryUrl = defaultDirectoryUrl,
+  { cachePath, streamsPath, findMirrors = resolveMirrors }: { cachePath?: string; streamsPath?: string; findMirrors?: () => Promise<string[]> } = {}
+) => {
   let servers: Promise<string[]> | undefined;
 
-  const fetchJson = async (url: string): Promise<unknown> => {
-    const response = await fetch(url, { headers: { 'User-Agent': userAgent }, signal: AbortSignal.timeout(requestTimeout) });
+  const fetchJson = async (url: string, cancel?: AbortSignal): Promise<unknown> => {
+    const signal = AbortSignal.any([AbortSignal.timeout(requestTimeout), ...(cancel ? [cancel] : [])]);
+    const response = await fetch(url, { headers: { 'User-Agent': userAgent }, signal });
     if (!response.ok) throw new Error(`Station directory ${url} answered ${response.status}`);
 
     return response.json();
   };
 
-  const discoverServers = () =>
+  const listServers = () =>
     fetchJson(`${directoryUrl}/json/servers`)
-      .then((list) => shuffled(toList(list, toServer)))
-      .then((list) => (list.length ? list : [directoryUrl]))
-      .catch(() => [directoryUrl]);
+      .then((list) => toList(list, toServer))
+      .catch(() => []);
+
+  // only the public directory has mirrors to look up, a directory of the environment is the only server
+  const isPublicDirectory = directoryUrl === defaultDirectoryUrl;
+
+  const readCache = async () => {
+    const list: unknown = await readFile(cachePath ?? '', 'utf8').then(JSON.parse, () => []);
+
+    return Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string' && URL.canParse(item)) : [];
+  };
+
+  const writeCache = (list: string[]) => (cachePath ? writeFile(cachePath, JSON.stringify(list)).catch(() => undefined) : undefined);
+
+  const discoverServers = async () => {
+    const found = shuffled(await listServers());
+    if (found.length || !isPublicDirectory) return found.length ? found : [directoryUrl];
+    const resolved = shuffled(await findMirrors().catch(() => []));
+    if (resolved.length) await writeCache(resolved);
+
+    return [...resolved, ...(await readCache()), ...knownMirrors, directoryUrl].filter((server, index, all) => all.indexOf(server) === index);
+  };
 
   const getServers = () => {
     servers ??= discoverServers();
     return servers;
   };
 
-  const fetchFrom = async ([server, ...others]: string[], path: string, lastError?: unknown): Promise<unknown> => {
-    if (!server) throw lastError ?? new Error('No station directory server is available');
+  /** Asks a few mirrors at once and takes the first answer, the next few are asked when all of them fail */
+  const fetchFrom = async (list: string[], path: string, lastError?: unknown): Promise<unknown> => {
+    const [race, others] = [list.slice(0, raceSize), list.slice(raceSize)];
+    if (!race.length) throw lastError ?? new Error('No station directory server is available');
+    const losers = new AbortController();
 
-    return fetchJson(`${server}${path}`).catch((error) => fetchFrom(others, path, error));
+    return Promise.any(race.map((server) => fetchJson(`${server}${path}`, losers.signal)))
+      .finally(() => losers.abort())
+      .catch((error) => fetchFrom(others, path, error instanceof AggregateError ? error.errors[0] : error));
   };
 
   const request = async (path: string) => fetchFrom(await getServers(), path);
@@ -180,8 +229,31 @@ export const createRadioBrowser = (userAgent: string, directoryUrl = defaultDire
     return toStations(await request(`/json/stations/byuuid?${new URLSearchParams({ uuids: uuids.join(',') })}`));
   };
 
-  /** Also registers a click of the station, which ranks it in the directory */
-  const resolveStream = async (uuid: string) => toStreamUrl(await request(`/json/url/${encodeURIComponent(uuid)}`));
+  // the stream of every station that was played, for the time the directory can not be asked
+  const readStreams = async (): Promise<Record<string, string>> => {
+    const streams: unknown = await readFile(streamsPath ?? '', 'utf8').then(JSON.parse, () => ({}));
+
+    return Object.fromEntries(Object.entries(isRecord(streams) ? streams : {}).flatMap(([uuid, url]) => (typeof url === 'string' ? [[uuid, url]] : [])));
+  };
+
+  const storeStream = async (uuid: string, url: string) => {
+    if (!streamsPath) return;
+    const streams = Object.entries(await readStreams()).filter(([stored]) => stored !== uuid);
+    const kept = [...streams, [uuid, url]].slice(-maxStoredStreams);
+    await writeFile(streamsPath, JSON.stringify(Object.fromEntries(kept))).catch(() => undefined);
+  };
+
+  /** Also registers a click of the station, which ranks it in the directory; the stream played last is used when the directory is down */
+  const resolveStream = (uuid: string) =>
+    request(`/json/url/${encodeURIComponent(uuid)}`)
+      .then(toStreamUrl)
+      .then((url) => storeStream(uuid, url).then(() => url))
+      .catch(async (error) => {
+        const stored = (await readStreams())[uuid];
+        if (stored === undefined) throw error;
+
+        return stored;
+      });
 
   return { searchStations, getTags, getOptions, findStations, resolveStream, getLogoUrl: (uuid: string) => logos.get(uuid) };
 };

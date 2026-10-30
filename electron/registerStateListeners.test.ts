@@ -13,6 +13,10 @@ vi.mock('electron', () => ({
   nativeTheme,
 }));
 
+const watching = vi.hoisted(() => ({ startLibraryWatching: vi.fn(async () => undefined), applyWatchSetting: vi.fn(async () => undefined) }));
+
+vi.mock('./libraryWatching', () => watching);
+
 vi.mock('./libraryRepository', () => ({ getFolders: async () => ['/music'] }));
 
 const saveSettings = vi.fn(async () => undefined);
@@ -42,6 +46,20 @@ describe('registerStateListeners', () => {
 
     expect(send).toHaveBeenCalledWith('STORE_FOLDERS', { folders: ['/music'] });
     expect(send).toHaveBeenCalledWith('RESTORE_SETTINGS', { settings: { volume: 1 } });
+  });
+
+  it('starts watching the library for the window that is ready', async () => {
+    const sender = { send, isDestroyed: () => false };
+
+    listeners.get('APP_READY')?.({ sender } as unknown as IpcMainEvent);
+
+    expect(watching.startLibraryWatching).toHaveBeenCalledWith(context.database, sender);
+  });
+
+  it('gives the saved settings to the watching of the library', async () => {
+    listeners.get('SAVE_SETTINGS')?.({ sender: destroyedSender } as unknown as IpcMainEvent, { watchFolders: false });
+
+    expect(watching.applyWatchSetting).toHaveBeenCalledWith({ watchFolders: false });
   });
 
   it('does not send to a window that was closed while the settings were saved', async () => {
