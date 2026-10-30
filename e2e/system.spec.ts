@@ -1,4 +1,4 @@
-import { expect, libraryTracks, navigate, test } from './app';
+import { expect, libraryTracks, navigate, quit, test } from './app';
 import { player } from './player';
 
 // where the app meets the system around it: the window, the media controls of the desktop, the protocol that serves the files
@@ -69,7 +69,7 @@ test('speaks the language that is picked, and keeps it after a restart', async (
   await navigate(session.page, 'Settings');
   await session.page.locator('select[class*="LanguageSelect__select"]').selectOption('hu');
   await expect(session.page.locator('[class*="Navigation__label"]').getByText('Kezdőlap')).toBeVisible();
-  await session.app.close();
+  await quit(session.app);
 
   const restarted = await start();
   await expect(restarted.page.locator('[class*="Navigation__label"]').getByText('Kezdőlap')).toBeVisible();

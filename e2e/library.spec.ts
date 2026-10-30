@@ -1,6 +1,6 @@
 import { rename } from 'fs/promises';
 import { join } from 'path';
-import { addFolder, expect, libraryTracks, navigate, test } from './app';
+import { addFolder, expect, libraryTracks, navigate, quit, test } from './app';
 import { albums, writeTrack } from './library';
 
 test('lists the albums and the songs of a scanned folder', async ({ session: { page } }) => {
@@ -27,7 +27,7 @@ test('filters the songs with the search', async ({ session: { page } }) => {
 });
 
 test('keeps the library when the app is started again', async ({ start, session }) => {
-  await session.app.close();
+  await quit(session.app);
 
   const { page } = await start();
 
@@ -58,7 +58,7 @@ test('removes a folder from the library and leaves its files', async ({ session:
 });
 
 test('marks a folder that cannot be reached and plays again once it is back', async ({ start, session, music }) => {
-  await session.app.close();
+  await quit(session.app);
   const moved = `${music}-away`;
   await rename(music, moved);
 
@@ -68,7 +68,7 @@ test('marks a folder that cannot be reached and plays again once it is back', as
   // the tracks stay in the library
   expect((await libraryTracks(offline.page)).length).toBe(4);
 
-  await offline.app.close();
+  await quit(offline.app);
   await rename(moved, music);
   const back = await start();
   await navigate(back.page, 'Folders');

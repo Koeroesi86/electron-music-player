@@ -1,4 +1,4 @@
-import { expect, navigate, test } from './app';
+import { expect, navigate, quit, test } from './app';
 import { player } from './player';
 
 // what the listener builds up in the app and expects to find again: playlists, favourites, the history, the settings
@@ -10,7 +10,7 @@ test('keeps a playlist of an album, and plays it', async ({ start, session }) =>
   await page.getByRole('menu').getByPlaceholder('Playlist name').fill('Evening');
   await page.getByRole('menu').getByRole('button', { name: 'Create' }).click();
   await expect(page.getByText('Evening', { exact: true }).first()).toBeVisible();
-  await session.app.close();
+  await quit(session.app);
 
   const restarted = await start();
   await restarted.page.getByText('Evening', { exact: true }).first().click();
@@ -25,7 +25,7 @@ test('lists a liked album under Liked, and keeps it after a restart', async ({ s
   await page.getByRole('button', { name: 'Add to favourites' }).first().click();
   await navigate(page, 'Liked');
   await expect(page.getByText('Pitch Perfect').filter({ visible: true }).first()).toBeVisible();
-  await session.app.close();
+  await quit(session.app);
 
   const restarted = await start();
   await navigate(restarted.page, 'Liked');
@@ -51,7 +51,7 @@ test('keeps the equalizer preset after a restart', async ({ start, session }) =>
   await navigate(session.page, 'Equalizer');
   await session.page.getByRole('button', { name: 'Vocal' }).click();
   await expect(session.page.getByRole('button', { name: 'Vocal' })).toHaveAttribute('aria-pressed', 'true');
-  await session.app.close();
+  await quit(session.app);
 
   const restarted = await start();
   await navigate(restarted.page, 'Equalizer');

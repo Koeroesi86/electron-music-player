@@ -1,4 +1,5 @@
 import { _electron as electron, test as base, expect, type ElectronApplication, type Page } from '@playwright/test';
+import { spawnSync } from 'child_process';
 import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
@@ -31,10 +32,14 @@ const tracksInLibrary = albums.flatMap((album) => album.tracks).length;
 
 const root = resolve(__dirname, '..');
 
-// an app that does not close in time (macOS has been seen to wait on a quit) is killed, as the profile is thrown away anyway
-const quit = async (app: ElectronApplication) => {
+/** Closes the app, and kills it (with its processes) when it has not closed in ten seconds: the profile is thrown away anyway, and a quit that hangs would take the whole run with it */
+export const quit = async (app: ElectronApplication) => {
   const closed = await Promise.race([app.close().then(() => true), new Promise<boolean>((done) => setTimeout(() => done(false), 10_000))]).catch(() => true);
-  if (!closed) app.process().kill('SIGKILL');
+  const pid = app.process().pid;
+  if (closed || !pid) return;
+
+  if (process.platform === 'win32') spawnSync('taskkill', ['/pid', `${pid}`, '/T', '/F']);
+  else app.process().kill('SIGKILL');
 };
 
 const pageUrl = 'emusic://app/index.html';
@@ -112,7 +117,12 @@ export const test = base.extend<Fixtures>({
     });
 
     await Promise.all(running.map(quit));
-    rmSync(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    // a process that was just killed may hold its files for a moment, and a left over temporary folder is no failure
+    try {
+      rmSync(home, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
+    } catch (error) {
+      console.warn('profile not removed', error);
+    }
   },
 });
 
