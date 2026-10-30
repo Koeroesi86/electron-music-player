@@ -8,6 +8,9 @@ const directoryHost = 'all.api.radio-browser.info';
 // used when neither the directory, the DNS nor the cached list names a mirror
 const knownMirrors = ['https://de1.api.radio-browser.info', 'https://de2.api.radio-browser.info', 'https://fi1.api.radio-browser.info'];
 const requestTimeout = 10000;
+// the mirrors asked at once, the first answer wins
+const raceSize = 3;
+const maxStoredStreams = 500;
 const optionLimit = { countries: 300, languages: 300, codecs: 20 };
 const tagLimit = 40;
 const maxLogos = 2000;
@@ -117,12 +120,13 @@ const optionSources = {
 export const createRadioBrowser = (
   userAgent: string,
   directoryUrl = defaultDirectoryUrl,
-  { cachePath, findMirrors = resolveMirrors }: { cachePath?: string; findMirrors?: () => Promise<string[]> } = {}
+  { cachePath, streamsPath, findMirrors = resolveMirrors }: { cachePath?: string; streamsPath?: string; findMirrors?: () => Promise<string[]> } = {}
 ) => {
   let servers: Promise<string[]> | undefined;
 
-  const fetchJson = async (url: string): Promise<unknown> => {
-    const response = await fetch(url, { headers: { 'User-Agent': userAgent }, signal: AbortSignal.timeout(requestTimeout) });
+  const fetchJson = async (url: string, cancel?: AbortSignal): Promise<unknown> => {
+    const signal = AbortSignal.any([AbortSignal.timeout(requestTimeout), ...(cancel ? [cancel] : [])]);
+    const response = await fetch(url, { headers: { 'User-Agent': userAgent }, signal });
     if (!response.ok) throw new Error(`Station directory ${url} answered ${response.status}`);
 
     return response.json();
@@ -158,10 +162,15 @@ export const createRadioBrowser = (
     return servers;
   };
 
-  const fetchFrom = async ([server, ...others]: string[], path: string, lastError?: unknown): Promise<unknown> => {
-    if (!server) throw lastError ?? new Error('No station directory server is available');
+  /** Asks a few mirrors at once and takes the first answer, the next few are asked when all of them fail */
+  const fetchFrom = async (list: string[], path: string, lastError?: unknown): Promise<unknown> => {
+    const [race, others] = [list.slice(0, raceSize), list.slice(raceSize)];
+    if (!race.length) throw lastError ?? new Error('No station directory server is available');
+    const losers = new AbortController();
 
-    return fetchJson(`${server}${path}`).catch((error) => fetchFrom(others, path, error));
+    return Promise.any(race.map((server) => fetchJson(`${server}${path}`, losers.signal)))
+      .finally(() => losers.abort())
+      .catch((error) => fetchFrom(others, path, error instanceof AggregateError ? error.errors[0] : error));
   };
 
   const request = async (path: string) => fetchFrom(await getServers(), path);
@@ -220,8 +229,31 @@ export const createRadioBrowser = (
     return toStations(await request(`/json/stations/byuuid?${new URLSearchParams({ uuids: uuids.join(',') })}`));
   };
 
-  /** Also registers a click of the station, which ranks it in the directory */
-  const resolveStream = async (uuid: string) => toStreamUrl(await request(`/json/url/${encodeURIComponent(uuid)}`));
+  // the stream of every station that was played, for the time the directory can not be asked
+  const readStreams = async (): Promise<Record<string, string>> => {
+    const streams: unknown = await readFile(streamsPath ?? '', 'utf8').then(JSON.parse, () => ({}));
+
+    return Object.fromEntries(Object.entries(isRecord(streams) ? streams : {}).flatMap(([uuid, url]) => (typeof url === 'string' ? [[uuid, url]] : [])));
+  };
+
+  const storeStream = async (uuid: string, url: string) => {
+    if (!streamsPath) return;
+    const streams = Object.entries(await readStreams()).filter(([stored]) => stored !== uuid);
+    const kept = [...streams, [uuid, url]].slice(-maxStoredStreams);
+    await writeFile(streamsPath, JSON.stringify(Object.fromEntries(kept))).catch(() => undefined);
+  };
+
+  /** Also registers a click of the station, which ranks it in the directory; the stream played last is used when the directory is down */
+  const resolveStream = (uuid: string) =>
+    request(`/json/url/${encodeURIComponent(uuid)}`)
+      .then(toStreamUrl)
+      .then((url) => storeStream(uuid, url).then(() => url))
+      .catch(async (error) => {
+        const stored = (await readStreams())[uuid];
+        if (stored === undefined) throw error;
+
+        return stored;
+      });
 
   return { searchStations, getTags, getOptions, findStations, resolveStream, getLogoUrl: (uuid: string) => logos.get(uuid) };
 };
