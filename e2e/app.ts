@@ -7,6 +7,7 @@ import { startDirectory } from '../scripts/screenshot-fixtures';
 import { installActiveAudio } from './active-audio';
 import { installAudioProbe } from './audio-probe';
 import { albums, writeLibrary } from './library';
+import { installNoNotifications } from './no-notifications';
 
 export interface Session {
   app: ElectronApplication;
@@ -142,7 +143,7 @@ export const launchApp = async ({ home, radioDirectory, initScripts }: LaunchOpt
       EMUSIC_RADIO_DIRECTORY: radioDirectory,
     },
   });
-  await Promise.all(initScripts.map((script) => app.context().addInitScript(script)));
+  await Promise.all([installNoNotifications, ...initScripts].map((script) => app.context().addInitScript(script)));
   const page = await findPage(app);
   // a window of the same size on every system, or the layout of a small display moves the controls out of reach
   await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach((window) => window.setContentSize(1360, 850)));
