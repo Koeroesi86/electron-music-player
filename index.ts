@@ -55,7 +55,7 @@ const isMockUpdate = !app.isPackaged && process.env.MOCK_UPDATE === '1';
 
 const argv = minimist(process.argv.slice(2));
 
-global._appDataPath = getAppDataPath(app.getPath('appData'), packageInfo.name, isDev);
+global._appDataPath = getAppDataPath(app.getPath('appData'), packageInfo.name, isDev, process.env.EMUSIC_APP_DATA);
 const appDataPath = global._appDataPath;
 
 const windows: AppWindows = {

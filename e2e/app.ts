@@ -88,6 +88,8 @@ export const test = base.extend<Fixtures>({
           NODE_ENV: 'production',
           EMUSIC_NO_UPDATE: '1',
           EMUSIC_NO_ARTIST_PHOTOS: '1',
+          // the library is in the profile of the run on every system, not in the app data folder of the user (macOS and Windows do not follow HOME there)
+          EMUSIC_APP_DATA: home,
           EMUSIC_RADIO_DIRECTORY: directory.origin,
         },
       });

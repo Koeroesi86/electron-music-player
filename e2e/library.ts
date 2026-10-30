@@ -16,7 +16,8 @@ export interface FixtureAlbum {
   tracks: FixtureTrack[];
 }
 
-const trackSeconds = 6;
+// long enough that a track does not end under a test that measures it several times on a slow runner (the tests that want an end skip to it)
+const trackSeconds = 30;
 
 /** Two albums of made up tracks, each a sine of its own pitch: 440 Hz is the A of the first track, 880 Hz an octave above, 100 Hz is in the reach of the bass of the equalizer */
 export const albums: FixtureAlbum[] = [
@@ -50,26 +51,33 @@ const cover = drawCover(
   64
 );
 
+// a track is the same bytes in every test, and a second of tone takes long to make: each is made once per run
+const made = new Map<string, Buffer>();
+
 export const writeTrack = (folder: string, album: FixtureAlbum, index: number, seconds = trackSeconds) => {
   const track = album.tracks[index];
+  const key = `${album.title}/${track.title}/${track.frequency}/${seconds}`;
+  if (!made.has(key)) {
+    made.set(
+      key,
+      writeFlac({
+        seconds,
+        frequency: track.frequency,
+        cover,
+        tags: {
+          TITLE: track.title,
+          ARTIST: album.artist,
+          ALBUMARTIST: album.artist,
+          ALBUM: album.title,
+          GENRE: album.genre,
+          TRACKNUMBER: index + 1,
+          DATE: album.year,
+        },
+      })
+    );
+  }
   mkdirSync(folder, { recursive: true });
-  writeFileSync(
-    join(folder, `${index + 1}-${track.title.toLowerCase().replace(/ /g, '-')}.flac`),
-    writeFlac({
-      seconds,
-      frequency: track.frequency,
-      cover,
-      tags: {
-        TITLE: track.title,
-        ARTIST: album.artist,
-        ALBUMARTIST: album.artist,
-        ALBUM: album.title,
-        GENRE: album.genre,
-        TRACKNUMBER: index + 1,
-        DATE: album.year,
-      },
-    })
-  );
+  writeFileSync(join(folder, `${index + 1}-${track.title.toLowerCase().replace(/ /g, '-')}.flac`), made.get(key) ?? Buffer.alloc(0));
 };
 
 /** Writes the albums, a folder each, in the folder */
