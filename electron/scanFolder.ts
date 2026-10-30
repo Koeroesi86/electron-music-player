@@ -1,6 +1,7 @@
 import { parseFile } from 'music-metadata';
 import type { IAudioMetadata, IPicture } from 'music-metadata';
 import readAudioFormat from './readAudioFormat';
+import readLoudness from './readLoudness';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
@@ -39,7 +40,7 @@ const parsePicture = (picture: IPicture, album: string, appDataPath: string): st
   return path.basename(filePath);
 };
 
-const transformMeta = ({ common: metadata, format }: IAudioMetadata, fileName: string, appDataPath: string): Track => ({
+const transformMeta = ({ common: metadata, format, native }: IAudioMetadata, fileName: string, appDataPath: string): Track => ({
   path: normalizePath(fileName),
   artist: metadata.artist || '',
   albumArtist: metadata.albumartist || '',
@@ -52,6 +53,7 @@ const transformMeta = ({ common: metadata, format }: IAudioMetadata, fileName: s
   picture: metadata.picture && metadata.picture[0] ? parsePicture(metadata.picture[0], metadata.album || '', appDataPath) : null,
   duration: format.duration ?? null,
   ...readAudioFormat(format),
+  ...readLoudness(metadata, native),
 });
 
 const isEqual = (a: Track, b: Track) => {

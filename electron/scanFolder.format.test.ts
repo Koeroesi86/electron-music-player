@@ -14,6 +14,7 @@ vi.mock('music-metadata', () => ({ parseFile: vi.fn() }));
 const meta = (format: object) => ({
   common: { artist: 'Artist', album: 'Album', title: 'Title' },
   format: { duration: 60, ...format },
+  native: {},
 });
 
 describe('scanFolder audio format', () => {

@@ -1,6 +1,6 @@
 import path from 'path';
 import type { Database } from 'sqlite3';
-import type { AlbumSummary, AudioFormat, Folder, GroupSummary, LibraryPage, Track } from '../types/library';
+import type { AlbumSummary, AudioFormat, Folder, GroupSummary, LibraryPage, Loudness, Track } from '../types/library';
 import type {
   AlbumGroup,
   AlbumQuery,
@@ -42,10 +42,10 @@ export const deleteFolders = (database: Database, folders: Pick<Folder, 'path'>[
   );
 
 /** Remove the tracks below a folder from the library, the files stay on disk */
-/** The format the library holds of a track, undefined for a track it does not have */
+/** The format and the loudness the library holds of a track, undefined for a track it does not have */
 export const findTrackFormat = (database: Database, trackPath: string) =>
-  executeQuery<AudioFormat>(database, {
-    query: `SELECT codec, bitDepth, sampleRate, bitrate, vbr, lossless FROM library WHERE path = ?`,
+  executeQuery<AudioFormat & Loudness>(database, {
+    query: `SELECT codec, bitDepth, sampleRate, bitrate, vbr, lossless, trackGain, albumGain, trackPeak, albumPeak FROM library WHERE path = ?`,
     variables: [trackPath],
   }).then(([format]) => format);
 

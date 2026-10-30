@@ -3,6 +3,7 @@ import type { Favourite, FavouriteKey, HistoryItem, NewFavourite } from '../../t
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../../types/radio';
 import type { Playlist } from '../../types/playlists';
 import type { ThemeMode, ThemeSettings } from '../../types/theme';
+import type { NormalizationMode } from '../audio/loudness';
 import type { AlbumSort, GroupKind, GroupSort, TrackSort } from '../../types/library-query';
 import type { UpdateState } from '../../types/update';
 
@@ -42,6 +43,8 @@ export interface PersistedSettings {
   currentSong: Track | null;
   currentTime: number;
   volume: number;
+  /** Whether the tracks are levelled by their ReplayGain tags, and by which of them */
+  normalization: NormalizationMode;
   selectedAlbum: Album | null;
   maximized: boolean;
   shuffle: boolean;
@@ -187,6 +190,7 @@ export type AppAction =
   | PayloadAction<'SET_ONLINE_VIEW', { view: OnlineView }>
   | PayloadAction<'SET_TAB', { tab: Tab }>
   | PayloadAction<'SET_NAVIGATION_GROUP', { group: NavigationGroup; open: boolean }>
+  | PayloadAction<'SET_NORMALIZATION', { mode: NormalizationMode }>
   | PayloadAction<'SET_VOLUME', { volume: number | string }>
   | PayloadAction<'SET_CURRENT_TIME', { currentTime: number | string }>
   | PayloadAction<'SET_GAIN', { value: number | string; index: number }>

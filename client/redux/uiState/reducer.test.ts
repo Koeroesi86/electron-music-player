@@ -335,6 +335,16 @@ describe('uiState reducer', () => {
       expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.1 } } }, saved).groupSort).toEqual({ field: 'name', direction: 'desc' });
     });
 
+    it('levels the tracks by their album by default, takes the mode that is picked, and keeps what was saved', () => {
+      const track = run({ type: 'SET_NORMALIZATION', payload: { mode: 'track' } });
+
+      expect(initial.normalization).toBe('album');
+      expect(track.normalization).toBe('track');
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { normalization: 'off' } } }).normalization).toBe('off');
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { normalization: 'loud' as never } } }, track).normalization).toBe('album');
+      expect(run({ type: 'RESTORE_SETTINGS', payload: { settings: { volume: 0.1 } } }, track).normalization).toBe('track');
+    });
+
     it('looks up the photos of the artists unless it is turned off, and keeps what was saved', () => {
       const off = run({ type: 'SET_ARTIST_PHOTOS', payload: { enabled: false } });
 

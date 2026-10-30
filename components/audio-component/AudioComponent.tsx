@@ -4,17 +4,21 @@ import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { radioUuidOf } from '../../client/radio-track';
 import { sourceOf } from '../../client/audio/track-source';
 import { useGaplessAudio } from '../../client/hooks/use-gapless-audio';
+import { normalizationGain } from '../../client/audio/loudness';
+import type { NormalizationMode } from '../../client/audio/loudness';
 
 interface AudioComponentProps {
   currentSong: Track | null;
   isPlaying: boolean;
   volume: number;
+  normalization: NormalizationMode;
   /** The track that follows the current one, the second element loads it while the current one plays */
   upNext: Track | null;
   trackEnded: () => void;
   connectNode: (node: HTMLAudioElement | null) => void;
   connectStandbyNode: (node: HTMLAudioElement | null) => void;
   activateNode: (node: HTMLAudioElement) => void;
+  setNormalization: (node: HTMLAudioElement, factor: number) => void;
 }
 
 /** After this many files in a row that cannot be played, the player stops instead of cycling through the whole queue */
@@ -24,7 +28,18 @@ const reconnectDelay = (attempt: number) => Math.min(1000 * 2 ** attempt, maxRec
 
 const elementIndexes = [0, 1];
 
-const AudioComponent = ({ currentSong, isPlaying, volume, upNext, trackEnded, connectNode, connectStandbyNode, activateNode }: AudioComponentProps) => {
+const AudioComponent = ({
+  currentSong,
+  isPlaying,
+  volume,
+  normalization,
+  upNext,
+  trackEnded,
+  connectNode,
+  connectStandbyNode,
+  activateNode,
+  setNormalization,
+}: AudioComponentProps) => {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const attempts = useRef(0);
   const skipped = useRef(0);
@@ -120,6 +135,17 @@ const AudioComponent = ({ currentSong, isPlaying, volume, upNext, trackEnded, co
   }, [currentSong]);
 
   useEffect(gapless.preloadNext, [currentSong, upNext]);
+
+  // each element is levelled for the track it holds, the one that loads the next track too, so the hand-off needs no change; a station has no tags and plays as it is
+  useEffect(
+    () =>
+      gapless.elements.current.forEach((node, index) => {
+        const source = gapless.loadedSource(index);
+        const track = [currentSong, upNext].find((candidate) => candidate && source !== undefined && sourceOf(candidate) === source);
+        if (node) setNormalization(node, normalizationGain(track ?? undefined, normalization));
+      }),
+    [currentSong, upNext, normalization]
+  );
 
   return (
     <>

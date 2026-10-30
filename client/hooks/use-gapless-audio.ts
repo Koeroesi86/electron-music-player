@@ -149,6 +149,8 @@ export const useGaplessAudio = ({ currentSong, upNext, activateNode, onEnded, on
     preloadNext,
     isActive,
     activeElement,
+    /** The source an element holds, undefined for one that holds none */
+    loadedSource: (index: number) => loaded.current[index],
     cancelHandoff,
     setVolume: (volume: number) =>
       elements.current.forEach((node) => {

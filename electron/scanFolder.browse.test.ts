@@ -11,7 +11,7 @@ import { createTestDatabase } from './test-database';
 
 vi.mock('music-metadata', () => ({ parseFile: vi.fn() }));
 
-const meta = (common: object) => ({ common: { artist: 'Artist', album: 'Album', title: 'Title', ...common }, format: { duration: 60 } });
+const meta = (common: object) => ({ common: { artist: 'Artist', album: 'Album', title: 'Title', ...common }, format: { duration: 60 }, native: {} });
 
 describe('scanFolder album artist and genre', () => {
   let database: Database;

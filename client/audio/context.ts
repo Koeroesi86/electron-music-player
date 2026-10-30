@@ -20,6 +20,9 @@ let audioNode: HTMLAudioElement | null = null;
 // a second createMediaElementSource on it throws
 const input = audioContext.createGain();
 const wrappedElements = new Set<HTMLAudioElement>();
+// the loudness normalization of each element, as an element plays one track after the other
+const normalizers = new Map<HTMLAudioElement, GainNode>();
+const normalizationRamp = 0.05;
 let analyser: AnalyserNode | undefined;
 let mounted = false;
 const playStatus = createListeners<boolean>();
@@ -70,7 +73,10 @@ const wrapNode = (node: HTMLAudioElement) => {
 
   wrappedElements.add(node);
   listenToPlayStatus(node);
-  audioContext.createMediaElementSource(node).connect(input);
+  const normalizer = audioContext.createGain();
+  normalizers.set(node, normalizer);
+  audioContext.createMediaElementSource(node).connect(normalizer);
+  normalizer.connect(input);
 
   if (mounted) return;
 
@@ -92,6 +98,16 @@ const connectStandbyNode = (node: HTMLAudioElement | null) => node && wrapNode(n
 const activateNode = (node: HTMLAudioElement) => {
   wrapNode(node);
   audioNode = node;
+};
+
+/** Sets the factor an element is multiplied by; one that is not playing takes it at once, one that plays glides to it so a change of the mode does not click */
+const setNormalization = (node: HTMLAudioElement, factor: number) => {
+  const { gain } = normalizers.get(node) ?? {};
+  if (!gain) return;
+
+  gain.cancelScheduledValues(audioContext.currentTime);
+  if (node.paused) gain.setValueAtTime(factor, audioContext.currentTime);
+  else gain.setTargetAtTime(factor, audioContext.currentTime, normalizationRamp);
 };
 
 const connectToSource = (item: AudioNode) => {
@@ -139,6 +155,7 @@ export const Audio = createContext({
   connectNode,
   connectStandbyNode,
   activateNode,
+  setNormalization,
   connectToSource,
   connectDestination,
   createBiquadFilter,
