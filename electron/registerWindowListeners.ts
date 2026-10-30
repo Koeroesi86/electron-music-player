@@ -3,6 +3,7 @@ import type { BrowserWindow } from 'electron';
 import { resolve } from 'path';
 import type { AppWindows } from '../types/global';
 import { getMainWindow } from './getMainWindow';
+import closeSplash from './closeSplash';
 import type { ListenerContext } from './listenerContext';
 import { getMainTranslator, onLanguageChange } from './language';
 
@@ -23,8 +24,7 @@ const setPlaybackButtons = (main: BrowserWindow) => {
 const showMainWindow = (windows: AppWindows) => {
   const main = getMainWindow(windows);
   main.show();
-  windows.loading?.close();
-  windows.loading = null;
+  closeSplash(windows);
 
   if (!isWin) {
     main.setVibrancy('under-window');

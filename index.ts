@@ -1,5 +1,4 @@
-import { app, dialog } from 'electron';
-import type { BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 import { join, resolve } from 'path';
 import fs from 'fs';
 import minimist from 'minimist';
@@ -218,18 +217,13 @@ app
 
       event.preventDefault();
       databaseClosed = true;
-      console.log('quit: will-quit, closing the database');
-      closeDatabase(d).then(() => {
-        console.log('quit: database closed, quitting again');
-        app.quit();
-      });
+      closeDatabase(d).then(() => app.quit());
     });
 
-    app.on('before-quit', () => console.log('quit: before-quit'));
-    app.on('quit', () => console.log('quit: quit'));
+    // a window that is still open (the app waits for it to close before it quits) goes with the quit
+    app.on('before-quit', () => BrowserWindow.getAllWindows().forEach((window) => window.destroy()));
 
     app.on('window-all-closed', () => {
-      console.log('quit: window-all-closed');
       if (!isMac) {
         app.quit();
       }

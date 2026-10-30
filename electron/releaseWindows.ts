@@ -1,13 +1,13 @@
 import type { AppWindows } from '../types/global';
+import closeSplash from './closeSplash';
 
 /**
  * The main window is gone: the splash that waits for it goes with it, or it stays as the only window and the app never quits (the main window is
- * closed, or its page crashes, before it is shown). The splash may be gone already, closed by itself.
+ * closed, or its page crashes, before it is shown).
  */
 const releaseWindows = (windows: AppWindows) => {
-  if (windows.loading && !windows.loading.isDestroyed()) windows.loading.close();
+  closeSplash(windows);
   windows.main = null;
-  windows.loading = null;
 };
 
 export default releaseWindows;
