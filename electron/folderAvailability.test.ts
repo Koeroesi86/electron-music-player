@@ -77,4 +77,10 @@ describe('folderAvailability', () => {
     expect(isInsideFolder(path.join(path.sep, 'mnt', 'usb'), path.join(path.sep, 'mnt', 'usb', 'a.flac'))).toBe(true);
     expect(isInsideFolder(path.join(path.sep, 'mnt', 'usb'), path.join(path.sep, 'mnt', 'usb2', 'a.flac'))).toBe(false);
   });
+
+  it('finds a track of a folder that was picked with backslashes, as the scan stores it with forward slashes', () => {
+    expect(isInsideFolder('C:\\Music\\Rock', 'C:/Music/Rock/a.flac')).toBe(true);
+    expect(isInsideFolder('C:\\Music\\Rock\\', 'C:/Music/Rock/live/a.flac')).toBe(true);
+    expect(isInsideFolder('C:\\Music\\Rock', 'C:/Music/Rock2/a.flac')).toBe(false);
+  });
 });
