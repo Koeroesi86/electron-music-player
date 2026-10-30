@@ -56,6 +56,9 @@ test('maximizes the window from its own button', async ({ session: { app, page }
 
 test('closes the window with the close button, and quits the app where closing the last window quits it', async ({ session: { app, page } }) => {
   const windowClosed = page.waitForEvent('close');
+  // temporary: shows in the CI log how far the quit of the app gets
+  app.process().stdout?.on('data', (data) => console.log(`app: ${data}`));
+  app.process().stderr?.on('data', (data) => console.log(`app: ${data}`));
 
   await page.locator('[class*="WindowControls__button"][aria-label="Close"]').click();
 

@@ -218,10 +218,18 @@ app
 
       event.preventDefault();
       databaseClosed = true;
-      closeDatabase(d).then(() => app.quit());
+      console.log('quit: will-quit, closing the database');
+      closeDatabase(d).then(() => {
+        console.log('quit: database closed, quitting again');
+        app.quit();
+      });
     });
 
+    app.on('before-quit', () => console.log('quit: before-quit'));
+    app.on('quit', () => console.log('quit: quit'));
+
     app.on('window-all-closed', () => {
+      console.log('quit: window-all-closed');
       if (!isMac) {
         app.quit();
       }
