@@ -1,9 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
-// the tests start the built app (npm run build first) and listen to its audio, see e2e/app.ts
+// the tests start the built app (npm run build first), see e2e/app.ts; the pictures of the website are taken with the same setup (npm run screenshots)
 export default defineConfig({
-  testDir: 'e2e',
-  testMatch: '*.spec.ts',
   // one app at a time: a window per test, and the audio is measured against a clock that a second app would load
   workers: 1,
   fullyParallel: false,
@@ -14,4 +12,8 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   reporter: process.env.CI ? [['github'], ['list'], ['html', { open: 'never' }]] : [['list']],
   use: { trace: 'retain-on-failure' },
+  projects: [
+    { name: 'e2e', testDir: 'e2e', testMatch: '*.spec.ts' },
+    { name: 'screenshots', testDir: 'e2e/screenshots', testMatch: '*.shots.ts' },
+  ],
 });
