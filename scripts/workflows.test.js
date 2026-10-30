@@ -48,7 +48,7 @@ describe('workflows', () => {
     const text = read('e2e.yml')
 
     expect(text.indexOf('npm run build')).toBeGreaterThan(-1)
-    expect(text.indexOf('npm run build')).toBeLessThan(text.indexOf('npm run e2e'))
+    expect(text.indexOf('npm run build')).toBeLessThan(text.indexOf('npm run test:e2e'))
   })
 
   it.each(['pr-checks.yml', 'build.yml'])('%s runs the end to end tests', (name) => {

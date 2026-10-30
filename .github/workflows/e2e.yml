@@ -27,7 +27,7 @@ jobs:
       - uses: ./.github/actions/install-dependencies
       - run: npm run build
       # the audio goes to a sink that plays nothing (--disable-audio-output), so the runners need no sound device; Linux draws the window headless
-      - run: npm run e2e
+      - run: npm run test:e2e
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:

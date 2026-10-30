@@ -13,7 +13,7 @@
     "test-utils-style-stub.ts",
     // the website, loaded by site/index.html
     "site/**",
-    // run by Playwright (npm run e2e), the helpers they import are reached from there
+    // run by Playwright (npm run test:e2e), the helpers they import are reached from there
     "playwright.config.ts",
     "e2e/**/*.spec.ts"
   ],

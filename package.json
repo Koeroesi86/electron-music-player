@@ -23,7 +23,7 @@
     "site": "node scripts/serve-site.js",
     "screenshots": "node scripts/screenshots.js",
     "security:electron": "node scripts/security-scan.js",
-    "e2e": "playwright test",
+    "test:e2e": "playwright test",
     "smoke": "node scripts/smoke.js",
     "smoke:packaged": "node scripts/smoke.js --packaged",
     "smoke:flatpak": "node scripts/smoke.js --flatpak",
