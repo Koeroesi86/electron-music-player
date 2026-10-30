@@ -36,7 +36,7 @@ export const refreshLibraryWatching = async (offline?: string[]) => {
   // the window can close while the folders are looked at
   if (watching !== current) return;
 
-  current.watcher.update(enabled ? folders.filter((folder) => !unreadable.includes(folder)) : []);
+  await current.watcher.update(enabled ? folders.filter((folder) => !unreadable.includes(folder)) : []);
 };
 
 /** Scan the library, and watch its folders until the window is gone, a changed folder is scanned after it is quiet; the scan at start and when a folder is back cover what a watcher does not see */
@@ -51,6 +51,11 @@ export const startLibraryWatching = async (database: Database, sender: WebConten
 
   rescanLibrary(sender);
   await refreshLibraryWatching();
+};
+
+/** Look at the watched folders for a change the watch did not report, as on a network drive; a look a moment ago is not repeated */
+export const checkLibraryWatching = async () => {
+  await watching?.watcher.check();
 };
 
 /** Follow the setting of the window */

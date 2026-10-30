@@ -1,13 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WebContents } from 'electron';
 import type { Database } from 'sqlite3';
-import { applyWatchSetting, refreshLibraryWatching, startLibraryWatching } from './libraryWatching';
+import { applyWatchSetting, checkLibraryWatching, refreshLibraryWatching, startLibraryWatching } from './libraryWatching';
 import { findOfflineFolders } from './folderAvailability';
 import { getFolders } from './libraryRepository';
 import { getSettings } from './settingsRepository';
 import rescanLibrary from './rescanLibrary';
 
-const folderWatcher = vi.hoisted(() => ({ update: vi.fn(), close: vi.fn(), onChange: undefined as ((folder: string) => void) | undefined }));
+const folderWatcher = vi.hoisted(() => ({
+  update: vi.fn(async () => undefined),
+  check: vi.fn(async () => undefined),
+  close: vi.fn(),
+  onChange: undefined as ((folder: string) => void) | undefined,
+}));
 
 vi.mock('./folderWatcher', () => ({
   createFolderWatcher: (onChange: (folder: string) => void) => {
@@ -29,7 +34,8 @@ describe('libraryWatching', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     handlers.clear();
-    folderWatcher.update.mockReset();
+    folderWatcher.update.mockReset().mockResolvedValue(undefined);
+    folderWatcher.check.mockReset().mockResolvedValue(undefined);
     folderWatcher.close.mockReset();
     vi.mocked(rescanLibrary).mockReset().mockResolvedValue(undefined);
     vi.mocked(getFolders).mockResolvedValue(folders);
@@ -90,6 +96,16 @@ describe('libraryWatching', () => {
 
     expect(findOfflineFolders).not.toHaveBeenCalled();
     expect(folderWatcher.update).toHaveBeenLastCalledWith(['/music', '/usb']);
+  });
+
+  it('looks at the folders when asked, and does nothing before there is a window', async () => {
+    await checkLibraryWatching();
+    expect(folderWatcher.check).not.toHaveBeenCalled();
+
+    await startLibraryWatching(database, sender);
+    await checkLibraryWatching();
+
+    expect(folderWatcher.check).toHaveBeenCalledOnce();
   });
 
   it('stops when the window is gone, and does nothing before there is one', async () => {
