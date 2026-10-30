@@ -23,8 +23,10 @@ const readModifiedTimes = async (folders: Folder[]) => {
 };
 
 /** The tracks below an offline folder are kept, its files cannot be told from missing ones */
-const removeMissingTracks = async (database: Database, offline: string[]) => {
-  const tracks = (await getLibrary(database)).filter((track) => !offline.some((folderPath) => isInsideFolder(folderPath, track.path)));
+const removeMissingTracks = async (database: Database, offline: string[], only?: string[]) => {
+  const tracks = (await getLibrary(database))
+    .filter((track) => !offline.some((folderPath) => isInsideFolder(folderPath, track.path)))
+    .filter((track) => !only || only.some((folderPath) => isInsideFolder(folderPath, track.path)));
   const present = await Promise.all(tracks.map((track) => exists(track.path)));
   const missing = tracks.filter((_track, index) => !present[index]);
 
@@ -33,7 +35,8 @@ const removeMissingTracks = async (database: Database, offline: string[]) => {
   await deleteTracks(database, missing);
 };
 
-async function rescanLibrary(sender: WebContents, forced = false) {
+/** Scan the changed folders, or with `only` just those of them that are named, and remove the tracks that are gone */
+async function rescanLibrary(sender: WebContents, forced = false, only?: string[]) {
   const database = global._database;
   if (!database) return;
   console.log(`Scanning library ${forced ? 'completely' : 'wisely'}...`);
@@ -41,7 +44,7 @@ async function rescanLibrary(sender: WebContents, forced = false) {
   try {
     const all = await getFolders(database);
     const { offline } = await reportOfflineFolders(database, sender, all);
-    const folders = all.filter((folder) => !offline.includes(folder.path));
+    const folders = all.filter((folder) => !offline.includes(folder.path) && (!only || only.includes(folder.path)));
     const modified = await readModifiedTimes(folders);
     const changed = folders.filter((folder) => (forced ? modified.has(folder.path) : folder.lastModified < (modified.get(folder.path) ?? 0)));
 
@@ -51,7 +54,7 @@ async function rescanLibrary(sender: WebContents, forced = false) {
       database,
       changed.map((folder) => ({ path: folder.path, lastModified: modified.get(folder.path) ?? folder.lastModified }))
     );
-    await removeMissingTracks(database, offline);
+    await removeMissingTracks(database, offline, only);
     sender.send('RESCAN_COMPLETE', {});
   } catch (e) {
     (quitSignal.aborted ? console.log : console.error)(quitSignal.aborted ? 'Scan stopped, the app is quitting' : e);

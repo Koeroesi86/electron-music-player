@@ -3,10 +3,12 @@ import type { WebContents } from 'electron';
 import type { Database } from 'sqlite3';
 import checkFolders from './checkFolders';
 import { reportOfflineFolders } from './folderAvailability';
+import { refreshLibraryWatching } from './libraryWatching';
 import rescanLibrary from './rescanLibrary';
 
 vi.mock('./folderAvailability', () => ({ reportOfflineFolders: vi.fn() }));
 vi.mock('./rescanLibrary', () => ({ default: vi.fn() }));
+vi.mock('./libraryWatching', () => ({ refreshLibraryWatching: vi.fn() }));
 
 describe('checkFolders', () => {
   const database = {} as Database;
@@ -19,6 +21,13 @@ describe('checkFolders', () => {
     await checkFolders(database, sender);
 
     expect(rescanLibrary).toHaveBeenCalledWith(sender);
+  });
+
+  it('watches the folders that can be read, with the offline ones it has just found', async () => {
+    vi.mocked(reportOfflineFolders).mockResolvedValue({ offline: ['/mnt/usb'], recovered: [] });
+    await checkFolders(database, sender);
+
+    expect(refreshLibraryWatching).toHaveBeenCalledWith(['/mnt/usb']);
   });
 
   it('does not rescan when nothing came back', async () => {

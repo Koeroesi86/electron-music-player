@@ -44,6 +44,7 @@ const initialState: UiState = {
   coverSize: coverSizes.default,
   groupSort: undefined,
   artistPhotos: true,
+  watchFolders: true,
   openGroup: undefined,
   groupFilter: '',
   libraryFolders: [],
@@ -75,6 +76,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, librarySearch: action.payload.search };
     case 'SET_ARTIST_PHOTOS':
       return { ...state, artistPhotos: action.payload.enabled };
+    case 'SET_WATCH_FOLDERS':
+      return { ...state, watchFolders: action.payload.enabled };
     case 'SET_GROUP_SORT':
       return { ...state, groupSort: action.payload.sort };
     case 'SET_GROUP_FILTER':
@@ -213,6 +216,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
         ...('coverSize' in settings && { coverSize: restoreCoverSize(settings.coverSize) }),
         // only a saved off turns the photos off
         ...('artistPhotos' in settings && { artistPhotos: settings.artistPhotos !== false }),
+        // only a saved off turns the watching off
+        ...('watchFolders' in settings && { watchFolders: settings.watchFolders !== false }),
         ...('groupSort' in settings && { groupSort: restoreGroupSort(settings.groupSort) }),
         ...('libraryFolders' in settings && { libraryFolders: parseFolders(settings.libraryFolders) }),
         // a saved filter or sort that is not valid is dropped

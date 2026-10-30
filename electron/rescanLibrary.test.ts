@@ -62,6 +62,18 @@ describe('rescanLibrary', () => {
     expect(scanFolders).toHaveBeenCalledWith([expect.objectContaining({ path: root })], sender);
   });
 
+  it('scans only the folders that are named, whatever the others did', async () => {
+    const other = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-rescan-other-'));
+    await addFolder(root, 0);
+    await addFolder(other, 0);
+    const complete = new Promise<void>((resolve) => vi.mocked(sender.send).mockImplementation((channel) => channel === 'RESCAN_COMPLETE' && resolve()));
+    rescanLibrary(sender, true, [other]);
+    await complete;
+    fs.rmSync(other, { recursive: true, force: true });
+
+    expect(scanFolders).toHaveBeenCalledWith([expect.objectContaining({ path: other })], sender);
+  });
+
   it('keeps the old modification time when the scan fails, so the folder is retried', async () => {
     await addFolder(root, 0);
     vi.mocked(scanFolders).mockRejectedValue(new Error('scan failed'));
@@ -110,6 +122,23 @@ describe('rescanLibrary', () => {
     await rescan();
 
     expect(await getLibrary(database)).toHaveLength(1);
+  });
+
+  it('looks for the missing tracks of the named folders only', async () => {
+    const other = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-rescan-other-'));
+    // a folder with nothing in it counts as not mounted, so each has a file
+    fs.writeFileSync(path.join(root, 'kept.flac'), '');
+    fs.writeFileSync(path.join(other, 'kept.flac'), '');
+    await addFolder(root, 0);
+    await addFolder(other, 0);
+    await addTrack(database, track(path.join(root, 'deleted.flac')));
+    await addTrack(database, track(path.join(other, 'deleted.flac')));
+    const complete = new Promise<void>((resolve) => vi.mocked(sender.send).mockImplementation((channel) => channel === 'RESCAN_COMPLETE' && resolve()));
+    rescanLibrary(sender, true, [other]);
+    await complete;
+    fs.rmSync(other, { recursive: true, force: true });
+
+    expect((await getLibrary(database)).map((item) => item.path)).toEqual([path.join(root, 'deleted.flac')]);
   });
 
   it('still removes the track that is missing from a folder that can be read', async () => {
