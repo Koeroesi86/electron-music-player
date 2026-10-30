@@ -5,6 +5,7 @@ import type { Folder } from '../types/library';
 import { deleteTracks, getFolders, getLibrary, saveFolders } from './libraryRepository';
 import { isInsideFolder, reportOfflineFolders, withTimeout } from './folderAvailability';
 import scanFolders from './scanFolders';
+import { quitSignal } from './scanCancellation';
 
 // a file that does not answer in time is kept, only a file that is reported missing is removed
 const exists = (filePath: string) =>
@@ -53,7 +54,7 @@ async function rescanLibrary(sender: WebContents, forced = false) {
     await removeMissingTracks(database, offline);
     sender.send('RESCAN_COMPLETE', {});
   } catch (e) {
-    console.error(e);
+    (quitSignal.aborted ? console.log : console.error)(quitSignal.aborted ? 'Scan stopped, the app is quitting' : e);
   }
 }
 

@@ -18,6 +18,7 @@ import { createRadioLogos } from './electron/radioLogos';
 import { getAppUserModelId } from './electron/appUserModelId';
 import { registerDevDesktopEntry, removeDevDesktopEntry } from './electron/devDesktopEntry';
 import closeDatabase from './electron/closeDatabase';
+import { cancelScans } from './electron/scanCancellation';
 import closeSplash from './electron/closeSplash';
 import releaseWindows from './electron/releaseWindows';
 import { getMainTranslator, setPickedLanguage } from './electron/language';
@@ -223,7 +224,11 @@ app
     });
 
     // the app waits for its windows to close before it quits; the main window closes on its own, as the page saves its settings on the way out
-    app.on('before-quit', () => closeSplash(windows));
+    // the database closes after its queued statements, which a running scan keeps adding to, so the scan stops first
+    app.on('before-quit', () => {
+      cancelScans();
+      closeSplash(windows);
+    });
 
     app.on('window-all-closed', () => {
       if (!isMac) {

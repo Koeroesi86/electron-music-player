@@ -13,6 +13,7 @@ import type { Track } from '../types/library';
 import addTrack from './addTrack';
 import { getLibrary } from './libraryRepository';
 import isSupported from './isSupported';
+import { quitSignal } from './scanCancellation';
 
 const fileReadTimeout = 2000;
 
@@ -94,18 +95,20 @@ const writeMeta = async (fileName: string, existingTracks: Map<string, Track>, d
   await Promise.race([store(), timedOut]);
 };
 
-/** Scan a defined folder for tracks */
-const scanFolder = async (folderPath: string, sender: WebContents) => {
+/** Scan a defined folder for tracks; an aborted signal ends the scan with its error, so the caller does not take the folder for scanned */
+const scanFolder = async (folderPath: string, sender: WebContents, signal: AbortSignal = quitSignal) => {
   if (!global._database) throw new Error('Database is not connected');
   const database = global._database;
   const appDataPath = global._appDataPath;
 
   const files = (await findFiles(folderPath)).sort();
+  signal.throwIfAborted();
   const library = await getLibrary(database);
   const existingTracks = new Map(library.map((track) => [track.path, track]));
   let currentFolder = folderPath;
 
   for (const [progress, fileName] of files.entries()) {
+    signal.throwIfAborted();
     const folder = path.dirname(fileName);
     if (folder !== currentFolder) {
       sender.send('SCANNING_FOLDER', { folder });
