@@ -56,7 +56,19 @@ describe('withAvailability', () => {
     );
 
     expect(result.map(({ snapshot }) => snapshot)).toEqual([
-      { title: 'One', codec: 'FLAC', lossless: 1, bitDepth: null, sampleRate: null, bitrate: null, vbr: null },
+      {
+        title: 'One',
+        codec: 'FLAC',
+        lossless: 1,
+        bitDepth: null,
+        sampleRate: null,
+        bitrate: null,
+        vbr: null,
+        trackGain: null,
+        albumGain: null,
+        trackPeak: null,
+        albumPeak: null,
+      },
       { title: 'Gone' },
       album,
     ]);

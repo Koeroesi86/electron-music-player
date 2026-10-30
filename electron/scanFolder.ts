@@ -1,6 +1,7 @@
 import { parseFile } from 'music-metadata';
 import type { IAudioMetadata, IPicture } from 'music-metadata';
 import readAudioFormat from './readAudioFormat';
+import readLoudness from './readLoudness';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
@@ -12,6 +13,7 @@ import type { Track } from '../types/library';
 import addTrack from './addTrack';
 import { getLibrary } from './libraryRepository';
 import isSupported from './isSupported';
+import { quitSignal } from './scanCancellation';
 
 const fileReadTimeout = 2000;
 
@@ -39,7 +41,7 @@ const parsePicture = (picture: IPicture, album: string, appDataPath: string): st
   return path.basename(filePath);
 };
 
-const transformMeta = ({ common: metadata, format }: IAudioMetadata, fileName: string, appDataPath: string): Track => ({
+const transformMeta = ({ common: metadata, format, native }: IAudioMetadata, fileName: string, appDataPath: string): Track => ({
   path: normalizePath(fileName),
   artist: metadata.artist || '',
   albumArtist: metadata.albumartist || '',
@@ -52,6 +54,7 @@ const transformMeta = ({ common: metadata, format }: IAudioMetadata, fileName: s
   picture: metadata.picture && metadata.picture[0] ? parsePicture(metadata.picture[0], metadata.album || '', appDataPath) : null,
   duration: format.duration ?? null,
   ...readAudioFormat(format),
+  ...readLoudness(metadata, native),
 });
 
 const isEqual = (a: Track, b: Track) => {
@@ -92,18 +95,20 @@ const writeMeta = async (fileName: string, existingTracks: Map<string, Track>, d
   await Promise.race([store(), timedOut]);
 };
 
-/** Scan a defined folder for tracks */
-const scanFolder = async (folderPath: string, sender: WebContents) => {
+/** Scan a defined folder for tracks; an aborted signal ends the scan with its error, so the caller does not take the folder for scanned */
+const scanFolder = async (folderPath: string, sender: WebContents, signal: AbortSignal = quitSignal) => {
   if (!global._database) throw new Error('Database is not connected');
   const database = global._database;
   const appDataPath = global._appDataPath;
 
   const files = (await findFiles(folderPath)).sort();
+  signal.throwIfAborted();
   const library = await getLibrary(database);
   const existingTracks = new Map(library.map((track) => [track.path, track]));
   let currentFolder = folderPath;
 
   for (const [progress, fileName] of files.entries()) {
+    signal.throwIfAborted();
     const folder = path.dirname(fileName);
     if (folder !== currentFolder) {
       sender.send('SCANNING_FOLDER', { folder });

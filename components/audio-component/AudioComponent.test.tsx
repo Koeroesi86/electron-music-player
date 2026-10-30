@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Track } from '../../types/library';
 import { toRadioTrack } from '../../client/radio-track';
+import type { NormalizationMode } from '../../client/audio/loudness';
 import AudioComponent from './AudioComponent';
 
 const station = toRadioTrack({ uuid: 'abc-1', name: 'Jazz FM', country: 'UK', tags: ['jazz'], codec: 'MP3', bitrate: 128 });
@@ -16,6 +17,8 @@ const renderAudio = (currentSong: Track | null, isPlaying = false) =>
       connectNode={vi.fn()}
       connectStandbyNode={vi.fn()}
       activateNode={vi.fn()}
+      normalization="album"
+      setNormalization={vi.fn()}
       upNext={null}
     />
   );
@@ -43,6 +46,8 @@ describe('AudioComponent', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -61,6 +66,8 @@ describe('AudioComponent', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -79,6 +86,8 @@ describe('AudioComponent', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -102,6 +111,8 @@ describe('AudioComponent end of a track', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -131,6 +142,8 @@ describe('AudioComponent end of a track', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -175,6 +188,8 @@ describe('AudioComponent radio reconnect', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -217,6 +232,8 @@ describe('AudioComponent radio reconnect', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -230,6 +247,8 @@ describe('AudioComponent radio reconnect', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -252,6 +271,8 @@ describe('AudioComponent radio reconnect', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -273,6 +294,8 @@ describe('AudioComponent radio reconnect', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -294,6 +317,8 @@ describe('AudioComponent radio reconnect', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -315,6 +340,8 @@ describe('AudioComponent radio reconnect', () => {
         connectNode={vi.fn()}
         connectStandbyNode={vi.fn()}
         activateNode={vi.fn()}
+        normalization="album"
+        setNormalization={vi.fn()}
         upNext={null}
       />
     );
@@ -336,16 +363,20 @@ describe('AudioComponent gapless', () => {
   const trackEnded = vi.fn();
   const activateNode = vi.fn();
 
-  const props = (currentSong: Track | null, upNext: Track | null, isPlaying = true) => (
+  const setNormalization = vi.fn();
+
+  const props = (currentSong: Track | null, upNext: Track | null, isPlaying = true, normalization: NormalizationMode = 'album') => (
     <AudioComponent
       currentSong={currentSong}
       isPlaying={isPlaying}
       volume={1}
+      normalization={normalization}
       upNext={upNext}
       trackEnded={trackEnded}
       connectNode={vi.fn()}
       connectStandbyNode={vi.fn()}
       activateNode={activateNode}
+      setNormalization={setNormalization}
     />
   );
 
@@ -370,6 +401,7 @@ describe('AudioComponent gapless', () => {
     load.mockClear();
     trackEnded.mockClear();
     activateNode.mockClear();
+    setNormalization.mockClear();
   });
 
   afterEach(() => {
@@ -532,5 +564,30 @@ describe('AudioComponent gapless', () => {
     view.rerender(props(first, third));
 
     expect(standby.src).toBe(sourceOfPath(third.path));
+  });
+
+  describe('loudness normalization', () => {
+    const quiet: Track = { ...second, trackGain: -6, trackPeak: 0.5, albumGain: -6, albumPeak: 0.5 };
+    const half = 10 ** (-6 / 20);
+
+    it('levels the element that plays and the one that loads the next track, each for its own track', () => {
+      const view = render(props(null, null));
+      view.rerender(props(first, null));
+      view.rerender(props(first, quiet));
+      const [playing, standby] = Array.from(view.container.querySelectorAll('audio'));
+
+      expect(setNormalization).toHaveBeenLastCalledWith(standby, expect.closeTo(half));
+      expect(setNormalization).toHaveBeenCalledWith(playing, 1);
+    });
+
+    it('follows a change of the mode in both elements', () => {
+      const view = render(props(null, null));
+      view.rerender(props(first, quiet));
+      const standby = view.container.querySelectorAll('audio')[1];
+
+      view.rerender(props(first, quiet, true, 'off'));
+
+      expect(setNormalization).toHaveBeenLastCalledWith(standby, 1);
+    });
   });
 });

@@ -54,9 +54,10 @@ const cover = drawCover(
 // a track is the same bytes in every test, and a second of tone takes long to make: each is made once per run
 const made = new Map<string, Buffer>();
 
-export const writeTrack = (folder: string, album: FixtureAlbum, index: number, seconds = trackSeconds) => {
+/** `extraTags` are more Vorbis comments of the file, such as its ReplayGain */
+export const writeTrack = (folder: string, album: FixtureAlbum, index: number, seconds = trackSeconds, extraTags: Record<string, string> = {}) => {
   const track = album.tracks[index];
-  const key = `${album.title}/${track.title}/${track.frequency}/${seconds}`;
+  const key = `${album.title}/${track.title}/${track.frequency}/${seconds}/${JSON.stringify(extraTags)}`;
   if (!made.has(key)) {
     made.set(
       key,
@@ -72,6 +73,7 @@ export const writeTrack = (folder: string, album: FixtureAlbum, index: number, s
           GENRE: album.genre,
           TRACKNUMBER: index + 1,
           DATE: album.year,
+          ...extraTags,
         },
       })
     );

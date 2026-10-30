@@ -50,6 +50,16 @@ describe('scanFolder', () => {
     expect(scanningFiles()).toEqual([expect.objectContaining({ progress: 0, totalCount: 1 })]);
   });
 
+  it('stops with the abort when the signal is aborted, before it reads another file', async () => {
+    ['a.mp3', 'b.mp3'].forEach((name) => fs.writeFileSync(path.join(root, name), 'not audio'));
+    const controller = new AbortController();
+    send.mockImplementation((channel) => channel === 'SCANNING_FILE' && controller.abort());
+
+    await expect(scanFolder(root, sender, controller.signal)).rejects.toThrow();
+
+    expect(scanningFiles()).toHaveLength(1);
+  });
+
   it('does not wait between files', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout'] });
     ['a.mp3', 'b.mp3', 'c.mp3'].forEach((name) => fs.writeFileSync(path.join(root, name), 'not audio'));

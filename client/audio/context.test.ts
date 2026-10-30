@@ -3,12 +3,16 @@ import { useContext } from 'react';
 import { renderHook } from '@testing-library/react';
 
 const fakeNode = () => ({ connect: vi.fn(), disconnect: vi.fn() });
+const fakeGain = () => ({
+  ...fakeNode(),
+  gain: { cancelScheduledValues: vi.fn(), setValueAtTime: vi.fn(), setTargetAtTime: vi.fn() },
+});
 
 /** A fresh module on a fake AudioContext, which records how the nodes are wired */
 const setup = async () => {
   vi.resetModules();
   const source = fakeNode();
-  const input = fakeNode();
+  const gains: ReturnType<typeof fakeGain>[] = [];
   const analysers: ReturnType<typeof fakeNode>[] = [];
   const createMediaElementSource = vi.fn(() => source);
   vi.stubGlobal(
@@ -16,7 +20,12 @@ const setup = async () => {
     class {
       destination = {};
       createMediaElementSource = createMediaElementSource;
-      createGain = () => input;
+      currentTime = 3;
+      createGain = () => {
+        const gain = fakeGain();
+        gains.push(gain);
+        return gain;
+      };
       createAnalyser = () => {
         const analyser = Object.assign(fakeNode(), { smoothingTimeConstant: 0, fftSize: 0 });
         analysers.push(analyser);
@@ -25,8 +34,10 @@ const setup = async () => {
     }
   );
   const { Audio } = await import('./context');
+  // the first gain of the module is the input of the equalizer and the analyser, the next ones level an element each
+  const input = gains[0];
   const { result } = renderHook(() => useContext(Audio));
-  return { audio: result.current, source, input, analysers, createMediaElementSource };
+  return { audio: result.current, source, input, gains, analysers, createMediaElementSource };
 };
 
 describe('audio context', () => {
@@ -205,5 +216,46 @@ describe('audio context', () => {
 
       expect(standby.play).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('levels every element before its sound joins the input', async () => {
+    const { audio, source, input, gains } = await setup();
+    audio.connectNode(document.createElement('audio'));
+
+    const [, normalizer] = gains;
+    expect(source.connect).toHaveBeenCalledWith(normalizer);
+    expect(normalizer.connect).toHaveBeenCalledWith(input);
+  });
+
+  it('sets the level of an element that is not playing at once', async () => {
+    const { audio, gains } = await setup();
+    const node = document.createElement('audio');
+    Object.defineProperty(node, 'paused', { value: true });
+    audio.connectNode(node);
+
+    audio.setNormalization(node, 0.5);
+
+    expect(gains[1].gain.setValueAtTime).toHaveBeenCalledWith(0.5, 3);
+    expect(gains[1].gain.setTargetAtTime).not.toHaveBeenCalled();
+  });
+
+  it('glides to the level of an element that plays, so a change of the mode does not click', async () => {
+    const { audio, gains } = await setup();
+    const node = document.createElement('audio');
+    Object.defineProperty(node, 'paused', { value: false });
+    audio.connectNode(node);
+
+    audio.setNormalization(node, 0.5);
+
+    expect(gains[1].gain.setTargetAtTime).toHaveBeenCalledWith(0.5, 3, expect.any(Number));
+    expect(gains[1].gain.setValueAtTime).not.toHaveBeenCalled();
+  });
+
+  it('leaves an element that is not connected alone', async () => {
+    const { audio, gains } = await setup();
+
+    audio.setNormalization(document.createElement('audio'), 0.5);
+
+    expect(gains).toHaveLength(1);
   });
 });

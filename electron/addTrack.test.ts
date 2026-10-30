@@ -72,6 +72,19 @@ describe('addTrack', () => {
     expect(stored).toMatchObject({ codec: null, bitDepth: null, sampleRate: null, bitrate: null, vbr: null, lossless: null });
   });
 
+  it('stores the loudness of the track, and none for a track without tags', async () => {
+    const loudness = { trackGain: -6.5, albumGain: -8, trackPeak: 0.9, albumPeak: 0.99 };
+    await addTrack(database, { ...track, ...loudness });
+    await addTrack(database, { ...track, path: '/music/other.mp3' });
+
+    const [withTags, without] = await executeQuery<Record<string, unknown>>(database, {
+      query: 'SELECT trackGain, albumGain, trackPeak, albumPeak FROM library ORDER BY path',
+      variables: [],
+    });
+    expect(withTags).toEqual(loudness);
+    expect(without).toEqual({ trackGain: null, albumGain: null, trackPeak: null, albumPeak: null });
+  });
+
   it('replaces an existing track with the same path', async () => {
     await addTrack(database, track);
     await addTrack(database, { ...track, title: 'Renamed' });

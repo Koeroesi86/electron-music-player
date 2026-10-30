@@ -9,7 +9,15 @@ export interface AudioFormat {
   lossless: number | null;
 }
 
-export interface Track extends Partial<AudioFormat> {
+/** The ReplayGain of a file as its tags say; a file without the tag has none. A gain is in dB, a peak is a ratio of full scale (1 is 0 dBFS). */
+export interface Loudness {
+  trackGain: number | null;
+  albumGain: number | null;
+  trackPeak: number | null;
+  albumPeak: number | null;
+}
+
+export interface Track extends Partial<AudioFormat>, Partial<Loudness> {
   path: string;
   artist: string;
   album: string;
