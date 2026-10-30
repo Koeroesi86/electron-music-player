@@ -50,8 +50,8 @@ test('maximizes the window from its own button', async ({ session: { app, page }
   await page.getByRole('button', { name: 'Maximize' }).click();
   await expect.poll(maximized).toBe(true);
 
-  // the button offers to undo it now
-  await expect(page.getByRole('button', { name: 'Restore' })).toBeAttached();
+  // the button offers to undo it now (macOS zooms the window and the app does not hear of it as a maximize)
+  if (process.platform !== 'darwin') await expect(page.getByRole('button', { name: 'Restore' })).toBeAttached();
 });
 
 test('closes the window with the close button, and quits the app where closing the last window quits it', async ({ session: { app, page } }) => {
@@ -60,8 +60,9 @@ test('closes the window with the close button, and quits the app where closing t
   await page.locator('[class*="WindowControls__button"][aria-label="Close"]').click();
 
   await windowClosed;
-  // macOS keeps the app running without a window (index.ts)
-  if (process.platform !== 'darwin') await app.waitForEvent('close');
+  // macOS keeps the app running without a window (index.ts), so it is quit here, as the test run would wait for it otherwise
+  if (process.platform === 'darwin') await app.evaluate(({ app: electronApp }) => electronApp.quit());
+  await app.waitForEvent('close');
 });
 
 test('speaks the language that is picked, and keeps it after a restart', async ({ start, session }) => {

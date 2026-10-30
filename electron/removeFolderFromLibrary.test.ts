@@ -47,6 +47,15 @@ describe('removeFolderFromLibrary', () => {
     expect(send).toHaveBeenCalledWith('FOLDER_REMOVED_FROM_LIBRARY', {});
   });
 
+  it('removes the tracks the scan stored with the other separator, as it does on Windows', async () => {
+    await saveFolders(database, [{ path: 'C:\\music\\win', lastModified: 1 }]);
+    await addTrack(database, track('C:/music/win/four.flac'));
+
+    await removeFolderFromLibrary(database, 'C:\\music\\win', sender);
+
+    expect(paths(await getLibrary(database))).not.toContain('C:/music/win/four.flac');
+  });
+
   it('ignores a path that is not a library folder', async () => {
     await removeFolderFromLibrary(database, at(), sender);
     await removeFolderFromLibrary(database, 3, sender);

@@ -49,17 +49,26 @@ export const findTrackFormat = (database: Database, trackPath: string) =>
     variables: [trackPath],
   }).then(([format]) => format);
 
+// the scan stores the paths of tracks with forward slashes (scanFolder.ts), the folder keeps the ones it was picked with
+const insidePatterns = (folderPath: string) => {
+  const trimmed = folderPath.replace(/[\\/]+$/, '');
+
+  return [...new Set([`${trimmed.replace(/\\/g, '/')}/`, `${trimmed}${path.sep}`])].map((prefix) => `${escapeLike(prefix)}%`);
+};
+
+const insideCondition = (patterns: string[]) => patterns.map(() => `path LIKE ? ESCAPE '!'`).join(' OR ');
+
 export const deleteTracksInside = (database: Database, folderPath: string) =>
   executeQuery(database, {
-    query: `DELETE FROM library WHERE path LIKE ? ESCAPE '!'`,
-    variables: [`${escapeLike(folderPath.replace(/[\\/]+$/, '') + path.sep)}%`],
+    query: `DELETE FROM library WHERE ${insideCondition(insidePatterns(folderPath))}`,
+    variables: insidePatterns(folderPath),
   });
 
 /** Whether the library has a track below a folder */
 export const hasTracksInside = (database: Database, folderPath: string) =>
   executeQuery<{ found: number }>(database, {
-    query: `SELECT 1 AS found FROM library WHERE path LIKE ? ESCAPE '!' LIMIT 1`,
-    variables: [`${escapeLike(folderPath.replace(/[\\/]+$/, '') + path.sep)}%`],
+    query: `SELECT 1 AS found FROM library WHERE ${insideCondition(insidePatterns(folderPath))} LIMIT 1`,
+    variables: insidePatterns(folderPath),
   }).then((rows) => rows.length > 0);
 
 // the folder of a track including the trailing separator, for both separators: rtrim drops the characters after the last one

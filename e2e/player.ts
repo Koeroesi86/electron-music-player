@@ -37,11 +37,14 @@ export const player = (page: Page) => {
     title: () => page.locator('[class*="PlayerControls__title"]'),
     currentTime: () => page.evaluate(() => window.activeAudio?.()?.currentTime ?? 0),
     /** Jumps the element to the last seconds of the track, so its end does not take the length of the track to reach */
-    skipToEnd: (secondsLeft = 0.7) =>
-      page.evaluate((left) => {
+    skipToEnd: async (secondsLeft = 0.7) => {
+      // the length is not known until the element has read the file
+      await expect.poll(() => page.evaluate(() => window.activeAudio?.()?.duration ?? 0)).toBeGreaterThan(secondsLeft);
+      await page.evaluate((left) => {
         const element = window.activeAudio?.();
         if (element) element.currentTime = element.duration - left;
-      }, secondsLeft),
+      }, secondsLeft);
+    },
     expectPlaying: () => expect.poll(() => page.evaluate(() => window.activeAudio?.()?.paused)).toBe(false),
     expectPaused: () => expect.poll(() => page.evaluate(() => window.activeAudio?.()?.paused ?? true)).toBe(true),
   };
