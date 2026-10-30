@@ -50,6 +50,17 @@ describe('RadioStations', () => {
     expect(search).toHaveBeenCalledWith({});
   });
 
+  it('shows the saved name in the search box when the filters arrive after it opened', () => {
+    const { rerender, search } = renderPanel();
+    search.mockClear();
+
+    rerender(<RadioStations radio={radio({ query: { name: 'jazz' } })} loadTags={vi.fn()} loadOptions={vi.fn()} play={vi.fn()} search={search} />);
+
+    expect(screen.getByPlaceholderText('Search stations')).toHaveProperty('value', 'jazz');
+    act(() => vi.advanceTimersByTime(1000));
+    expect(search).not.toHaveBeenCalled();
+  });
+
   it('shows the logo of a station that has one, served by uuid, and not for the others', () => {
     const { container } = renderPanel({ stations: [{ ...jazz, hasLogo: true }, rock] });
 

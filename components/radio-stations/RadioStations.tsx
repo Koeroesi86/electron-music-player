@@ -78,6 +78,9 @@ const RadioStations = ({ radio, currentStation, search, loadTags, loadOptions, p
     // the list as it was left, the genres and the values to filter by load when the panel is first shown
   }, []);
 
+  // the saved filters arrive after the panel is shown
+  useUpdateEffect(() => setName(query.name ?? ''), [query.name]);
+
   useUpdateEffect(() => {
     // a search that already has this name (the filters were cleared) is not run again
     if ((delayedName.trim() || undefined) !== query.name) change({ name: delayedName.trim() || undefined });
