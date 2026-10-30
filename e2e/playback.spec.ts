@@ -47,11 +47,8 @@ test('goes on to the next track when one ends, and stops after the last', async 
   await controls.playAlbum('Pitch Perfect');
   await expectTone(page, 440);
 
-  await clearProbe(page);
   await controls.skipToEnd();
   await expectTone(page, 880);
-  // the track change is not a gap of seconds; the next test holds it to no gap at all
-  expect(await longestGap(page)).toBeLessThan(1);
 
   await controls.next();
   await expectTone(page, 100);
