@@ -188,4 +188,49 @@ describe('uiState middleware', () => {
     expect(nowPlaying).toEqual([currentSong]);
     expect(isPlaying).toBe(true);
   });
+
+  describe('the track that follows', () => {
+    it('is the next track of the queue', () => {
+      const store = createTestStore({ currentSong: a });
+
+      expect(store.getState().uiState.upNext).toEqual(b);
+    });
+
+    it('moves on with the current song', () => {
+      const store = createTestStore({ currentSong: a });
+      dispatch(store, { type: 'NEXT_SONG', payload: {} });
+
+      expect(store.getState().uiState.upNext).toEqual(c);
+    });
+
+    it('is the end of the queue for the last track', () => {
+      const store = createTestStore({ currentSong: c });
+
+      expect(store.getState().uiState.upNext).toBeNull();
+    });
+
+    it('follows a change of the queue', () => {
+      const store = createTestStore({ currentSong: a });
+      dispatch(store, { type: 'REMOVE_FROM_QUEUE', payload: { index: 1 } });
+
+      expect(store.getState().uiState.upNext).toEqual(c);
+    });
+
+    it('is the track that Next plays with shuffle', () => {
+      const store = createTestStore({ currentSong: a, shuffle: true });
+      const { upNext } = store.getState().uiState;
+      dispatch(store, { type: 'NEXT_SONG', payload: {} });
+
+      expect(store.getState().uiState.currentSong).toEqual(upNext);
+    });
+
+    it('stays the same however often the state changes with shuffle', () => {
+      const store = createTestStore({ currentSong: a, shuffle: true });
+      const { upNext } = store.getState().uiState;
+      dispatch(store, { type: 'SET_VOLUME', payload: { volume: 0.2 } });
+      dispatch(store, { type: 'ADD_TO_QUEUE', payload: { tracks: [track('d')] } });
+
+      expect(store.getState().uiState.upNext).toEqual(upNext);
+    });
+  });
 });

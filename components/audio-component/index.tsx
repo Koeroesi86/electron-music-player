@@ -9,6 +9,7 @@ import { Audio } from '../../client/audio/context';
 const mapState = (state: RootState) => ({
   currentSong: state.uiState.currentSong,
   isPlaying: state.uiState.isPlaying,
+  upNext: state.uiState.upNext,
   volume: state.uiState.volume,
 });
 
@@ -19,7 +20,11 @@ const mapDispatch = (dispatch: Dispatch<AppAction>) => ({
 const connector = connect(mapState, mapDispatch);
 
 const ContextualAudioComponent = (props: ConnectedProps<typeof connector>) => (
-  <Audio.Consumer>{({ connectNode }) => <AudioComponent {...props} connectNode={connectNode} />}</Audio.Consumer>
+  <Audio.Consumer>
+    {({ connectNode, connectStandbyNode, activateNode }) => (
+      <AudioComponent {...props} connectNode={connectNode} connectStandbyNode={connectStandbyNode} activateNode={activateNode} />
+    )}
+  </Audio.Consumer>
 );
 
 export default connector(ContextualAudioComponent);

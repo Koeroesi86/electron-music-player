@@ -82,6 +82,8 @@ export interface UiState extends PersistedSettings {
   progress: number;
   totalCount: number;
   isPlaying: boolean;
+  /** The track that plays after the current one, chosen early so the player can load it before the current one ends; it follows the queue, not saved */
+  upNext: Track | null;
   /** The track the current radio station is playing, as the stream announces it */
   streamTitle: string | null;
   /** The key of the art the main process found for the stream title, null while it is looked up or when there is none */
@@ -175,6 +177,7 @@ export type AppAction =
   | PayloadAction<'SCANNING_FILE', { fileName: string; progress: number; totalCount: number }>
   | PayloadAction<'MAXIMIZED_APP', { maximized: boolean }>
   | PayloadAction<'SET_PLAYING', { isPlaying: boolean }>
+  | PayloadAction<'SET_UP_NEXT', { track: Track | null }>
   | PayloadAction<'LAUNCHER_STATE', { available: boolean; enabled: boolean; offered: boolean }>
   | PayloadAction<'SET_LAUNCHER', { enabled: boolean }>
   | PayloadAction<'SET_LANGUAGE', { language: string | undefined }>

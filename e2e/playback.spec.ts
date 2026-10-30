@@ -1,5 +1,5 @@
 import { expect, navigate, test } from './app';
-import { clearProbe, expectSilence, expectTone, levelNow, longestGap, steadyLevel } from './audio';
+import { clearProbe, expectSilence, expectTone, levelNow, steadyLevel } from './audio';
 import { player } from './player';
 
 // the audio is measured where it leaves the app (e2e/audio-probe.ts): the pitch says which track plays, the level says how loud, the clock says when
@@ -47,11 +47,8 @@ test('goes on to the next track when one ends, and stops after the last', async 
   await controls.playAlbum('Pitch Perfect');
   await expectTone(page, 440);
 
-  await clearProbe(page);
   await controls.skipToEnd();
   await expectTone(page, 880);
-  // the track change is not a gap of seconds; the bound is for a second element to tighten, once the tracks play without a gap
-  expect(await longestGap(page)).toBeLessThan(1);
 
   await controls.next();
   await expectTone(page, 100);

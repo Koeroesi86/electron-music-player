@@ -26,6 +26,7 @@ const initialState: UiState = {
   totalCount: 0,
   maximized: false,
   isPlaying: false,
+  upNext: null,
   streamTitle: null,
   streamArt: null,
   launcher: { available: false, enabled: false, offered: false },
@@ -174,6 +175,8 @@ const reducer: Reducer<UiState> = (state = initialState, action) => {
       return { ...state, theme: { ...state.theme, accent: parseAccent(action.payload.accent) } };
     case 'SET_PLAYING':
       return { ...state, isPlaying: action.payload.isPlaying };
+    case 'SET_UP_NEXT':
+      return { ...state, upNext: action.payload.track };
     case 'TOGGLE_REPEAT':
       return { ...state, repeat: !state.repeat };
     case 'TOGGLE_SHUFFLE':

@@ -16,14 +16,14 @@ const createListeners = <T>() => {
 
 const audioContext = new window.AudioContext();
 let audioNode: HTMLAudioElement | null = null;
-let audioSource: MediaElementAudioSourceNode | undefined;
-// an element can only be wrapped once, a second createMediaElementSource on it throws
-let sourceElement: HTMLAudioElement | null = null;
+// the sound of every element comes in here, so the equalizer and the analyser do not care which element plays; an element can only be wrapped once,
+// a second createMediaElementSource on it throws
+const input = audioContext.createGain();
+const wrappedElements = new Set<HTMLAudioElement>();
 let analyser: AnalyserNode | undefined;
 let mounted = false;
 const playStatus = createListeners<boolean>();
 const timeChange = createListeners<number>();
-const connectedItems: AudioNode[] = [];
 const audioMountListeners: (() => void)[] = [];
 let timeChangeTimer: ReturnType<typeof setInterval> | undefined;
 const currentTimeFPS = 5;
@@ -41,11 +41,15 @@ const seek = (to: number) => {
   }
 };
 
+// the element that waits for the next track or finishes the last one does not speak for the player
 const listenToPlayStatus = (node: HTMLAudioElement) => {
+  const isActive = () => node === audioNode;
   // a track that reaches its end is paused before it ends: that is not a pause of the listener, the next track follows
-  node.addEventListener('pause', () => !node.ended && playStatus.notify(false));
-  node.addEventListener('play', () => playStatus.notify(true));
+  node.addEventListener('pause', () => isActive() && !node.ended && playStatus.notify(false));
+  node.addEventListener('play', () => isActive() && playStatus.notify(true));
   node.addEventListener('error', () => {
+    if (!isActive()) return;
+
     console.warn('error playing', node.src);
     playStatus.notify(false);
   });
@@ -61,27 +65,37 @@ const startTimeChanges = () => {
   }, 1000 / currentTimeFPS);
 };
 
-const connectNode = (node: HTMLAudioElement | null) => {
-  audioNode = node;
-  if (!node || node === sourceElement) return;
+const wrapNode = (node: HTMLAudioElement) => {
+  if (wrappedElements.has(node)) return;
 
-  sourceElement = node;
+  wrappedElements.add(node);
   listenToPlayStatus(node);
+  audioContext.createMediaElementSource(node).connect(input);
 
-  const source = audioContext.createMediaElementSource(node);
-  audioSource = source;
-  connectedItems.forEach((item) => source.connect(item));
+  if (mounted) return;
 
   mounted = true;
   audioMountListeners.forEach((listener) => listener());
-
   seek(currentTime);
   startTimeChanges();
 };
 
+const connectNode = (node: HTMLAudioElement | null) => {
+  audioNode = node;
+  if (node) wrapNode(node);
+};
+
+/** An element that takes over from the playing one: its sound joins the same input, the status of the player stays with the playing element */
+const connectStandbyNode = (node: HTMLAudioElement | null) => node && wrapNode(node);
+
+/** From now on this element is the one that plays: its time, its status and the play and pause commands are the player's */
+const activateNode = (node: HTMLAudioElement) => {
+  wrapNode(node);
+  audioNode = node;
+};
+
 const connectToSource = (item: AudioNode) => {
-  connectedItems.push(item);
-  audioSource?.connect(item);
+  input.connect(item);
 };
 
 const play = () => {
@@ -97,17 +111,18 @@ const play = () => {
     });
 };
 
-const pause = () => audioNode?.pause();
+// the element that takes over is paused too, as it may be starting
+const pause = () => wrappedElements.forEach((node) => node.pause());
 
 const createAnalyser = (): AnalyserNode | undefined => {
-  if (!audioSource) return undefined;
+  if (!mounted) return undefined;
 
   // only listens: its output is not connected, as it would play the signal a second time, around the equalizer
   if (!analyser) {
     analyser = audioContext.createAnalyser();
     analyser.smoothingTimeConstant = 0.8;
     analyser.fftSize = 2048;
-    audioSource.connect(analyser);
+    input.connect(analyser);
   }
 
   return analyser;
@@ -122,6 +137,8 @@ export const Audio = createContext({
   removePlayStatusListener: (listener: PlayStatusListener) => void playStatus.remove(listener),
   addTimeChangeListener: (listener: TimeChangeListener) => void timeChange.add(listener),
   connectNode,
+  connectStandbyNode,
+  activateNode,
   connectToSource,
   connectDestination,
   createBiquadFilter,
