@@ -1,3 +1,6 @@
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRadioBrowser, toRadioQuery, toSearchParameters } from './radioBrowser';
 
@@ -121,11 +124,55 @@ describe('radio-browser client', () => {
       await expect(createRadioBrowser('eMusic').searchStations({})).rejects.toThrow('answered 500');
     });
 
-    it('uses the round robin host when the servers cannot be discovered', async () => {
-      fetchMock.mockResolvedValueOnce(json({}, 500)).mockResolvedValueOnce(json([station]));
+    it('asks the mirrors named by the DNS when the discovery endpoint is down', async () => {
+      const findMirrors = vi.fn().mockResolvedValue(['https://nl1.api.radio-browser.info']);
+      fetchMock.mockResolvedValueOnce(json({}, 503)).mockResolvedValueOnce(json([station]));
 
-      expect((await createRadioBrowser('eMusic').searchStations({})).stations).toHaveLength(1);
-      expect(new URL(requestedUrls(fetchMock)[1]).hostname).toBe('all.api.radio-browser.info');
+      const radio = createRadioBrowser('eMusic', undefined, { findMirrors });
+
+      expect((await radio.searchStations({})).stations).toHaveLength(1);
+      expect(new URL(requestedUrls(fetchMock)[1]).hostname).toBe('nl1.api.radio-browser.info');
+    });
+
+    it('falls back to the known mirrors, and skips one that fails', async () => {
+      fetchMock
+        .mockResolvedValueOnce(json({}, 503))
+        .mockResolvedValueOnce(json({}, 503))
+        .mockResolvedValueOnce(json([station]));
+
+      const radio = createRadioBrowser('eMusic', undefined, { findMirrors: () => Promise.reject(new Error('no DNS')) });
+
+      expect((await radio.searchStations({})).stations).toHaveLength(1);
+      expect(
+        requestedUrls(fetchMock)
+          .slice(1)
+          .map((url) => new URL(url).hostname)
+      ).toEqual(['de1.api.radio-browser.info', 'de2.api.radio-browser.info']);
+    });
+
+    it('remembers the mirrors of the DNS for the next start', async () => {
+      const cachePath = join(await mkdtemp(join(tmpdir(), 'radio-')), 'mirrors.json');
+      const findMirrors = vi.fn().mockResolvedValueOnce(['https://nl1.api.radio-browser.info']).mockRejectedValue(new Error('no DNS'));
+      fetchMock.mockResolvedValue(json({}, 503));
+      await createRadioBrowser('eMusic', undefined, { cachePath, findMirrors })
+        .searchStations({})
+        .catch(() => undefined);
+      fetchMock.mockReset();
+      fetchMock.mockResolvedValueOnce(json({}, 503)).mockResolvedValueOnce(json([station]));
+
+      await createRadioBrowser('eMusic', undefined, { cachePath, findMirrors }).searchStations({});
+
+      expect(new URL(requestedUrls(fetchMock)[1]).hostname).toBe('nl1.api.radio-browser.info');
+    });
+
+    it('uses only the directory of the environment when it lists no servers', async () => {
+      const findMirrors = vi.fn();
+      fetchMock.mockResolvedValueOnce(json({}, 503)).mockResolvedValueOnce(json([station]));
+
+      await createRadioBrowser('eMusic', 'http://127.0.0.1:9999', { findMirrors }).searchStations({});
+
+      expect(findMirrors).not.toHaveBeenCalled();
+      expect(requestedUrls(fetchMock)[1]).toContain('http://127.0.0.1:9999/json/stations/search');
     });
 
     it('discovers the servers once', async () => {

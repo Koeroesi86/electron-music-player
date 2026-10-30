@@ -1,7 +1,12 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve4, resolve6, reverse } from 'node:dns/promises';
 import type { RadioOption, RadioOptionKind, RadioQuery, RadioStation, RadioTag } from '../types/radio';
 import { parseRadioSearch, radioPageSize, radioSortOrders } from '../types/radio-query';
 
 const defaultDirectoryUrl = 'https://all.api.radio-browser.info';
+const directoryHost = 'all.api.radio-browser.info';
+// used when neither the directory, the DNS nor the cached list names a mirror
+const knownMirrors = ['https://de1.api.radio-browser.info', 'https://de2.api.radio-browser.info', 'https://fi1.api.radio-browser.info'];
 const requestTimeout = 10000;
 const optionLimit = { countries: 300, languages: 300, codecs: 20 };
 const tagLimit = 40;
@@ -43,6 +48,18 @@ const toTag = (value: unknown): RadioTag | undefined =>
   isRecord(value) && text(value.name) ? { name: text(value.name), stationCount: count(value.stationcount) } : undefined;
 
 const toServer = (value: unknown) => (isRecord(value) && text(value.name) ? `https://${text(value.name)}` : undefined);
+
+const isMirrorHost = (name: string) => name.endsWith('.api.radio-browser.info');
+
+/** The mirrors behind the round robin host, from the reverse records of its addresses (the way the directory documents) */
+const resolveMirrors = async (host = directoryHost) => {
+  const addresses = (await Promise.allSettled([resolve4(host), resolve6(host)])).flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+  const names = (await Promise.allSettled(addresses.map((address) => reverse(address)))).flatMap((result) =>
+    result.status === 'fulfilled' ? result.value : []
+  );
+
+  return [...new Set(names.filter(isMirrorHost))].map((name) => `https://${name}`);
+};
 
 const toList = <T>(value: unknown, convert: (item: unknown) => T | undefined) => {
   if (!Array.isArray(value)) throw new Error('Unexpected answer of the station directory');
@@ -97,7 +114,11 @@ const optionSources = {
 } satisfies Record<RadioOptionKind, { path: string; order: string; valueKey: string }>;
 
 /** Client of the radio-browser.info API: it has no single host, so a server is picked at random and the next one is tried when it fails */
-export const createRadioBrowser = (userAgent: string, directoryUrl = defaultDirectoryUrl) => {
+export const createRadioBrowser = (
+  userAgent: string,
+  directoryUrl = defaultDirectoryUrl,
+  { cachePath, findMirrors = resolveMirrors }: { cachePath?: string; findMirrors?: () => Promise<string[]> } = {}
+) => {
   let servers: Promise<string[]> | undefined;
 
   const fetchJson = async (url: string): Promise<unknown> => {
@@ -107,11 +128,30 @@ export const createRadioBrowser = (userAgent: string, directoryUrl = defaultDire
     return response.json();
   };
 
-  const discoverServers = () =>
+  const listServers = () =>
     fetchJson(`${directoryUrl}/json/servers`)
-      .then((list) => shuffled(toList(list, toServer)))
-      .then((list) => (list.length ? list : [directoryUrl]))
-      .catch(() => [directoryUrl]);
+      .then((list) => toList(list, toServer))
+      .catch(() => []);
+
+  // only the public directory has mirrors to look up, a directory of the environment is the only server
+  const isPublicDirectory = directoryUrl === defaultDirectoryUrl;
+
+  const readCache = async () => {
+    const list: unknown = await readFile(cachePath ?? '', 'utf8').then(JSON.parse, () => []);
+
+    return Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string' && URL.canParse(item)) : [];
+  };
+
+  const writeCache = (list: string[]) => (cachePath ? writeFile(cachePath, JSON.stringify(list)).catch(() => undefined) : undefined);
+
+  const discoverServers = async () => {
+    const found = shuffled(await listServers());
+    if (found.length || !isPublicDirectory) return found.length ? found : [directoryUrl];
+    const resolved = shuffled(await findMirrors().catch(() => []));
+    if (resolved.length) await writeCache(resolved);
+
+    return [...resolved, ...(await readCache()), ...knownMirrors, directoryUrl].filter((server, index, all) => all.indexOf(server) === index);
+  };
 
   const getServers = () => {
     servers ??= discoverServers();
