@@ -34,12 +34,21 @@ const root = resolve(__dirname, '..');
 
 /** Closes the app, and kills it (with its processes) when it has not closed in ten seconds: the profile is thrown away anyway, and a quit that hangs would take the whole run with it */
 export const quit = async (app: ElectronApplication) => {
-  const closed = await Promise.race([app.close().then(() => true), new Promise<boolean>((done) => setTimeout(() => done(false), 10_000))]).catch(() => true);
-  const pid = app.process().pid;
-  if (closed || !pid) return;
+  // the handle is gone once the app has closed, which a test that restarts the app has done before the end
+  const child = (() => {
+    try {
+      return app.process();
+    } catch {
+      return undefined;
+    }
+  })();
+  if (!child) return;
 
-  if (process.platform === 'win32') spawnSync('taskkill', ['/pid', `${pid}`, '/T', '/F']);
-  else app.process().kill('SIGKILL');
+  const closed = await Promise.race([app.close().then(() => true), new Promise<boolean>((done) => setTimeout(() => done(false), 10_000))]).catch(() => true);
+  if (closed || !child.pid) return;
+
+  if (process.platform === 'win32') spawnSync('taskkill', ['/pid', `${child.pid}`, '/T', '/F']);
+  else child.kill('SIGKILL');
 };
 
 const pageUrl = 'emusic://app/index.html';
