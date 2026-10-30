@@ -67,15 +67,21 @@ export const levelNow = async (page: Page) => {
   return (await heardLately(page)).rms;
 };
 
-/** The level once two readings apart agree, as a reading right after a track began or a setting changed can be of the change itself */
+/** The level once two readings of audio that follow each other agree, as a reading right after a track began or a setting changed can be of the change itself (readings that overlap agree for that reason alone) */
 export const steadyLevel = async (page: Page) => {
-  let before = await levelNow(page);
-  let steady = before;
+  let readAt = 0;
+  let before = 0;
+  let steady = 0;
   await expect
     .poll(async () => {
-      steady = await levelNow(page);
-      const settled = Math.abs(steady - before) <= before * 0.05;
+      const { sampleRate, windows } = await probeOf(page);
+      const wanted = Math.ceil((0.5 * sampleRate) / 1024);
+      if (!sampleRate || windows.length < readAt + wanted) return false;
+
+      steady = summarize(sampleRate, windows.slice(-wanted)).rms;
+      const settled = readAt > 0 && steady > audible && Math.abs(steady - before) <= before * 0.05;
       before = steady;
+      readAt = windows.length;
       return settled;
     })
     .toBe(true);

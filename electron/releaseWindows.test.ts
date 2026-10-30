@@ -2,16 +2,16 @@ import type { BrowserWindow } from 'electron';
 import { describe, expect, it, vi } from 'vitest';
 import releaseWindows from './releaseWindows';
 
-const fakeWindow = (destroyed = false) => ({ close: vi.fn(), isDestroyed: () => destroyed });
+const fakeWindow = (destroyed = false) => ({ destroy: vi.fn(), isDestroyed: () => destroyed });
 
 describe('releaseWindows', () => {
-  it('closes the splash that is still open, so the app has no window left and quits', () => {
+  it('takes down the splash that is still open, so the app has no window left and quits', () => {
     const splash = fakeWindow();
     const windows = { main: fakeWindow() as unknown as BrowserWindow, loading: splash as unknown as BrowserWindow };
 
     releaseWindows(windows);
 
-    expect(splash.close).toHaveBeenCalledOnce();
+    expect(splash.destroy).toHaveBeenCalledOnce();
     expect(windows).toEqual({ main: null, loading: null });
   });
 
@@ -21,7 +21,7 @@ describe('releaseWindows', () => {
 
     releaseWindows(windows);
 
-    expect(splash.close).not.toHaveBeenCalled();
+    expect(splash.destroy).not.toHaveBeenCalled();
     expect(windows.loading).toBeNull();
   });
 
