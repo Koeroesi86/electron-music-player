@@ -5,17 +5,18 @@ import { applyWatchSetting, checkLibraryWatching, refreshLibraryWatching, startL
 import { findOfflineFolders } from './folderAvailability';
 import { getFolders } from './libraryRepository';
 import { getSettings } from './settingsRepository';
+import rescanChanges from './rescanChanges';
 import rescanLibrary from './rescanLibrary';
 
 const folderWatcher = vi.hoisted(() => ({
   update: vi.fn(async () => undefined),
   check: vi.fn(async () => undefined),
   close: vi.fn(),
-  onChange: undefined as ((folder: string) => void) | undefined,
+  onChange: undefined as ((changes: { path: string; deep: boolean }[]) => void) | undefined,
 }));
 
 vi.mock('./folderWatcher', () => ({
-  createFolderWatcher: (onChange: (folder: string) => void) => {
+  createFolderWatcher: (onChange: (changes: { path: string; deep: boolean }[]) => void) => {
     folderWatcher.onChange = onChange;
     return folderWatcher;
   },
@@ -24,6 +25,7 @@ vi.mock('./folderAvailability', () => ({ findOfflineFolders: vi.fn() }));
 vi.mock('./libraryRepository', () => ({ getFolders: vi.fn() }));
 vi.mock('./settingsRepository', () => ({ getSettings: vi.fn() }));
 vi.mock('./rescanLibrary', () => ({ default: vi.fn() }));
+vi.mock('./rescanChanges', () => ({ default: vi.fn() }));
 
 describe('libraryWatching', () => {
   const database = {} as Database;
@@ -38,6 +40,7 @@ describe('libraryWatching', () => {
     folderWatcher.check.mockReset().mockResolvedValue(undefined);
     folderWatcher.close.mockReset();
     vi.mocked(rescanLibrary).mockReset().mockResolvedValue(undefined);
+    vi.mocked(rescanChanges).mockReset().mockResolvedValue(undefined);
     vi.mocked(getFolders).mockResolvedValue(folders);
     vi.mocked(findOfflineFolders).mockResolvedValue(['/usb']);
     vi.mocked(getSettings).mockResolvedValue({ volume: 1 });
@@ -55,15 +58,16 @@ describe('libraryWatching', () => {
     expect(folderWatcher.update).toHaveBeenLastCalledWith(['/music']);
   });
 
-  it('scans the folder that changed once it is quiet', async () => {
+  it('scans what changed once it is quiet, and not the library', async () => {
     await startLibraryWatching(database, sender);
     vi.mocked(rescanLibrary).mockClear();
 
-    folderWatcher.onChange?.('/music');
-    folderWatcher.onChange?.('/music');
+    folderWatcher.onChange?.([{ path: '/music/rock', deep: false }]);
+    folderWatcher.onChange?.([{ path: '/music/rock', deep: false }]);
     await vi.advanceTimersByTimeAsync(2000);
 
-    expect(rescanLibrary).toHaveBeenCalledExactlyOnceWith(sender, true, ['/music']);
+    expect(rescanChanges).toHaveBeenCalledExactlyOnceWith(sender, [{ path: '/music/rock', deep: false }]);
+    expect(rescanLibrary).not.toHaveBeenCalled();
   });
 
   it('watches nothing when it was saved off, and still scans at start', async () => {

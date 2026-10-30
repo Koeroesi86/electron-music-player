@@ -64,6 +64,13 @@ export const deleteTracksInside = (database: Database, folderPath: string) =>
     variables: insidePatterns(folderPath),
   });
 
+/** The tracks below a folder */
+export const getTracksInside = (database: Database, folderPath: string) =>
+  executeQuery<Track>(database, {
+    query: `SELECT * FROM library WHERE ${insideCondition(insidePatterns(folderPath))}`,
+    variables: insidePatterns(folderPath),
+  });
+
 /** Whether the library has a track below a folder */
 export const hasTracksInside = (database: Database, folderPath: string) =>
   executeQuery<{ found: number }>(database, {

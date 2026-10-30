@@ -1,6 +1,9 @@
-/** Folders that changed are scanned once after a quiet time, so a big copy is one scan; a change during a scan is scanned after it, never two scans at once */
-export const createRescanScheduler = (run: (folders: string[]) => Promise<void>, quietTime = 2000) => {
-  const pending = new Set<string>();
+import { changeKey } from './libraryChange';
+import type { Change } from './libraryChange';
+
+/** The places that changed are scanned once after a quiet time, so a big copy is one scan; a change during a scan is scanned after it, never two scans at once */
+export const createRescanScheduler = (run: (changes: Change[]) => Promise<void>, quietTime = 2000) => {
+  const pending = new Map<string, Change>();
   let timer: NodeJS.Timeout | undefined;
   let running = false;
 
@@ -12,10 +15,10 @@ export const createRescanScheduler = (run: (folders: string[]) => Promise<void>,
   async function flush() {
     if (running || pending.size === 0) return;
 
-    const folders = [...pending];
+    const changes = [...pending.values()];
     pending.clear();
     running = true;
-    await run(folders)
+    await run(changes)
       .catch((e) => console.error(e))
       .finally(() => {
         running = false;
@@ -24,8 +27,8 @@ export const createRescanScheduler = (run: (folders: string[]) => Promise<void>,
   }
 
   return {
-    schedule: (folder: string) => {
-      pending.add(folder);
+    schedule: (changes: Change[]) => {
+      changes.forEach((change) => pending.set(changeKey(change), change));
       arm();
     },
     cancel: () => {

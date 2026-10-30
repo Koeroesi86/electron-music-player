@@ -4,6 +4,7 @@ import { createFolderWatcher } from './folderWatcher';
 import { findOfflineFolders } from './folderAvailability';
 import { getFolders } from './libraryRepository';
 import { createRescanScheduler } from './rescanScheduler';
+import rescanChanges from './rescanChanges';
 import rescanLibrary from './rescanLibrary';
 import { getSettings } from './settingsRepository';
 
@@ -39,12 +40,12 @@ export const refreshLibraryWatching = async (offline?: string[]) => {
   await current.watcher.update(enabled ? folders.filter((folder) => !unreadable.includes(folder)) : []);
 };
 
-/** Scan the library, and watch its folders until the window is gone, a changed folder is scanned after it is quiet; the scan at start and when a folder is back cover what a watcher does not see */
+/** Scan the library, and watch its folders until the window is gone, what changed in them is scanned after it is quiet; the scan at start and when a folder is back cover what a watcher does not see */
 export const startLibraryWatching = async (database: Database, sender: WebContents) => {
   stop();
   enabled = !isOff(await getSettings(database));
 
-  const scheduler = createRescanScheduler((folders) => rescanLibrary(sender, true, folders));
+  const scheduler = createRescanScheduler((changes) => rescanChanges(sender, changes));
   const current = { database, scheduler, watcher: createFolderWatcher(scheduler.schedule) };
   watching = current;
   sender.once('destroyed', () => watching === current && stop());

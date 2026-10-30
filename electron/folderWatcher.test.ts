@@ -22,9 +22,9 @@ describe('createFolderWatcher', () => {
     options: { budget?: number; checkGap?: number; checkInterval?: number } = {}
   ) => {
     const watchers = new Map<string, FakeWatcher>();
-    const listeners = new Map<string, () => void>();
+    const listeners = new Map<string, (event: string, filename: string | null) => void>();
     const modified = new Map<string, number>();
-    const watch = vi.fn((folder: string, _options: unknown, listener: () => void) => {
+    const watch = vi.fn((folder: string, _options: unknown, listener: (event: string, filename: string | null) => void) => {
       const watcher = new FakeWatcher();
       watchers.set(folder, watcher);
       listeners.set(folder, listener);
@@ -38,15 +38,35 @@ describe('createFolderWatcher', () => {
     return { folderWatcher, watch, watchers, listeners, modified, readTimes, onChange };
   };
 
-  it('watches the folders recursively, and reports the folder that changed', async () => {
+  /** The folders of the fake look of a folder, all with another time */
+  const folders = (folder: string, count: number) => Array.from({ length: count }, (_, index) => ({ path: `${folder}/${index}`, deep: false }));
+
+  it('watches the folders recursively, and reports the path that changed', async () => {
     const { folderWatcher, watch, listeners, onChange } = setup();
     await folderWatcher.update(['/music', '/radio']);
 
-    listeners.get('/radio')?.();
+    listeners.get('/radio')?.('rename', 'rock/new.flac');
 
     expect(watch).toHaveBeenCalledWith('/music', { recursive: true }, expect.any(Function));
-    expect(onChange).toHaveBeenCalledExactlyOnceWith('/radio');
+    await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
+    // the path is not there, so what was below it and the folder it was in are looked at
+    expect(onChange).toHaveBeenCalledWith([
+      { path: path.join('/radio', 'rock', 'new.flac'), deep: true },
+      { path: path.join('/radio', 'rock'), deep: false },
+    ]);
     folderWatcher.close();
+  });
+
+  it('takes the whole folder as changed when the watch gives no name', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-watch-name-'));
+    const { folderWatcher, listeners, onChange } = setup({ [root]: 1 });
+    await folderWatcher.update([root]);
+
+    listeners.get(root)?.('change', null);
+
+    await vi.waitFor(() => expect(onChange).toHaveBeenCalledExactlyOnceWith([{ path: root, deep: true }]));
+    folderWatcher.close();
+    fs.rmSync(root, { recursive: true, force: true });
   });
 
   it('opens what is new and closes what is gone, and leaves the rest alone', async () => {
@@ -69,7 +89,7 @@ describe('createFolderWatcher', () => {
 
     modified.set('/radio', 2);
     await vi.advanceTimersByTimeAsync(1000);
-    expect(onChange).toHaveBeenCalledExactlyOnceWith('/radio');
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(folders('/radio', 4));
     folderWatcher.close();
   });
 
@@ -83,7 +103,7 @@ describe('createFolderWatcher', () => {
     modified.set('/music', 2);
     await vi.advanceTimersByTimeAsync(1000);
     await vi.advanceTimersByTimeAsync(1000);
-    expect(onChange).toHaveBeenCalledExactlyOnceWith('/music');
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(folders('/music', 3));
     folderWatcher.close();
   });
 
@@ -92,10 +112,51 @@ describe('createFolderWatcher', () => {
     await folderWatcher.update(['/music']);
 
     modified.set('/music', 2);
-    listeners.get('/music')?.();
+    listeners.get('/music')?.('change', 'rock/one.flac');
+    await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
     await vi.advanceTimersByTimeAsync(1000);
 
-    expect(onChange).toHaveBeenCalledExactlyOnceWith('/music');
+    expect(onChange).toHaveBeenCalledOnce();
+    folderWatcher.close();
+  });
+
+  it('reports a folder that is gone as deep, and one that is new for its own files', async () => {
+    const { folderWatcher, onChange } = setup();
+    const times = [
+      new Map([
+        ['/music/a', 1],
+        ['/music/b', 1],
+      ]),
+      new Map([
+        ['/music/a', 1],
+        ['/music/c', 1],
+      ]),
+    ];
+    const readTimes = vi.fn(
+      async () =>
+        times.shift() ??
+        new Map([
+          ['/music/a', 1],
+          ['/music/c', 1],
+        ])
+    );
+    const watching = createFolderWatcher(onChange, {
+      watch: vi.fn(() => new FakeWatcher()) as unknown as typeof fs.watch,
+      readTimes,
+      checkInterval: 1000,
+      checkGap: 0,
+      budget: 0,
+    });
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await watching.update(['/music']);
+
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith([
+      { path: '/music/c', deep: false },
+      { path: '/music/b', deep: true },
+    ]);
+    watching.close();
     folderWatcher.close();
   });
 
@@ -123,7 +184,7 @@ describe('createFolderWatcher', () => {
 
     modified.set('/music', 2);
     await vi.advanceTimersByTimeAsync(1000);
-    expect(onChange).toHaveBeenCalledExactlyOnceWith('/music');
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(folders('/music', 3));
     folderWatcher.close();
   });
 
@@ -141,7 +202,7 @@ describe('createFolderWatcher', () => {
     modified.set('/music', 2);
     await vi.advanceTimersByTimeAsync(1000);
 
-    expect(onChange).toHaveBeenCalledExactlyOnceWith('/music');
+    expect(onChange).toHaveBeenCalledExactlyOnceWith([{ path: '/music/0', deep: false }]);
     folderWatcher.close();
   });
 
@@ -212,7 +273,7 @@ describe('with the file system', () => {
     // the watch needs a moment to be in place on some systems, so the file is written until it is seen
     await vi.waitFor(() => {
       fs.writeFileSync(path.join(root, 'artist', 'album', `${Date.now()}.flac`), '');
-      expect(onChange).toHaveBeenCalledWith(root);
+      expect(onChange).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ path: expect.stringContaining(root) })]));
     });
 
     folderWatcher.close();

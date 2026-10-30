@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRescanScheduler } from './rescanScheduler';
 
+const change = (path: string, deep = false) => ({ path, deep });
+
 describe('createRescanScheduler', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
@@ -9,15 +11,15 @@ describe('createRescanScheduler', () => {
     const run = vi.fn(async () => undefined);
     const { schedule } = createRescanScheduler(run, 1000);
 
-    schedule('/music');
+    schedule([change('/music/a')]);
     await vi.advanceTimersByTimeAsync(900);
-    schedule('/music');
-    schedule('/radio');
+    schedule([change('/music/a'), change('/music/b')]);
+    schedule([change('/radio', true)]);
     await vi.advanceTimersByTimeAsync(900);
     expect(run).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(200);
-    expect(run).toHaveBeenCalledExactlyOnceWith(['/music', '/radio']);
+    expect(run).toHaveBeenCalledExactlyOnceWith([change('/music/a'), change('/music/b'), change('/radio', true)]);
   });
 
   it('scans a change that came during a scan after it, never two at once', async () => {
@@ -25,15 +27,15 @@ describe('createRescanScheduler', () => {
     const run = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
     const { schedule } = createRescanScheduler(run, 1000);
 
-    schedule('/music');
+    schedule([change('/music')]);
     await vi.advanceTimersByTimeAsync(1000);
-    schedule('/radio');
+    schedule([change('/radio')]);
     await vi.advanceTimersByTimeAsync(5000);
-    expect(run).toHaveBeenCalledExactlyOnceWith(['/music']);
+    expect(run).toHaveBeenCalledExactlyOnceWith([change('/music')]);
 
     finish();
     await vi.advanceTimersByTimeAsync(1000);
-    expect(run).toHaveBeenLastCalledWith(['/radio']);
+    expect(run).toHaveBeenLastCalledWith([change('/radio')]);
     expect(run).toHaveBeenCalledTimes(2);
   });
 
@@ -42,9 +44,9 @@ describe('createRescanScheduler', () => {
     const run = vi.fn().mockRejectedValueOnce(new Error('failed')).mockResolvedValue(undefined);
     const { schedule } = createRescanScheduler(run, 1000);
 
-    schedule('/music');
+    schedule([change('/music')]);
     await vi.advanceTimersByTimeAsync(1000);
-    schedule('/music');
+    schedule([change('/music')]);
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(run).toHaveBeenCalledTimes(2);
@@ -54,7 +56,7 @@ describe('createRescanScheduler', () => {
     const run = vi.fn(async () => undefined);
     const { schedule, cancel } = createRescanScheduler(run, 1000);
 
-    schedule('/music');
+    schedule([change('/music')]);
     cancel();
     await vi.advanceTimersByTimeAsync(5000);
 

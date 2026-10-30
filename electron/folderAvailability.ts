@@ -31,6 +31,10 @@ export const isInsideFolder = (folderPath: string, filePath: string) => {
   return [`${trimmed.replace(/\\/g, '/')}/`, `${trimmed}${path.sep}`].some((prefix) => filePath.startsWith(prefix));
 };
 
+/** Whether a file is in a folder itself, not in a folder below it */
+export const isDirectlyInside = (folderPath: string, filePath: string) =>
+  isInsideFolder(folderPath, filePath) && !/[\\/]/.test(filePath.slice(folderPath.replace(/[\\/]+$/, '').length + 1));
+
 const hasEntries = async (folderPath: string) => {
   const directory = await fs.promises.opendir(folderPath);
   return directory.read().then(

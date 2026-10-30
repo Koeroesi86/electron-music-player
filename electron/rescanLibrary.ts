@@ -6,16 +6,7 @@ import { deleteTracks, getFolders, getLibrary, saveFolders } from './libraryRepo
 import { isInsideFolder, reportOfflineFolders, withTimeout } from './folderAvailability';
 import scanFolders from './scanFolders';
 import { quitSignal } from './scanCancellation';
-
-// a file that does not answer in time is kept, only a file that is reported missing is removed
-const exists = (filePath: string) =>
-  withTimeout(
-    fs.promises.access(filePath).then(
-      () => true,
-      () => false
-    ),
-    true
-  );
+import { findMissingTracks } from './missingTracks';
 
 const readModifiedTimes = async (folders: Folder[]) => {
   const times = await Promise.all(folders.map(async (folder) => [folder.path, await withTimeout(fs.promises.stat(folder.path), undefined)] as const));
@@ -23,20 +14,17 @@ const readModifiedTimes = async (folders: Folder[]) => {
 };
 
 /** The tracks below an offline folder are kept, its files cannot be told from missing ones */
-const removeMissingTracks = async (database: Database, offline: string[], only?: string[]) => {
-  const tracks = (await getLibrary(database))
-    .filter((track) => !offline.some((folderPath) => isInsideFolder(folderPath, track.path)))
-    .filter((track) => !only || only.some((folderPath) => isInsideFolder(folderPath, track.path)));
-  const present = await Promise.all(tracks.map((track) => exists(track.path)));
-  const missing = tracks.filter((_track, index) => !present[index]);
+const removeMissingTracks = async (database: Database, offline: string[]) => {
+  const tracks = (await getLibrary(database)).filter((track) => !offline.some((folderPath) => isInsideFolder(folderPath, track.path)));
+  const missing = await findMissingTracks(tracks);
 
   missing.forEach((track) => console.log(`Removing non existent ${track.path}`));
   console.log(`Removing ${missing.length} of ${tracks.length} songs`);
   await deleteTracks(database, missing);
 };
 
-/** Scan the changed folders, or with `only` just those of them that are named, and remove the tracks that are gone */
-async function rescanLibrary(sender: WebContents, forced = false, only?: string[]) {
+/** Scan the changed folders, and remove the tracks that are gone */
+async function rescanLibrary(sender: WebContents, forced = false) {
   const database = global._database;
   if (!database) return;
   console.log(`Scanning library ${forced ? 'completely' : 'wisely'}...`);
@@ -44,7 +32,7 @@ async function rescanLibrary(sender: WebContents, forced = false, only?: string[
   try {
     const all = await getFolders(database);
     const { offline } = await reportOfflineFolders(database, sender, all);
-    const folders = all.filter((folder) => !offline.includes(folder.path) && (!only || only.includes(folder.path)));
+    const folders = all.filter((folder) => !offline.includes(folder.path));
     const modified = await readModifiedTimes(folders);
     const changed = folders.filter((folder) => (forced ? modified.has(folder.path) : folder.lastModified < (modified.get(folder.path) ?? 0)));
 
@@ -54,7 +42,7 @@ async function rescanLibrary(sender: WebContents, forced = false, only?: string[
       database,
       changed.map((folder) => ({ path: folder.path, lastModified: modified.get(folder.path) ?? folder.lastModified }))
     );
-    await removeMissingTracks(database, offline, only);
+    await removeMissingTracks(database, offline);
     sender.send('RESCAN_COMPLETE', {});
   } catch (e) {
     (quitSignal.aborted ? console.log : console.error)(quitSignal.aborted ? 'Scan stopped, the app is quitting' : e);

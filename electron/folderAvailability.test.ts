@@ -5,7 +5,7 @@ import path from 'path';
 import type { WebContents } from 'electron';
 import type { Database } from 'sqlite3';
 import addTrack from './addTrack';
-import { findOfflineFolders, isInsideFolder, reportOfflineFolders, withTimeout } from './folderAvailability';
+import { findOfflineFolders, isDirectlyInside, isInsideFolder, reportOfflineFolders, withTimeout } from './folderAvailability';
 import { createTestDatabase } from './test-database';
 
 describe('folderAvailability', () => {
@@ -76,6 +76,13 @@ describe('folderAvailability', () => {
   it('finds a file inside a folder but not in a sibling with the same beginning', () => {
     expect(isInsideFolder(path.join(path.sep, 'mnt', 'usb'), path.join(path.sep, 'mnt', 'usb', 'a.flac'))).toBe(true);
     expect(isInsideFolder(path.join(path.sep, 'mnt', 'usb'), path.join(path.sep, 'mnt', 'usb2', 'a.flac'))).toBe(false);
+  });
+
+  it('tells a file in a folder from one in a folder below it', () => {
+    expect(isDirectlyInside('C:\\Music\\Rock', 'C:/Music/Rock/a.flac')).toBe(true);
+    expect(isDirectlyInside('C:\\Music\\Rock\\', 'C:/Music/Rock/a.flac')).toBe(true);
+    expect(isDirectlyInside('C:\\Music\\Rock', 'C:/Music/Rock/live/a.flac')).toBe(false);
+    expect(isDirectlyInside('C:\\Music\\Rock', 'C:/Music/Rock2/a.flac')).toBe(false);
   });
 
   it('finds a track of a folder that was picked with backslashes, as the scan stores it with forward slashes', () => {
