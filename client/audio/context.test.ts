@@ -8,6 +8,7 @@ const fakeNode = () => ({ connect: vi.fn(), disconnect: vi.fn() });
 const setup = async () => {
   vi.resetModules();
   const source = fakeNode();
+  const input = fakeNode();
   const analysers: ReturnType<typeof fakeNode>[] = [];
   const createMediaElementSource = vi.fn(() => source);
   vi.stubGlobal(
@@ -15,6 +16,7 @@ const setup = async () => {
     class {
       destination = {};
       createMediaElementSource = createMediaElementSource;
+      createGain = () => input;
       createAnalyser = () => {
         const analyser = Object.assign(fakeNode(), { smoothingTimeConstant: 0, fftSize: 0 });
         analysers.push(analyser);
@@ -24,7 +26,7 @@ const setup = async () => {
   );
   const { Audio } = await import('./context');
   const { result } = renderHook(() => useContext(Audio));
-  return { audio: result.current, source, analysers, createMediaElementSource };
+  return { audio: result.current, source, input, analysers, createMediaElementSource };
 };
 
 describe('audio context', () => {
@@ -44,12 +46,12 @@ describe('audio context', () => {
   });
 
   it('only listens with the analyser: playing its output would add the signal around the equalizer', async () => {
-    const { audio, source, analysers } = await setup();
+    const { audio, input, analysers } = await setup();
     audio.connectNode(document.createElement('audio'));
 
     const analyser = audio.createAnalyser();
 
-    expect(source.connect).toHaveBeenCalledWith(analyser);
+    expect(input.connect).toHaveBeenCalledWith(analyser);
     expect(analysers[0].connect).not.toHaveBeenCalled();
   });
 
@@ -134,5 +136,74 @@ describe('audio context', () => {
     audio.connectNode(element);
 
     expect(createMediaElementSource).toHaveBeenCalledTimes(1);
+  });
+
+  describe('with a second element that takes over', () => {
+    const connectTwo = async () => {
+      const { audio, input, createMediaElementSource } = await setup();
+      const [playing, standby] = [document.createElement('audio'), document.createElement('audio')];
+      const listener = vi.fn();
+      audio.addPlayStatusListener(listener);
+      audio.connectNode(playing);
+      audio.connectStandbyNode(standby);
+      return { audio, input, createMediaElementSource, playing, standby, listener };
+    };
+
+    it('wraps both elements into the same input', async () => {
+      const { input, createMediaElementSource } = await connectTwo();
+
+      expect(createMediaElementSource).toHaveBeenCalledTimes(2);
+      expect(input.connect).not.toHaveBeenCalled();
+    });
+
+    it('does not report the play and the pause of the element that waits', async () => {
+      const { standby, listener } = await connectTwo();
+
+      standby.dispatchEvent(new Event('play'));
+      standby.dispatchEvent(new Event('pause'));
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('reports the element that plays after it took over, and no more the one it took over from', async () => {
+      const { audio, playing, standby, listener } = await connectTwo();
+      audio.activateNode(standby);
+
+      playing.dispatchEvent(new Event('pause'));
+      standby.dispatchEvent(new Event('pause'));
+
+      expect(listener.mock.calls).toEqual([[false]]);
+    });
+
+    it('wraps an element that takes over once', async () => {
+      const { audio, standby, createMediaElementSource } = await connectTwo();
+
+      audio.activateNode(standby);
+      audio.connectStandbyNode(standby);
+
+      expect(createMediaElementSource).toHaveBeenCalledTimes(2);
+    });
+
+    it('pauses both elements', async () => {
+      const { audio, playing, standby } = await connectTwo();
+      playing.pause = vi.fn();
+      standby.pause = vi.fn();
+
+      audio.pause();
+
+      expect(playing.pause).toHaveBeenCalledTimes(1);
+      expect(standby.pause).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts the element that plays now', async () => {
+      const { audio, standby } = await connectTwo();
+      Object.defineProperty(standby, 'paused', { value: true });
+      standby.play = vi.fn().mockResolvedValue(undefined);
+      audio.activateNode(standby);
+
+      audio.play();
+
+      expect(standby.play).toHaveBeenCalledTimes(1);
+    });
   });
 });
