@@ -22,7 +22,11 @@ export const player = (page: Page) => {
     repeat: () => page.getByTitle('Repeat', { exact: true }).click(),
     mute: () => page.getByRole('button', { name: 'Mute' }).click(),
     unmute: () => page.getByRole('button', { name: 'Unmute' }).click(),
-    setVolume: (volume: number) => setRange(range('volume'), volume),
+    // the volume reaches the audio element a moment after the slider moved, and a level measured before that is the old one
+    setVolume: async (volume: number) => {
+      await setRange(range('volume'), volume);
+      await expect.poll(() => page.evaluate(() => window.activeAudio?.()?.volume)).toBeCloseTo(volume, 2);
+    },
     seekTo: (seconds: number) => setRange(range('seek'), seconds),
     /** Plays the album from its tile in Albums */
     playAlbum: async (title: string) => {

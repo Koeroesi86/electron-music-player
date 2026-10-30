@@ -91,6 +91,8 @@ test('follows the volume slider and the mute button', async ({ session: { page }
   await controls.playAlbum('Pitch Perfect');
   await controls.setVolume(1);
   await expectTone(page, 440);
+  // what was heard before the volume was at the full is not its level
+  await clearProbe(page);
   const full = await levelNow(page);
 
   await controls.setVolume(0.5);
