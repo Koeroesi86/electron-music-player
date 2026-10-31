@@ -103,7 +103,8 @@
         "--device=dri",
         "--socket=pulseaudio",
         "--share=network",
-        "--filesystem=xdg-music:ro"
+        "--filesystem=xdg-music:ro",
+        "--own-name=org.mpris.MediaPlayer2.chromium.instance*"
       ]
     }
   },
