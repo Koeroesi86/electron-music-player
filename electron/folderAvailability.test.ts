@@ -26,7 +26,7 @@ describe('folderAvailability', () => {
   });
 
   beforeEach(async () => {
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-folders-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-folders-'));
     database = await createTestDatabase();
   });
 

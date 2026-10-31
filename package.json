@@ -1,5 +1,5 @@
 {
-  "name": "electron-music-player",
+  "name": "tunelle",
   "version": "1.0.0",
   "description": "Lossless Audio Player",
   "main": "out/index.js",
@@ -36,8 +36,8 @@
   },
   "homepage": "https://github.com/Koeroesi86/electron-music-player",
   "build": {
-    "appId": "io.github.koeroesi86.eMusic",
-    "productName": "eMusic",
+    "appId": "io.github.koeroesi86.Tunelle",
+    "productName": "Tunelle",
     "compression": "normal",
     "files": [
       "build/**/*",
@@ -70,11 +70,11 @@
       "hardenedRuntime": false
     },
     "nsis": {
-      "artifactName": "eMusic-Setup-${version}-${arch}.${ext}"
+      "artifactName": "Tunelle-Setup-${version}-${arch}.${ext}"
     },
     "linux": {
-      "artifactName": "eMusic-${version}-${arch}.${ext}",
-      "executableName": "eMusic",
+      "artifactName": "Tunelle-${version}-${arch}.${ext}",
+      "executableName": "Tunelle",
       "category": "Audio",
       "target": [
         "AppImage"

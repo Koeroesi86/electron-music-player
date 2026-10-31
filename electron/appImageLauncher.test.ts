@@ -23,18 +23,18 @@ const sizes = [16, 24, 32, 48, 64, 128, 256, 512];
 
 describe('buildDesktopEntry', () => {
   it('starts the AppImage and groups the window with the entry', () => {
-    const entry = buildDesktopEntry('/home/me/Apps/eMusic-26.10.1.AppImage');
+    const entry = buildDesktopEntry('/home/me/Apps/Tunelle-26.10.1.AppImage');
 
-    expect(entry).toContain('Exec="/home/me/Apps/eMusic-26.10.1.AppImage" %U');
+    expect(entry).toContain('Exec="/home/me/Apps/Tunelle-26.10.1.AppImage" %U');
     expect(entry).toContain('Comment=Lossless Audio Player');
     expect(entry).toContain('Comment[hu]=');
-    expect(entry).toContain('Icon=emusic');
+    expect(entry).toContain('Icon=tunelle');
     expect(entry).toContain('Categories=AudioVideo;Audio;Player;');
-    expect(entry).toContain('StartupWMClass=eMusic');
+    expect(entry).toContain('StartupWMClass=Tunelle');
   });
 
   it('keeps a path with spaces in one piece', () => {
-    expect(buildDesktopEntry('/home/me/My Apps/eMusic.AppImage')).toContain('Exec="/home/me/My Apps/eMusic.AppImage" %U');
+    expect(buildDesktopEntry('/home/me/My Apps/Tunelle.AppImage')).toContain('Exec="/home/me/My Apps/Tunelle.AppImage" %U');
   });
 
   it.each(['/home/me/a"b.AppImage', '/home/me/$HOME.AppImage', '/home/me/100%.AppImage', '/home/me/a\\b.AppImage', '/home/me/a\nb.AppImage'])(
@@ -49,11 +49,11 @@ describe('launcher on disk', () => {
   let folder: string;
   let options: LauncherOptions;
   let refresh: ReturnType<typeof vi.fn<(applicationsPath: string) => Promise<void>>>;
-  const appImage = () => join(folder, 'Apps/eMusic.AppImage');
+  const appImage = () => join(folder, 'Apps/Tunelle.AppImage');
 
   const createAppImage = (path: string) => mkdir(join(path, '..'), { recursive: true }).then(() => writeFile(path, ''));
   const link = () => getLauncherLink(options.dataHome);
-  const desktopFile = () => join(folder, 'data/applications/emusic.desktop');
+  const desktopFile = () => join(folder, 'data/applications/tunelle.desktop');
   const exists = (path: string) =>
     stat(path).then(
       () => true,
@@ -61,7 +61,7 @@ describe('launcher on disk', () => {
     );
 
   beforeEach(async () => {
-    folder = await createFolder('emusic-launcher-');
+    folder = await createFolder('tunelle-launcher-');
     await mkdir(join(folder, 'icons'));
     await Promise.all(sizes.map((size) => writeFile(join(folder, 'icons', `${size}x${size}.png`), `icon ${size}`)));
     refresh = vi.fn(() => Promise.resolve());
@@ -79,7 +79,7 @@ describe('launcher on disk', () => {
     await enableLauncher(appImage(), options);
 
     await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(buildDesktopEntry(link()));
-    await expect(readFile(join(folder, 'data/icons/hicolor/256x256/apps/emusic.png'), 'utf8')).resolves.toBe('icon 256');
+    await expect(readFile(join(folder, 'data/icons/hicolor/256x256/apps/tunelle.png'), 'utf8')).resolves.toBe('icon 256');
     await expect(readdir(join(folder, 'data/icons/hicolor'))).resolves.toHaveLength(sizes.length);
     await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(true);
     await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
@@ -100,11 +100,11 @@ describe('launcher on disk', () => {
   it('keeps the entry as it is when the AppImage changes, as the desktop shell keeps the entry it read first', async () => {
     await enableLauncher(appImage(), options);
     const entry = await readFile(desktopFile(), 'utf8');
-    await enableLauncher(join(folder, 'other/eMusic-26.10.7.AppImage'), options);
+    await enableLauncher(join(folder, 'other/Tunelle-26.10.7.AppImage'), options);
 
     await expect(readFile(desktopFile(), 'utf8')).resolves.toBe(entry);
-    await expect(readlink(link()).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(join(folder, 'other/eMusic-26.10.7.AppImage'));
-    await expect(readdir(join(folder, 'data/emusic'))).resolves.toEqual(['eMusic.AppImage']);
+    await expect(readlink(link()).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(join(folder, 'other/Tunelle-26.10.7.AppImage'));
+    await expect(readdir(join(folder, 'data/tunelle'))).resolves.toEqual(['Tunelle.AppImage']);
   });
 
   it('starts an AppImage with a path the entry can not hold, through the link', async () => {
@@ -131,7 +131,7 @@ describe('launcher on disk', () => {
 
     await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(false);
     await expect(exists(link())).resolves.toBe(false);
-    await expect(exists(join(folder, 'data/icons/hicolor/512x512/apps/emusic.png'))).resolves.toBe(false);
+    await expect(exists(join(folder, 'data/icons/hicolor/512x512/apps/tunelle.png'))).resolves.toBe(false);
     await expect(readFile(other, 'utf8')).resolves.toBe('keep');
     expect(refresh).toHaveBeenCalledTimes(2);
   });
@@ -149,7 +149,7 @@ describe('launcher on disk', () => {
     });
 
     it('leaves an entry alone while its AppImage exists', async () => {
-      const first = join(folder, 'first/eMusic.AppImage');
+      const first = join(folder, 'first/Tunelle.AppImage');
       await createAppImage(first);
       await enableLauncher(first, options);
       refresh.mockClear();
@@ -173,7 +173,7 @@ describe('launcher on disk', () => {
     it('rewrites the entry of the running AppImage when its content changed', async () => {
       await createAppImage(appImage());
       await enableLauncher(appImage(), options);
-      await writeFile(desktopFile(), buildDesktopEntry(link()).replace('Icon=emusic', 'Icon=old'));
+      await writeFile(desktopFile(), buildDesktopEntry(link()).replace('Icon=tunelle', 'Icon=old'));
       refresh.mockClear();
 
       await syncLauncher(appImage(), options);
@@ -193,7 +193,7 @@ describe('launcher on disk', () => {
     });
 
     it('leaves a link at the path of an entry that started a removed AppImage, as the desktop may keep that path', async () => {
-      const old = join(folder, 'old/eMusic-26.10.6.AppImage');
+      const old = join(folder, 'old/Tunelle-26.10.6.AppImage');
       await mkdir(join(old, '..'));
       await enableLauncher(old, options);
       await writeFile(desktopFile(), buildDesktopEntry(old));
@@ -228,41 +228,87 @@ describe('launcher on disk', () => {
 
       await syncLauncher(appImage(), options);
 
-      await expect(readFile(join(folder, 'data/icons/hicolor/256x256/apps/emusic.png'), 'utf8')).resolves.toBe('new icon 256');
+      await expect(readFile(join(folder, 'data/icons/hicolor/256x256/apps/tunelle.png'), 'utf8')).resolves.toBe('new icon 256');
     });
 
     it('restores an icon that went missing', async () => {
       await createAppImage(appImage());
       await enableLauncher(appImage(), options);
-      await rm(join(folder, 'data/icons/hicolor/16x16/apps/emusic.png'));
+      await rm(join(folder, 'data/icons/hicolor/16x16/apps/tunelle.png'));
 
       await syncLauncher(appImage(), options);
 
-      await expect(exists(join(folder, 'data/icons/hicolor/16x16/apps/emusic.png'))).resolves.toBe(true);
+      await expect(exists(join(folder, 'data/icons/hicolor/16x16/apps/tunelle.png'))).resolves.toBe(true);
     });
 
     it('points the entry to the running AppImage when the AppImage was moved', async () => {
-      await enableLauncher(join(folder, 'old/eMusic.AppImage'), options);
+      await enableLauncher(join(folder, 'old/Tunelle.AppImage'), options);
 
       await syncLauncher(appImage(), options);
 
       await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
     });
 
+    describe('from the entry of the name eMusic', () => {
+      const legacyFiles = () => [
+        join(folder, 'data/applications/emusic.desktop'),
+        join(folder, 'data/emusic/eMusic.AppImage'),
+        ...sizes.map((size) => join(folder, `data/icons/hicolor/${size}x${size}/apps/emusic.png`)),
+      ];
+
+      const createLegacyLauncher = async () => {
+        await Promise.all(legacyFiles().map((file) => mkdir(join(file, '..'), { recursive: true })));
+        await Promise.all(legacyFiles().map((file) => writeFile(file, file.endsWith('.desktop') ? 'Exec="/old/eMusic.AppImage" %U\n' : '')));
+      };
+
+      it('replaces it with the entry of the running AppImage, and removes what it left', async () => {
+        await createLegacyLauncher();
+
+        await syncLauncher(appImage(), options);
+
+        await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
+        await expect(Promise.all(legacyFiles().map(exists))).resolves.toEqual(legacyFiles().map(() => false));
+        await expect(exists(join(folder, 'data/emusic'))).resolves.toBe(false);
+        await expect(exists(join(folder, 'data/icons/hicolor/16x16/apps/tunelle.png'))).resolves.toBe(true);
+        expect(refresh).toHaveBeenCalled();
+      });
+
+      it('removes it and keeps the entry that is there already', async () => {
+        const first = join(folder, 'first/Tunelle.AppImage');
+        await createAppImage(first);
+        await enableLauncher(first, options);
+        await createLegacyLauncher();
+
+        await syncLauncher(appImage(), options);
+
+        await expect(readLauncherTarget(options.dataHome)).resolves.toBe(first);
+        await expect(exists(legacyFiles()[0])).resolves.toBe(false);
+      });
+
+      it('is left alone when the app does not run from an AppImage', async () => {
+        await createLegacyLauncher();
+
+        await syncLauncher(undefined, options);
+
+        await expect(exists(legacyFiles()[0])).resolves.toBe(true);
+        await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(false);
+      });
+    });
+
     it('drops the entry when its AppImage is gone and the app does not run from an AppImage', async () => {
-      await enableLauncher(join(folder, 'old/eMusic.AppImage'), options);
+      await enableLauncher(join(folder, 'old/Tunelle.AppImage'), options);
 
       await syncLauncher(undefined, options);
 
       await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(false);
-      await expect(exists(join(folder, 'data/icons/hicolor/16x16/apps/emusic.png'))).resolves.toBe(false);
+      await expect(exists(join(folder, 'data/icons/hicolor/16x16/apps/tunelle.png'))).resolves.toBe(false);
     });
   });
 });
 
 describe('launcher offer', () => {
   it('was not made until it is marked, and stays marked', async () => {
-    const folder = await createFolder('emusic-offer-');
+    const folder = await createFolder('tunelle-offer-');
     const userData = join(folder, 'userData');
 
     await expect(wasLauncherOffered(userData)).resolves.toBe(false);

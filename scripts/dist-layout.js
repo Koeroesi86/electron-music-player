@@ -6,13 +6,13 @@ const unpackedFolders = {
   win32: arch => (arch === 'x64' ? 'win-unpacked' : `win-${arch}-unpacked`)
 }
 const executables = {
-  linux: 'eMusic',
-  darwin: 'eMusic.app/Contents/MacOS/eMusic',
-  win32: 'eMusic.exe'
+  linux: 'Tunelle',
+  darwin: 'Tunelle.app/Contents/MacOS/Tunelle',
+  win32: 'Tunelle.exe'
 }
 const resources = {
   linux: 'resources',
-  darwin: 'eMusic.app/Contents/Resources',
+  darwin: 'Tunelle.app/Contents/Resources',
   win32: 'resources'
 }
 

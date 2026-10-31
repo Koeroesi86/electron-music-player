@@ -20,7 +20,7 @@ const run = (hook, toolInput, env = {}) => {
 
 describe.skipIf(!hasTools)('claude hooks', () => {
   beforeAll(() => {
-    project = mkdtempSync(join(tmpdir(), 'emusic-hooks-'))
+    project = mkdtempSync(join(tmpdir(), 'tunelle-hooks-'))
     mkdirSync(join(project, 'electron'))
     mkdirSync(join(project, 'migrations'))
     writeFileSync(join(project, 'package.json'), JSON.stringify({ name: 'x', version: '26.10.1' }))

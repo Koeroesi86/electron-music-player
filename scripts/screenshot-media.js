@@ -97,7 +97,7 @@ const writeFlac = ({ seconds, tags, cover, frequency }) => {
   streamInfo.writeBigUInt64BE((BigInt(sampleRate) << 44n) | (1n << 41n) | (15n << 36n) | BigInt(total), 10)
 
   const comments = Object.entries(tags).map(([key, value]) => lengthPrefixed(`${key}=${value}`, 'writeUInt32LE'))
-  const vorbis = Buffer.concat([lengthPrefixed('eMusic screenshots', 'writeUInt32LE'), uint32(comments.length, 'writeUInt32LE'), ...comments])
+  const vorbis = Buffer.concat([lengthPrefixed('Tunelle screenshots', 'writeUInt32LE'), uint32(comments.length, 'writeUInt32LE'), ...comments])
   const picture = Buffer.concat([
     uint32(3),
     lengthPrefixed('image/png', 'writeUInt32BE'),

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { createSiteServer } from './serve-site'
 
-const release = { tag_name: 'v26.10.14', assets: [{ name: 'eMusic-Setup-26.10.14-x64.exe', browser_download_url: 'https://example.test/setup.exe' }] }
+const release = { tag_name: 'v26.10.14', assets: [{ name: 'Tunelle-Setup-26.10.14-x64.exe', browser_download_url: 'https://example.test/setup.exe' }] }
 
 describe('createSiteServer', () => {
   let server

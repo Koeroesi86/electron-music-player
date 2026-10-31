@@ -22,7 +22,7 @@ describe('migrate', () => {
   const add = (file: string, sql: string) => writeFile(join(folder, file), sql);
 
   beforeEach(async () => {
-    folder = await mkdtemp(join(tmpdir(), 'emusic-migrate-'));
+    folder = await mkdtemp(join(tmpdir(), 'tunelle-migrate-'));
     database = await openDatabase();
   });
 

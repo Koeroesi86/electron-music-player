@@ -11,7 +11,7 @@ const noGap = 0;
 
 // two tracks of 6 s, so the end of the first is reached by playing, not by a seek: a seek leaves a gap of its own in some formats and on some systems
 const flacFolder = () => {
-  const folder = mkdtempSync(join(tmpdir(), 'emusic-gapless-'));
+  const folder = mkdtempSync(join(tmpdir(), 'tunelle-gapless-'));
   [0, 1].forEach((index) => writeTrack(folder, albums[0], index, 6));
   return folder;
 };

@@ -51,7 +51,7 @@ describe('ThemeProvider connected to the store', () => {
   it('reads the cover of the local track that plays', async () => {
     setup([{ type: 'PLAY_TRACK', payload: { track } }]);
 
-    await waitFor(() => expect(coverAccent).toHaveBeenCalledExactlyOnceWith('emusic://app/albumart/abc-optimized.png'));
+    await waitFor(() => expect(coverAccent).toHaveBeenCalledExactlyOnceWith('tunelle://app/albumart/abc-optimized.png'));
   });
 
   it('reads the art of the song a station has on air', async () => {
@@ -61,7 +61,7 @@ describe('ThemeProvider connected to the store', () => {
       { type: 'RADIO_STREAM_ART', payload: { uuid: 'station-1', title: 'Artist - Song', art: 'art-1.png' } },
     ]);
 
-    await waitFor(() => expect(coverAccent).toHaveBeenCalledExactlyOnceWith('emusic://app/radio-art/art-1.png'));
+    await waitFor(() => expect(coverAccent).toHaveBeenCalledExactlyOnceWith('tunelle://app/radio-art/art-1.png'));
   });
 
   it('reads nothing without a track or a cover', () => {

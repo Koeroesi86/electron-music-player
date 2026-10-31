@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 import { albums, startDirectory, writeLibrary } from '../../scripts/screenshot-fixtures';
 import { installActiveAudio } from '../active-audio';
+import { installAudioProbe } from '../audio-probe';
 import { addFolder, launchApp, navigate } from '../app';
 
 // the pictures of site/screenshots (npm run screenshots [-- -g scene]), one test each, in the order of the list: a scene starts from an album playing, and from what the ones before left
@@ -22,11 +23,11 @@ interface Album {
 const test = base.extend<object, { window: Page }>({
   window: [
     async ({}, use) => {
-      const home = mkdtempSync(join(tmpdir(), 'emusic-screenshots-'));
+      const home = mkdtempSync(join(tmpdir(), 'tunelle-screenshots-'));
       const music = join(home, 'music');
       writeLibrary(music);
       const directory = await startDirectory();
-      const { app, page } = await launchApp({ home, radioDirectory: directory.origin, initScripts: [installActiveAudio] });
+      const { app, page } = await launchApp({ home, radioDirectory: directory.origin, initScripts: [installActiveAudio, installAudioProbe] });
       // the app stops what moves on its own for this setting (the wave of a station is drawn once, the covers change at once), so a picture does not depend on the moment it is taken
       // and the colour scheme is the one of the system, not the light one that Playwright sets unless it is told not to
       await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: null });
@@ -107,7 +108,7 @@ const hidePaths = (page: Page) =>
   page.evaluate(() => {
     const texts = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     for (let node = texts.nextNode(); node; node = texts.nextNode())
-      node.textContent = (node.textContent ?? '').replace(/\S*emusic-screenshots-\w+[\\/]?/, '/home/mia/');
+      node.textContent = (node.textContent ?? '').replace(/\S*tunelle-screenshots-\w+[\\/]?/, '/home/mia/');
   });
 
 // the heart in the row or tile that says the text: the nearest parent with a heart of its own

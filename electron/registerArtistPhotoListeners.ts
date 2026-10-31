@@ -16,9 +16,9 @@ const namesOf = (payload: unknown) =>
     ? payload.artists.filter(isArtistName).slice(0, maxNames)
     : [];
 
-/** Turned off by EMUSIC_NO_ARTIST_PHOTOS=1, which the smoke tests set so they do not reach Deezer */
+/** Turned off by TUNELLE_NO_ARTIST_PHOTOS=1, which the smoke tests set so they do not reach Deezer */
 const registerArtistPhotoListeners = ({ database }: ListenerContext, env: NodeJS.ProcessEnv = process.env) => {
-  if (env.EMUSIC_NO_ARTIST_PHOTOS === '1') return;
+  if (env.TUNELLE_NO_ARTIST_PHOTOS === '1') return;
 
   let requester: WebContents | undefined;
   const queue = createArtistPhotoQueue({

@@ -1,9 +1,11 @@
 import { execFile } from 'child_process';
-import { copyFile, mkdir, readFile, readlink, rename, rm, stat, symlink, utimes, writeFile } from 'fs/promises';
+import { copyFile, mkdir, readFile, readlink, rename, rm, rmdir, stat, symlink, utimes, writeFile } from 'fs/promises';
 import { join, posix } from 'path';
 import { catalog } from '../locales';
 
-const launcherName = 'emusic';
+const launcherName = 'tunelle';
+// the name of the entry that the app installed as eMusic: an update renames the app, so the entry of the old name is carried over to the new one
+const legacyLauncherName = 'emusic';
 const iconSizes = [16, 24, 32, 48, 64, 128, 256, 512];
 
 export interface LauncherOptions {
@@ -18,10 +20,10 @@ export interface LauncherOptions {
 const updateDesktopDatabase = (applicationsPath: string) => new Promise<void>((done) => execFile('update-desktop-database', [applicationsPath], () => done()));
 
 const getApplicationsPath = (dataHome: string) => join(dataHome, 'applications');
-const getDesktopFile = (dataHome: string) => join(getApplicationsPath(dataHome), `${launcherName}.desktop`);
+const getDesktopFile = (dataHome: string, name = launcherName) => join(getApplicationsPath(dataHome), `${name}.desktop`);
 // the desktop shell keeps the entry it read first and fails every start of an old path, so the entry always starts this link and the link follows the AppImage
-export const getLauncherLink = (dataHome: string) => posix.join(dataHome, launcherName, 'eMusic.AppImage');
-const getIconFile = (dataHome: string, size: number) => join(dataHome, 'icons/hicolor', `${size}x${size}`, 'apps', `${launcherName}.png`);
+export const getLauncherLink = (dataHome: string) => posix.join(dataHome, launcherName, 'Tunelle.AppImage');
+const getIconFile = (dataHome: string, size: number, name = launcherName) => join(dataHome, 'icons/hicolor', `${size}x${size}`, 'apps', `${name}.png`);
 
 // the characters that would need escaping in the Exec key of a desktop entry; such a path is not worth the risk of a broken launcher
 const unsafePath = /["`$\\%\n]/;
@@ -38,14 +40,14 @@ export const buildDesktopEntry = (appImage: string) => {
   return [
     '[Desktop Entry]',
     'Type=Application',
-    'Name=eMusic',
+    'Name=Tunelle',
     `Comment=${catalog.en['app.description']}`,
     ...localizedComments,
     `Exec="${appImage}" %U`,
     `Icon=${launcherName}`,
     'Terminal=false',
     'Categories=AudioVideo;Audio;Player;',
-    'StartupWMClass=eMusic',
+    'StartupWMClass=Tunelle',
     '',
   ].join('\n');
 };
@@ -141,12 +143,38 @@ const keepPath = (path: string, dataHome: string) =>
     .then(() => symlink(getLauncherLink(dataHome), path, 'file'))
     .catch(() => undefined);
 
+/** What the entry of the old name of the app left: the entry, the link to the AppImage and the icons */
+const getLegacyFiles = (dataHome: string) => [
+  getDesktopFile(dataHome, legacyLauncherName),
+  posix.join(dataHome, legacyLauncherName, 'eMusic.AppImage'),
+  ...iconSizes.map((size) => getIconFile(dataHome, size, legacyLauncherName)),
+];
+
+/**
+ * An update of the app from the name eMusic leaves its entry pointing to the AppImage the update removed, and the app does not know it as its own:
+ * the entry of the running AppImage takes its place when there was one, and what the old name left goes away
+ */
+const migrateLegacyLauncher = async (appImage: string | undefined, options: LauncherOptions) => {
+  const { dataHome, refresh = updateDesktopDatabase } = options;
+  const [legacyEntry] = getLegacyFiles(dataHome);
+
+  if (!appImage || !(await exists(legacyEntry))) return;
+  if ((await readLauncherTarget(dataHome)) === undefined) await enableLauncher(appImage, options);
+
+  await Promise.all(getLegacyFiles(dataHome).map((file) => rm(file, { force: true })));
+  await rmdir(join(dataHome, legacyLauncherName)).catch(() => undefined);
+  await invalidateIconCache(dataHome);
+  await refresh(getApplicationsPath(dataHome));
+};
+
 /**
  * Keeps an enabled entry working: it points to the running AppImage when the one it started was moved,
  * and goes away when that one is gone and the app does not run from an AppImage; an entry of the running AppImage is rewritten
  * when its content or icons changed with the version, and an entry that still works for another AppImage is left alone
  */
 export const syncLauncher = async (appImage: string | undefined, options: LauncherOptions) => {
+  await migrateLegacyLauncher(appImage, options);
+
   const target = await readLauncherTarget(options.dataHome);
   if (target === undefined) return;
   if (appImage && target === appImage && !(await isCurrent(appImage, options))) return enableLauncher(appImage, options);

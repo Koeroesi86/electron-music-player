@@ -6,7 +6,7 @@ import { registerDevDesktopEntry, removeDevDesktopEntry } from './devDesktopEntr
 
 describe('devDesktopEntry', () => {
   let dataHome = '';
-  const entry = () => join(dataHome, 'applications/emusic-dev.desktop');
+  const entry = () => join(dataHome, 'applications/tunelle-dev.desktop');
 
   beforeEach(() => {
     dataHome = mkdtempSync(join(tmpdir(), 'dev-entry-'));

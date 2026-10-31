@@ -25,9 +25,9 @@ const track: Track = {
 
 describe('TitleBar', () => {
   it('shows the icon of the app before the title', () => {
-    const { container } = render(<TitleBar title="eMusic" />);
+    const { container } = render(<TitleBar title="Tunelle" />);
 
-    expect(screen.getByText('eMusic').querySelector('img')?.getAttribute('src')).toContain('svg');
+    expect(screen.getByText('Tunelle').querySelector('img')?.getAttribute('src')).toContain('svg');
     expect(container.querySelectorAll('img')).toHaveLength(1);
   });
 

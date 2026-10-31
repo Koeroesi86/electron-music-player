@@ -26,7 +26,7 @@ describe('radio-browser client', () => {
   it('asks the directory it was given, and falls back to it when that lists no servers', async () => {
     fetchMock.mockResolvedValueOnce(json([])).mockResolvedValueOnce(json({ url: 'http://station.example/stream' }));
 
-    expect(await createRadioBrowser('eMusic/1.0.0', 'http://127.0.0.1:9999').resolveStream('abc-1')).toBe('http://station.example/stream');
+    expect(await createRadioBrowser('Tunelle/1.0.0', 'http://127.0.0.1:9999').resolveStream('abc-1')).toBe('http://station.example/stream');
     expect(requestedUrls(fetchMock)).toEqual(['http://127.0.0.1:9999/json/servers', 'http://127.0.0.1:9999/json/url/abc-1']);
   });
 
@@ -39,7 +39,7 @@ describe('radio-browser client', () => {
           { ...station, stationuuid: 'abc-3', favicon: '' },
         ])
       );
-      const browser = createRadioBrowser('eMusic/1.0.0');
+      const browser = createRadioBrowser('Tunelle/1.0.0');
 
       const { stations } = await browser.searchStations({});
 
@@ -58,7 +58,7 @@ describe('radio-browser client', () => {
     it('lists the stations of a query, the most popular first', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([station]));
 
-      const { stations, hasMore } = await createRadioBrowser('eMusic/1.0.0').searchStations({ name: 'jazz', tag: 'smooth' });
+      const { stations, hasMore } = await createRadioBrowser('Tunelle/1.0.0').searchStations({ name: 'jazz', tag: 'smooth' });
 
       expect(hasMore).toBe(false);
       expect(stations).toEqual([{ uuid: 'abc-1', name: 'Jazz FM', country: 'Hungary', tags: ['jazz', 'smooth'], codec: 'MP3', bitrate: 128, hasLogo: false }]);
@@ -78,9 +78,9 @@ describe('radio-browser client', () => {
     it('identifies the app with its user agent', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([]));
 
-      await createRadioBrowser('eMusic/1.0.0').searchStations({});
+      await createRadioBrowser('Tunelle/1.0.0').searchStations({});
 
-      expect(fetchMock.mock.calls.every(([, init]) => new Headers(init?.headers).get('User-Agent') === 'eMusic/1.0.0')).toBe(true);
+      expect(fetchMock.mock.calls.every(([, init]) => new Headers(init?.headers).get('User-Agent') === 'Tunelle/1.0.0')).toBe(true);
     });
 
     it('drops the entries that are not stations and the HLS streams', async () => {
@@ -98,13 +98,13 @@ describe('radio-browser client', () => {
           ])
         );
 
-      expect((await createRadioBrowser('eMusic').searchStations({})).stations.map(({ uuid }) => uuid)).toEqual(['abc-1', 'plain']);
+      expect((await createRadioBrowser('Tunelle').searchStations({})).stations.map(({ uuid }) => uuid)).toEqual(['abc-1', 'plain']);
     });
 
     it('fails on an answer that is not a list', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValue(json({ error: 'nope' }));
 
-      await expect(createRadioBrowser('eMusic').searchStations({})).rejects.toThrow('Unexpected answer');
+      await expect(createRadioBrowser('Tunelle').searchStations({})).rejects.toThrow('Unexpected answer');
     });
 
     it('falls back to the second server after the first answered an error', async () => {
@@ -113,7 +113,7 @@ describe('radio-browser client', () => {
         .mockResolvedValueOnce(json({}, 500))
         .mockResolvedValueOnce(json([station]));
 
-      expect((await createRadioBrowser('eMusic').searchStations({})).stations).toHaveLength(1);
+      expect((await createRadioBrowser('Tunelle').searchStations({})).stations).toHaveLength(1);
       const [, first, second] = requestedUrls(fetchMock).map((url) => new URL(url).hostname);
       expect(first).not.toBe(second);
     });
@@ -121,14 +121,14 @@ describe('radio-browser client', () => {
     it('fails with the status when the directory answers an error', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValue(json({}, 500));
 
-      await expect(createRadioBrowser('eMusic').searchStations({})).rejects.toThrow('answered 500');
+      await expect(createRadioBrowser('Tunelle').searchStations({})).rejects.toThrow('answered 500');
     });
 
     it('asks the mirrors named by the DNS when the discovery endpoint is down', async () => {
       const findMirrors = vi.fn().mockResolvedValue(['https://nl1.api.radio-browser.info']);
       fetchMock.mockResolvedValueOnce(json({}, 503)).mockResolvedValueOnce(json([station]));
 
-      const radio = createRadioBrowser('eMusic', undefined, { findMirrors });
+      const radio = createRadioBrowser('Tunelle', undefined, { findMirrors });
 
       expect((await radio.searchStations({})).stations).toHaveLength(1);
       expect(new URL(requestedUrls(fetchMock)[1]).hostname).toBe('nl1.api.radio-browser.info');
@@ -140,7 +140,7 @@ describe('radio-browser client', () => {
         .mockResolvedValueOnce(json({}, 503))
         .mockResolvedValueOnce(json([station]));
 
-      const radio = createRadioBrowser('eMusic', undefined, { findMirrors: () => Promise.reject(new Error('no DNS')) });
+      const radio = createRadioBrowser('Tunelle', undefined, { findMirrors: () => Promise.reject(new Error('no DNS')) });
 
       expect((await radio.searchStations({})).stations).toHaveLength(1);
       expect(
@@ -154,13 +154,13 @@ describe('radio-browser client', () => {
       const cachePath = join(await mkdtemp(join(tmpdir(), 'radio-')), 'mirrors.json');
       const findMirrors = vi.fn().mockResolvedValueOnce(['https://nl1.api.radio-browser.info']).mockRejectedValue(new Error('no DNS'));
       fetchMock.mockResolvedValue(json({}, 503));
-      await createRadioBrowser('eMusic', undefined, { cachePath, findMirrors })
+      await createRadioBrowser('Tunelle', undefined, { cachePath, findMirrors })
         .searchStations({})
         .catch(() => undefined);
       fetchMock.mockReset();
       fetchMock.mockResolvedValueOnce(json({}, 503)).mockResolvedValueOnce(json([station]));
 
-      await createRadioBrowser('eMusic', undefined, { cachePath, findMirrors }).searchStations({});
+      await createRadioBrowser('Tunelle', undefined, { cachePath, findMirrors }).searchStations({});
 
       expect(new URL(requestedUrls(fetchMock)[1]).hostname).toBe('nl1.api.radio-browser.info');
     });
@@ -169,7 +169,7 @@ describe('radio-browser client', () => {
       const findMirrors = vi.fn();
       fetchMock.mockResolvedValueOnce(json({}, 503)).mockResolvedValueOnce(json([station]));
 
-      await createRadioBrowser('eMusic', 'http://127.0.0.1:9999', { findMirrors }).searchStations({});
+      await createRadioBrowser('Tunelle', 'http://127.0.0.1:9999', { findMirrors }).searchStations({});
 
       expect(findMirrors).not.toHaveBeenCalled();
       expect(requestedUrls(fetchMock)[1]).toContain('http://127.0.0.1:9999/json/stations/search');
@@ -181,7 +181,7 @@ describe('radio-browser client', () => {
         .mockImplementationOnce(() => new Promise(() => undefined))
         .mockResolvedValueOnce(json([station]));
 
-      const { stations } = await createRadioBrowser('eMusic').searchStations({});
+      const { stations } = await createRadioBrowser('Tunelle').searchStations({});
 
       expect(stations).toHaveLength(1);
       expect(requestedUrls(fetchMock).filter((url) => url.includes('/json/stations/search'))).toHaveLength(2);
@@ -190,7 +190,7 @@ describe('radio-browser client', () => {
     it('discovers the servers once', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockImplementation(() => Promise.resolve(json([])));
 
-      const radio = createRadioBrowser('eMusic');
+      const radio = createRadioBrowser('Tunelle');
       await radio.searchStations({});
       await radio.searchStations({ name: 'rock' });
 
@@ -202,7 +202,7 @@ describe('radio-browser client', () => {
     it('asks the directory for a combination of the filters and the sort', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([station]));
 
-      await createRadioBrowser('eMusic').searchStations({
+      await createRadioBrowser('Tunelle').searchStations({
         name: 'jazz',
         tag: 'smooth',
         country: 'HU',
@@ -235,7 +235,7 @@ describe('radio-browser client', () => {
       const page = Array.from({ length: 60 }, (_, index) => ({ ...station, stationuuid: `s${index}`, hls: index === 0 ? 1 : 0 }));
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json(page));
 
-      const { stations, hasMore } = await createRadioBrowser('eMusic').searchStations({});
+      const { stations, hasMore } = await createRadioBrowser('Tunelle').searchStations({});
 
       expect(stations).toHaveLength(59);
       expect(hasMore).toBe(true);
@@ -250,13 +250,13 @@ describe('radio-browser client', () => {
     ] as const)('lists the %s with their station count', async (kind, path, item, option) => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([item, { stationcount: 1 }, null]));
 
-      expect(await createRadioBrowser('eMusic').getOptions(kind)).toEqual([option]);
+      expect(await createRadioBrowser('Tunelle').getOptions(kind)).toEqual([option]);
       expect(new URL(requestedUrls(fetchMock)[1]).pathname).toBe(path);
     });
 
     it('loads a list once for the session', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValue(json([{ name: 'AAC', stationcount: 3 }]));
-      const radio = createRadioBrowser('eMusic');
+      const radio = createRadioBrowser('Tunelle');
 
       await radio.getOptions('codecs');
       await radio.getOptions('codecs');
@@ -266,7 +266,7 @@ describe('radio-browser client', () => {
 
     it('asks again after a failure', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json({}, 500)).mockResolvedValueOnce(json({}, 500));
-      const radio = createRadioBrowser('eMusic');
+      const radio = createRadioBrowser('Tunelle');
       await expect(radio.getOptions('codecs')).rejects.toThrow('answered 500');
 
       fetchMock.mockResolvedValueOnce(json([{ name: 'AAC', stationcount: 3 }]));
@@ -279,7 +279,7 @@ describe('radio-browser client', () => {
     it('lists the genres with their station count', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([{ name: 'jazz', stationcount: 12 }, { name: '' }]));
 
-      expect(await createRadioBrowser('eMusic').getTags()).toEqual([{ name: 'jazz', stationCount: 12 }]);
+      expect(await createRadioBrowser('Tunelle').getTags()).toEqual([{ name: 'jazz', stationCount: 12 }]);
       expect(new URL(requestedUrls(fetchMock)[1]).pathname).toBe('/json/tags');
     });
   });
@@ -288,7 +288,7 @@ describe('radio-browser client', () => {
     it('lists the stations of the directory among the uuids in one request', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json([station]));
 
-      const stations = await createRadioBrowser('eMusic').findStations(['abc-1', 'gone-2']);
+      const stations = await createRadioBrowser('Tunelle').findStations(['abc-1', 'gone-2']);
 
       expect(stations.map(({ uuid }) => uuid)).toEqual(['abc-1']);
       const url = new URL(requestedUrls(fetchMock)[1]);
@@ -297,7 +297,7 @@ describe('radio-browser client', () => {
     });
 
     it('does not ask the directory about no stations', async () => {
-      expect(await createRadioBrowser('eMusic').findStations([])).toEqual([]);
+      expect(await createRadioBrowser('Tunelle').findStations([])).toEqual([]);
       expect(fetchMock).not.toHaveBeenCalled();
     });
   });
@@ -306,25 +306,25 @@ describe('radio-browser client', () => {
     it('resolves the stream address of a station', async () => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json({ ok: true, url: 'http://stream.example.com/live' }));
 
-      expect(await createRadioBrowser('eMusic').resolveStream('abc/1')).toBe('http://stream.example.com/live');
+      expect(await createRadioBrowser('Tunelle').resolveStream('abc/1')).toBe('http://stream.example.com/live');
       expect(new URL(requestedUrls(fetchMock)[1]).pathname).toBe('/json/url/abc%2F1');
     });
 
     it.each(['file:///etc/passwd', 'ftp://example.com/stream', 'javascript:alert(1)', 'not a url', ''])('refuses the address %j', async (url) => {
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json({ ok: true, url }));
 
-      await expect(createRadioBrowser('eMusic').resolveStream('abc')).rejects.toThrow('no playable stream');
+      await expect(createRadioBrowser('Tunelle').resolveStream('abc')).rejects.toThrow('no playable stream');
     });
 
     it('plays the stream it resolved last when the directory can not be asked', async () => {
       const streamsPath = join(await mkdtemp(join(tmpdir(), 'radio-')), 'streams.json');
       const options = { streamsPath, findMirrors: () => Promise.resolve([]) };
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json({ ok: true, url: 'http://stream.example.com/live' }));
-      await createRadioBrowser('eMusic', undefined, options).resolveStream('abc');
+      await createRadioBrowser('Tunelle', undefined, options).resolveStream('abc');
       fetchMock.mockReset();
       fetchMock.mockResolvedValue(json({}, 503));
 
-      const radio = createRadioBrowser('eMusic', undefined, options);
+      const radio = createRadioBrowser('Tunelle', undefined, options);
 
       expect(await radio.resolveStream('abc')).toBe('http://stream.example.com/live');
       await expect(radio.resolveStream('never-played')).rejects.toThrow('answered 503');
@@ -335,7 +335,7 @@ describe('radio-browser client', () => {
       await writeFile(streamsPath, JSON.stringify({ abc: 'http://old.example.com/live' }));
       fetchMock.mockResolvedValueOnce(json(servers)).mockResolvedValueOnce(json({ url: 'http://new.example.com/live' }));
 
-      expect(await createRadioBrowser('eMusic', undefined, { streamsPath }).resolveStream('abc')).toBe('http://new.example.com/live');
+      expect(await createRadioBrowser('Tunelle', undefined, { streamsPath }).resolveStream('abc')).toBe('http://new.example.com/live');
     });
   });
 });

@@ -1,7 +1,7 @@
 import { mkdirSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const entryName = 'emusic-dev.desktop';
+const entryName = 'tunelle-dev.desktop';
 
 const getEntryFile = (dataHome: string) => join(dataHome, 'applications', entryName);
 
@@ -10,7 +10,9 @@ export const registerDevDesktopEntry = (dataHome: string, iconFile: string) => {
   mkdirSync(join(dataHome, 'applications'), { recursive: true });
   writeFileSync(
     getEntryFile(dataHome),
-    ['[Desktop Entry]', 'Type=Application', 'Name=eMusic (dev)', `Icon=${iconFile}`, 'Exec=true', 'StartupWMClass=emusic-dev', 'NoDisplay=true', ''].join('\n')
+    ['[Desktop Entry]', 'Type=Application', 'Name=Tunelle (dev)', `Icon=${iconFile}`, 'Exec=true', 'StartupWMClass=tunelle-dev', 'NoDisplay=true', ''].join(
+      '\n'
+    )
   );
 };
 

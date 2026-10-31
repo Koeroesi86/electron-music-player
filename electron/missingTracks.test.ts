@@ -24,7 +24,7 @@ describe('findMissingTracks', () => {
   const at = (...segments: string[]) => path.join(root, ...segments).replace(/\\/g, '/');
 
   beforeEach(() => {
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-missing-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-missing-'));
     fs.mkdirSync(path.join(root, 'album'));
     fs.writeFileSync(path.join(root, 'album', 'one.flac'), '');
   });

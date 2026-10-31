@@ -29,14 +29,14 @@ describe('library api', () => {
     respond({ items: [track('/a', 'file:///art.jpg')], total: 250 });
 
     expect(await fetchTrackPage(2, unsorted)).toEqual({ items: [track('/a', '/art.jpg')], total: 250 });
-    expect(fetch).toHaveBeenCalledWith('emusic://app/library/tracks?offset=200&limit=100');
+    expect(fetch).toHaveBeenCalledWith('tunelle://app/library/tracks?offset=200&limit=100');
   });
 
   it('fetches the page of albums and strips the file protocol of the covers', async () => {
     respond({ items: [album], total: 1 });
 
     expect(await fetchAlbumPage(0, unsorted)).toEqual({ items: [{ ...album, cover: '/art.jpg' }], total: 1 });
-    expect(fetch).toHaveBeenCalledWith('emusic://app/library/albums?offset=0&limit=100');
+    expect(fetch).toHaveBeenCalledWith('tunelle://app/library/albums?offset=0&limit=100');
   });
 
   it('asks for the albums of a group, with the characters of its key escaped', async () => {
@@ -46,8 +46,8 @@ describe('library api', () => {
     await fetchAlbumPage(0, { sort: undefined, folders: [], group: { kind: 'genre', key: '' } });
 
     expect(vi.mocked(fetch).mock.calls.map(([url]) => url)).toEqual([
-      'emusic://app/library/albums?offset=0&limit=100&sort=year&dir=asc&folder=%2Fm&by=artist&group=ac%2Fdc%20%26%20co',
-      'emusic://app/library/albums?offset=0&limit=100&by=genre&group=',
+      'tunelle://app/library/albums?offset=0&limit=100&sort=year&dir=asc&folder=%2Fm&by=artist&group=ac%2Fdc%20%26%20co',
+      'tunelle://app/library/albums?offset=0&limit=100&by=genre&group=',
     ]);
   });
 
@@ -59,8 +59,8 @@ describe('library api', () => {
     await fetchGroupPage('albumArtist', 0, { sort: { field: 'albumCount', direction: 'desc' }, folders: ['/m'], filter: 'a&b' });
 
     expect(vi.mocked(fetch).mock.calls.map(([url]) => url)).toEqual([
-      'emusic://app/library/groups?offset=100&limit=100&by=artist',
-      'emusic://app/library/groups?offset=0&limit=100&by=albumArtist&sort=albumCount&dir=desc&folder=%2Fm&q=a%26b',
+      'tunelle://app/library/groups?offset=100&limit=100&by=artist',
+      'tunelle://app/library/groups?offset=0&limit=100&by=albumArtist&sort=albumCount&dir=desc&folder=%2Fm&q=a%26b',
     ]);
   });
 
@@ -78,9 +78,9 @@ describe('library api', () => {
     await fetchAlbumPage(0, { sort: undefined, folders: ['/m'] });
 
     expect(vi.mocked(fetch).mock.calls.map(([url]) => url)).toEqual([
-      'emusic://app/library/tracks?offset=100&limit=100&sort=year&dir=desc&folder=%2Fm%2Fa%26b&folder=C%3A%5CMusic',
-      'emusic://app/library/albums?offset=0&limit=100&sort=trackCount&dir=asc',
-      'emusic://app/library/albums?offset=0&limit=100&folder=%2Fm',
+      'tunelle://app/library/tracks?offset=100&limit=100&sort=year&dir=desc&folder=%2Fm%2Fa%26b&folder=C%3A%5CMusic',
+      'tunelle://app/library/albums?offset=0&limit=100&sort=trackCount&dir=asc',
+      'tunelle://app/library/albums?offset=0&limit=100&folder=%2Fm',
     ]);
   });
 
@@ -92,9 +92,9 @@ describe('library api', () => {
     await fetchAlbumPage(0, { sort: undefined, folders: [], search: undefined });
 
     expect(vi.mocked(fetch).mock.calls.map(([url]) => url)).toEqual([
-      'emusic://app/library/tracks?offset=0&limit=100&search=a%26b%20%C3%A9',
-      'emusic://app/library/albums?offset=0&limit=100&folder=%2Fm&search=halo',
-      'emusic://app/library/albums?offset=0&limit=100',
+      'tunelle://app/library/tracks?offset=0&limit=100&search=a%26b%20%C3%A9',
+      'tunelle://app/library/albums?offset=0&limit=100&folder=%2Fm&search=halo',
+      'tunelle://app/library/albums?offset=0&limit=100',
     ]);
   });
 
@@ -103,7 +103,7 @@ describe('library api', () => {
 
     await fetchLibrary({ sort: undefined, folders: [], search: 'halo' });
 
-    expect(fetch).toHaveBeenCalledWith('emusic://app/library?search=halo');
+    expect(fetch).toHaveBeenCalledWith('tunelle://app/library?search=halo');
   });
 
   it('fetches the library in the order and the folders of the query', async () => {
@@ -111,7 +111,7 @@ describe('library api', () => {
 
     await fetchLibrary({ sort: { field: 'title', direction: 'asc' }, folders: ['/m'] });
 
-    expect(fetch).toHaveBeenCalledWith('emusic://app/library?sort=title&dir=asc&folder=%2Fm');
+    expect(fetch).toHaveBeenCalledWith('tunelle://app/library?sort=title&dir=asc&folder=%2Fm');
   });
 
   it('fetches the tracks of an album and keeps the album without its track count', async () => {
@@ -119,7 +119,7 @@ describe('library api', () => {
 
     const { trackCount: _trackCount, ...summary } = album;
     expect(await fetchAlbum(album)).toEqual({ ...summary, tracks: [track('/m/1')] });
-    expect(fetch).toHaveBeenCalledWith('emusic://app/library/album?path=%2Fm&title=A%20B');
+    expect(fetch).toHaveBeenCalledWith('tunelle://app/library/album?path=%2Fm&title=A%20B');
   });
 
   it('throws when the response is not ok', async () => {

@@ -6,13 +6,13 @@ import minimist from 'minimist';
 import ws from 'windows-shortcuts-appid';
 import type { AppWindows } from './types/global';
 import getAppDataPath from './electron/appDataPath';
-import { copyOldUserData, getAppName } from './electron/userData';
+import { copyOldLibrary, copyOldUserData, getAppName } from './electron/userData';
 import createWindow from './electron/createWindow';
 import getLoadingWindow from './electron/getLoadingWindow';
 import createDatabase from './electron/createDatabase';
 import { libraryErrorMessage } from './electron/libraryErrorMessage';
 import setupListeners from './electron/setupListeners';
-import { emusicOrigin, handleEmusicProtocol, registerEmusicScheme } from './electron/emusicProtocol';
+import { tunelleOrigin, handleTunelleProtocol, registerTunelleScheme } from './electron/tunelleProtocol';
 import { createRadioBrowser } from './electron/radioBrowser';
 import { createRadioArt } from './electron/radioArt';
 import { createRadioLogos } from './electron/radioLogos';
@@ -44,31 +44,35 @@ const isDev = process.env.NODE_ENV === 'development';
 if (isDev && process.platform === 'linux') {
   const dataHome = process.env.XDG_DATA_HOME || join(app.getPath('home'), '.local/share');
 
-  app.setDesktopName('emusic-dev.desktop');
+  app.setDesktopName('tunelle-dev.desktop');
   registerDevDesktopEntry(dataHome, resolve(__dirname, '../icons/png/512x512.png'));
   app.on('will-quit', () => removeDevDesktopEntry(dataHome));
 }
 
 // the entry the AppImage launcher installs (electron/appImageLauncher.ts), so the running window gets its icon in the dock and taskbar
 if (!isDev && process.platform === 'linux') {
-  app.setDesktopName('emusic.desktop');
+  app.setDesktopName('tunelle.desktop');
 }
 
 const isMockUpdate = !app.isPackaged && process.env.MOCK_UPDATE === '1';
 
 const argv = minimist(process.argv.slice(2));
 
-// the name shows in the OS (the media controls name the app by it) and Electron's own data folder follows it, so the data of the old folder is copied once,
-// before anything reads the new folder (Electron creates it then). A run with a folder of its own (--user-data-dir, a test) is left alone
+// the name shows in the OS (the media controls name the app by it) and Electron's own data folder follows it, so the data of the folders of the old names
+// (eMusic, and electron-music-player before it) is copied once, before anything reads the new folder (Electron creates it then). The library folder follows
+// the package name and is copied after it. A run with a folder of its own (--user-data-dir, a test) is left alone
 const appName = getAppName(isDev);
 
-if (!isDev && !process.env.EMUSIC_APP_DATA && !app.commandLine.hasSwitch('user-data-dir')) {
-  copyOldUserData(join(app.getPath('appData'), packageInfo.name), join(app.getPath('appData'), appName));
+if (!isDev && !process.env.TUNELLE_APP_DATA && !app.commandLine.hasSwitch('user-data-dir')) {
+  const appData = app.getPath('appData');
+
+  ['eMusic', 'electron-music-player'].some((oldName) => copyOldUserData(join(appData, oldName), join(appData, appName)));
+  copyOldLibrary(join(appData, 'electron-music-player'), join(appData, packageInfo.name));
 }
 
 app.setName(appName);
 
-global._appDataPath = getAppDataPath(app.getPath('appData'), packageInfo.name, isDev, process.env.EMUSIC_APP_DATA);
+global._appDataPath = getAppDataPath(app.getPath('appData'), packageInfo.name, isDev, process.env.TUNELLE_APP_DATA);
 const appDataPath = global._appDataPath;
 
 const windows: AppWindows = {
@@ -76,14 +80,14 @@ const windows: AppWindows = {
   loading: null,
 };
 
-// the page is served by the emusic protocol; a development run loads it from the dev server, which asks the protocol across origins
+// the page is served by the tunelle protocol; a development run loads it from the dev server, which asks the protocol across origins
 const devOrigin = argv.webpackPort ? `http://localhost:${argv.webpackPort}` : undefined;
-const pageOrigin = devOrigin ?? emusicOrigin;
+const pageOrigin = devOrigin ?? tunelleOrigin;
 const windowLocation = `${pageOrigin}/index.html`;
 const loadingLocation = `${pageOrigin}/loading.html`;
 
 // before the app is ready
-registerEmusicScheme();
+registerTunelleScheme();
 
 function setAppId() {
   global._appId = getAppUserModelId(isDev, process.env.NODE_ENV);
@@ -94,7 +98,7 @@ function setAppId() {
   }
 
   if (isWin && isDev) {
-    const shortcutPath = `${app.getPath('appData')}\\Microsoft\\Windows\\Start Menu\\Programs\\eMusic${isDev ? '-' + process.env.NODE_ENV : ''}.lnk`;
+    const shortcutPath = `${app.getPath('appData')}\\Microsoft\\Windows\\Start Menu\\Programs\\Tunelle${isDev ? '-' + process.env.NODE_ENV : ''}.lnk`;
 
     if (fs.existsSync(shortcutPath)) {
       fs.unlinkSync(shortcutPath);
@@ -134,7 +138,7 @@ if (!fs.existsSync(appDataPath)) {
 const libraryLocation = resolve(appDataPath, './library.sqlite');
 
 // a test run asks a directory of its own, the real one needs the network
-const radio = createRadioBrowser(`eMusic/${app.getVersion()}`, process.env.EMUSIC_RADIO_DIRECTORY, {
+const radio = createRadioBrowser(`Tunelle/${app.getVersion()}`, process.env.TUNELLE_RADIO_DIRECTORY, {
   cachePath: resolve(appDataPath, './radio-mirrors.json'),
   streamsPath: resolve(appDataPath, './radio-streams.json'),
 });
@@ -144,7 +148,7 @@ const radioArt = createRadioArt();
 const radioLogos = createRadioLogos(radio.getLogoUrl);
 
 const serveApp = () =>
-  handleEmusicProtocol({
+  handleTunelleProtocol({
     getDatabase: () => global._database,
     appRoot: resolve(rootPath, 'build'),
     devOrigin,
@@ -201,7 +205,7 @@ app
     });
     await loading.loadURL(loadingLocation);
     // the splash page is static and shows the text the main process sends; the picked language is in the library, which opens after the splash
-    loading.webContents.send('SPLASH_PROGRESS', { text: getMainTranslator().t('splash.loading', { title: 'eMusic' }) });
+    loading.webContents.send('SPLASH_PROGRESS', { text: getMainTranslator().t('splash.loading', { title: 'Tunelle' }) });
 
     return updateOnSplash(loading);
   })

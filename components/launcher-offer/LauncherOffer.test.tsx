@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import LauncherOffer from './LauncherOffer';
 
-const question = 'Add eMusic to the application menu? You can change this later in the settings.';
+const question = 'Add Tunelle to the application menu? You can change this later in the settings.';
 
 describe('LauncherOffer', () => {
   it('asks on the first run from an AppImage and adds the app when the user agrees', () => {

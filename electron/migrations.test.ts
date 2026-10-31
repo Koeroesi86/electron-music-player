@@ -31,7 +31,7 @@ describe('migrations', () => {
   });
 
   it('has every folder scanned again after the loudness columns are added, as the scan skips a folder that did not change', async () => {
-    const folder = mkdtempSync(path.join(os.tmpdir(), 'emusic-migrations-'));
+    const folder = mkdtempSync(path.join(os.tmpdir(), 'tunelle-migrations-'));
     const old = new sqlite3.Database(':memory:');
     try {
       readdirSync(migrationsPath)

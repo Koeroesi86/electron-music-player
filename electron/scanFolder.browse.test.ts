@@ -23,7 +23,7 @@ describe('scanFolder album artist and genre', () => {
 
   beforeEach(async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-scan-browse-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-scan-browse-'));
     fs.writeFileSync(path.join(root, 'a.flac'), 'not audio');
     database = await createTestDatabase();
     global._database = database;

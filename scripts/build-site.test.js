@@ -9,23 +9,23 @@ const release = {
   tag_name: 'v26.10.14',
   body: ["## What's Changed", '* Browse the library by artist by @someone in https://github.com/o/r/pull/111', '* Read <b>formats</b> by @someone in https://github.com/o/r/pull/109', '', '**Full Changelog**: https://github.com/o/r/compare/a...b'].join('\n'),
   assets: [
-    asset('eMusic-Setup-26.10.14-x64.exe'),
-    asset('eMusic-Setup-26.10.14-x64.exe.blockmap'),
-    asset('eMusic-Setup-26.10.14-arm64.exe'),
-    asset('eMusic-26.10.14-arm64.dmg'),
-    asset('eMusic-26.10.14.dmg'),
-    asset('eMusic-26.10.14-mac.zip'),
-    asset('eMusic-26.10.14-x86_64.AppImage'),
+    asset('Tunelle-Setup-26.10.14-x64.exe'),
+    asset('Tunelle-Setup-26.10.14-x64.exe.blockmap'),
+    asset('Tunelle-Setup-26.10.14-arm64.exe'),
+    asset('Tunelle-26.10.14-arm64.dmg'),
+    asset('Tunelle-26.10.14.dmg'),
+    asset('Tunelle-26.10.14-mac.zip'),
+    asset('Tunelle-26.10.14-x86_64.AppImage'),
     asset('latest.yml'),
   ],
 }
 
 describe('architecture', () => {
   it.each([
-    ['eMusic-26.10.14-arm64.dmg', 'arm64'],
-    ['eMusic-26.10.14-aarch64.AppImage', 'arm64'],
-    ['eMusic-26.10.14.dmg', 'x64'],
-    ['eMusic-26.10.14-x86_64.AppImage', 'x64'],
+    ['Tunelle-26.10.14-arm64.dmg', 'arm64'],
+    ['Tunelle-26.10.14-aarch64.AppImage', 'arm64'],
+    ['Tunelle-26.10.14.dmg', 'x64'],
+    ['Tunelle-26.10.14-x86_64.AppImage', 'x64'],
   ])('reads %s as %s', (name, expected) => {
     expect(architecture(name)).toBe(expected)
   })
@@ -37,7 +37,7 @@ describe('findAssets', () => {
   })
 
   it('links the installer of the release', () => {
-    expect(findAssets(release.assets)['mac-arm64']).toBe('https://example.test/eMusic-26.10.14-arm64.dmg')
+    expect(findAssets(release.assets)['mac-arm64']).toBe('https://example.test/Tunelle-26.10.14-arm64.dmg')
   })
 })
 
@@ -56,7 +56,7 @@ describe('stampSite', () => {
     const html = stampSite('v{{version}} <a href="{{asset:windows-x64}}"></a><ul>{{notes}}</ul>', release)
 
     expect(html).toContain('v26.10.14')
-    expect(html).toContain('href="https://example.test/eMusic-Setup-26.10.14-x64.exe"')
+    expect(html).toContain('href="https://example.test/Tunelle-Setup-26.10.14-x64.exe"')
     expect(html).toContain('<li>Read &lt;b&gt;formats&lt;/b&gt;</li>')
   })
 
@@ -71,7 +71,7 @@ describe('buildSite', () => {
   afterEach(() => rmSync(folder, { recursive: true, force: true }))
 
   it('writes the page of the repository without a placeholder left', () => {
-    folder = mkdtempSync(join(tmpdir(), 'emusic-site-'))
+    folder = mkdtempSync(join(tmpdir(), 'tunelle-site-'))
     writeFileSync(join(folder, 'release.json'), JSON.stringify(release))
 
     buildSite(join(folder, 'release.json'), join(folder, 'out'))

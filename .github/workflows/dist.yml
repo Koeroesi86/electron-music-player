@@ -114,13 +114,13 @@ jobs:
       - name: Smoke test of the Flatpak bundle
         if: runner.os == 'Linux'
         run: |
-          flatpak install --user --noninteractive --bundle dist/eMusic-*.flatpak
+          flatpak install --user --noninteractive --bundle dist/Tunelle-*.flatpak
           xvfb-run --auto-servernum dbus-run-session npm run smoke:flatpak
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            dist/eMusic*
+            dist/Tunelle*
             dist/*.yml
             !dist/builder-debug.yml
           if-no-files-found: error

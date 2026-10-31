@@ -18,7 +18,7 @@ describe('scanFolder', () => {
     send.mockReset();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-scan-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-scan-'));
     database = await createTestDatabase();
     global._database = database;
     global._appDataPath = root;
