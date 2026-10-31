@@ -10,13 +10,14 @@ const baselineFile = resolve(__dirname, '../electronegativity-baseline.json')
 const { version } = require('electron/package.json')
 const output = join(mkdtempSync(join(tmpdir(), 'electronegativity-')), 'results.sarif')
 
-const { status } = spawnSync(
+const { status, signal, error, stderr } = spawnSync(
   process.execPath,
   [require.resolve('@doyensec/electronegativity/dist/index.js'), '-i', 'electron', '-e', version, '-r', '-o', output],
-  { stdio: 'ignore' }
+  { stdio: ['ignore', 'ignore', 'pipe'], encoding: 'utf8' }
 )
 if (status !== 0) {
-  console.error('Electronegativity failed to run')
+  // a run that failed says why (a signal ends the process without a status), or the next failure is as unexplained as this one
+  console.error(`Electronegativity failed to run (status ${status}, signal ${signal})`, error ?? '', stderr)
   process.exit(1)
 }
 
