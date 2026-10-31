@@ -34,7 +34,7 @@
     "email": "koeroesi86@gmail.com",
     "url": "http://chris.koro.si"
   },
-  "homepage": "https://github.com/Koeroesi86/electron-music-player",
+  "homepage": "https://github.com/Koeroesi86/tunelle",
   "build": {
     "appId": "io.github.koeroesi86.Tunelle",
     "productName": "Tunelle",
@@ -87,7 +87,7 @@
     "publish": {
       "provider": "github",
       "owner": "Koeroesi86",
-      "repo": "electron-music-player"
+      "repo": "tunelle"
     },
     "flatpak": {
       "runtime": "org.freedesktop.Platform",

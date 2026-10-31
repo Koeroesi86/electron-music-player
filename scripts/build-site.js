@@ -5,7 +5,7 @@ const { join, resolve } = require('path')
 // copies site/ to the out folder and writes the latest release into index.html: the version, the installer of each system and the titles of the
 // changes (release.json is the answer of `gh api repos/<owner>/<repo>/releases/latest`), so the page needs no script to know the release
 // {{version}}, {{notes}} and {{asset:<system>-<arch>}} are the placeholders; a system without an installer links to the page of the latest release
-const releasesUrl = 'https://github.com/Koeroesi86/electron-music-player/releases/latest'
+const releasesUrl = 'https://github.com/Koeroesi86/tunelle/releases/latest'
 const maxNotes = 6
 
 // the installer of a system, from the name of the asset: x64 is the one that has no architecture in its name (macOS) or one of several spellings (Linux)

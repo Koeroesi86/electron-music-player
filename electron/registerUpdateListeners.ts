@@ -1,7 +1,7 @@
 import { ipcMain, shell } from 'electron';
 import type { ListenerContext } from './listenerContext';
 
-const releasesUrl = 'https://github.com/Koeroesi86/electron-music-player/releases';
+const releasesUrl = 'https://github.com/Koeroesi86/tunelle/releases';
 
 /** The settings ask for the version and the update state, start a check and ask for the restart; the update source itself stays in this process */
 const registerUpdateListeners = ({ updates }: ListenerContext) => {

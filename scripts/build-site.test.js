@@ -61,7 +61,7 @@ describe('stampSite', () => {
   })
 
   it('links the page of the latest release for a system without an installer', () => {
-    expect(stampSite('{{asset:linux-arm64}}', release)).toBe('https://github.com/Koeroesi86/electron-music-player/releases/latest')
+    expect(stampSite('{{asset:linux-arm64}}', release)).toBe('https://github.com/Koeroesi86/tunelle/releases/latest')
   })
 })
 
