@@ -6,6 +6,7 @@ import minimist from 'minimist';
 import ws from 'windows-shortcuts-appid';
 import type { AppWindows } from './types/global';
 import getAppDataPath from './electron/appDataPath';
+import { copyOldUserData, getAppName } from './electron/userData';
 import createWindow from './electron/createWindow';
 import getLoadingWindow from './electron/getLoadingWindow';
 import createDatabase from './electron/createDatabase';
@@ -56,6 +57,16 @@ if (!isDev && process.platform === 'linux') {
 const isMockUpdate = !app.isPackaged && process.env.MOCK_UPDATE === '1';
 
 const argv = minimist(process.argv.slice(2));
+
+// the name shows in the OS (the media controls name the app by it) and Electron's own data folder follows it, so the data of the old folder is copied once,
+// before anything reads the new folder (Electron creates it then). A run with a folder of its own (--user-data-dir, a test) is left alone
+const appName = getAppName(isDev);
+
+if (!isDev && !process.env.EMUSIC_APP_DATA && !app.commandLine.hasSwitch('user-data-dir')) {
+  copyOldUserData(join(app.getPath('appData'), packageInfo.name), join(app.getPath('appData'), appName));
+}
+
+app.setName(appName);
 
 global._appDataPath = getAppDataPath(app.getPath('appData'), packageInfo.name, isDev, process.env.EMUSIC_APP_DATA);
 const appDataPath = global._appDataPath;
