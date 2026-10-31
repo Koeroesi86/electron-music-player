@@ -40,7 +40,7 @@ test('shows what was played under Recently played, and clears it', async ({ sess
 
   await navigate(page, 'Home');
   await expect(page.getByText('Recently played')).toBeVisible();
-  await expect(page.getByText('Hold It').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.locator('[class*="HomeView__recentList"]').getByText('Hold It')).toBeVisible();
 
   await page.getByRole('button', { name: 'Clear history' }).click();
   await page.locator('[class*="Confirm"]').filter({ hasText: 'Clear the list' }).getByRole('button', { name: 'Yes' }).click();

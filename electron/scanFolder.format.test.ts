@@ -26,7 +26,6 @@ describe('scanFolder audio format', () => {
   const parsed = vi.mocked(parseFile);
 
   beforeEach(async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
     root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-scan-format-'));
     fs.writeFileSync(path.join(root, 'a.flac'), 'not audio');
     database = await createTestDatabase();

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { GroupSummary } from '../../types/library';
 import GenreCard from './GenreCard';
@@ -8,8 +8,6 @@ const group: GroupSummary = { key: 'jazz', name: 'Jazz', albumCount: 22, trackCo
 const tone = (element: Element) => element.className.match(/tone\d+/)?.[0];
 
 describe('GenreCard', () => {
-  afterEach(cleanup);
-
   it('shows the name with the number of albums and tracks, and opens the genre when it is clicked', () => {
     const open = vi.fn();
     render(<GenreCard group={group} unknownName="Unknown genre" open={open} />);

@@ -18,6 +18,7 @@ const flatpak = process.argv.includes('--flatpak')
 const packaged = flatpak || process.argv.includes('--packaged')
 const executablePath = flatpak ? 'flatpak' : packaged ? resolve(root, packagedExecutable(process.platform, process.arch)) : require('electron')
 // the flatpak starts its own sandbox: zypak sets the chromium sandbox up, so --no-sandbox is not passed
+// elsewhere the sandbox of chromium needs user namespaces that the CI runners (containers, locked down images) do not give on Linux; macOS and Windows run it
 const args = flatpak
   ? ['run', '--env=EMUSIC_NO_UPDATE=1', require('../package.json').build.appId]
   : [...(packaged ? [] : [resolve(root, 'out/index.js')]), ...(process.platform === 'linux' ? ['--no-sandbox'] : [])]

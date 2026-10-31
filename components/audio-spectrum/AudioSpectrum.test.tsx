@@ -17,7 +17,6 @@ describe('AudioSpectrum', () => {
   });
 
   afterEach(() => {
-    cleanup();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });

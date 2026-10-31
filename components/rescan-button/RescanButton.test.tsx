@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import RescanButton from './RescanButton';
 
 const send = vi.fn();
@@ -12,7 +12,6 @@ const rescan = () => screen.getByRole<HTMLButtonElement>('button', { name: 'Resc
 
 describe('RescanButton', () => {
   afterEach(() => {
-    cleanup();
     send.mockReset();
   });
 

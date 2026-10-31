@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import AlbumSort from './AlbumSort';
 
 const chip = () => screen.getByRole('button', { name: /^Sort albums by/ });
@@ -8,8 +8,6 @@ const field = (name: string) => screen.getByRole('menuitemradio', { name });
 const direction = (name: string) => screen.getByRole('menuitemradio', { name });
 
 describe('AlbumSort', () => {
-  afterEach(cleanup);
-
   it('shows the default order on the chip, and the fields in the menu with the direction out of reach', () => {
     render(<AlbumSort sort={undefined} setSort={vi.fn()} />);
 

@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import FolderFilter from './FolderFilter';
 
 const folders = ['/music/a', '/music/b', '/music/c'].map((path) => ({ path, lastModified: 1 }));
@@ -9,8 +9,6 @@ const boxes = () => screen.queryAllByRole<HTMLInputElement>('checkbox');
 const open = () => fireEvent.click(toggle());
 
 describe('FolderFilter', () => {
-  afterEach(cleanup);
-
   it('shows all folders, closed, with all of them checked once opened', () => {
     render(<FolderFilter folders={folders} selected={[]} setSelected={vi.fn()} />);
 

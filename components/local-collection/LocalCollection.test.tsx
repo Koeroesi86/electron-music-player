@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { LibraryView } from '../../client/redux/types';
 import LocalCollection from './LocalCollection';
 
@@ -18,8 +18,6 @@ const renderPage = (view: LibraryView, props: Partial<Parameters<typeof LocalCol
   render(<LocalCollection view={view} setView={vi.fn()} groupOpen={false} addFiles={vi.fn()} {...props} />);
 
 describe('LocalCollection', () => {
-  afterEach(cleanup);
-
   it('puts the search, the folders, the sort of the albums and the rescan in one row, without a title', () => {
     renderPage('albums');
 

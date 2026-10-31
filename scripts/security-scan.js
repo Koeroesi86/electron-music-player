@@ -10,13 +10,23 @@ const baselineFile = resolve(__dirname, '../electronegativity-baseline.json')
 const { version } = require('electron/package.json')
 const output = join(mkdtempSync(join(tmpdir(), 'electronegativity-')), 'results.sarif')
 
-const { status } = spawnSync(
-  process.execPath,
-  [require.resolve('@doyensec/electronegativity/dist/index.js'), '-i', 'electron', '-e', version, '-r', '-o', output],
-  { stdio: 'ignore' }
-)
-if (status !== 0) {
-  console.error('Electronegativity failed to run')
+// the check for the security fixes of the Electron version reads the list of releases from GitHub, and the run ends with an error when that request fails: a failed run is tried again
+const attempts = 3
+const run = () =>
+  spawnSync(process.execPath, [require.resolve('@doyensec/electronegativity/dist/index.js'), '-i', 'electron', '-e', version, '-r', '-o', output], {
+    stdio: ['ignore', 'ignore', 'pipe'],
+    encoding: 'utf8',
+  })
+
+const failures = []
+while (failures.length < attempts) {
+  const { status, signal, error, stderr } = run()
+  if (status === 0) break
+  // a run that failed says why (a signal ends the process without a status), or the next failure is as unexplained as this one
+  failures.push(`status ${status}, signal ${signal} ${error ?? ''}\n${stderr}`)
+}
+if (failures.length === attempts) {
+  console.error(`Electronegativity failed to run ${attempts} times\n${failures.join('\n')}`)
   process.exit(1)
 }
 

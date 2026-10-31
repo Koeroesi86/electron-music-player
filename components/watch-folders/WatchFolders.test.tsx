@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import WatchFolders from './WatchFolders';
 
 describe('WatchFolders', () => {
-  afterEach(cleanup);
-
   it('says that changes are picked up without a rescan, and turns the watching off', () => {
     const setEnabled = vi.fn();
     render(<WatchFolders enabled setEnabled={setEnabled} />);

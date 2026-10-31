@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { Track } from '../../types/library';
 import { toRadioTrack } from '../../client/radio-track';
 import PlayerControls from './PlayerControls';
@@ -35,8 +35,6 @@ const renderControls = (volume: number, currentSong: Track | null = null, curren
 };
 
 describe('PlayerControls', () => {
-  afterEach(cleanup);
-
   it('shows the format of a station', () => {
     renderControls(0.5, toRadioTrack({ uuid: 'u1', name: 'Jazz FM', country: '', tags: [], codec: 'MP3', bitrate: 128 }));
 

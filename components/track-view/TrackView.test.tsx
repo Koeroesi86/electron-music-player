@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { Track } from '../../types/library';
 import type { TrackSort } from '../../types/library-query';
 import { createPageCache, pageSize, storePage } from '../../client/redux/library/pages';
@@ -36,8 +36,6 @@ const baseProps = {
 };
 
 describe('TrackView', () => {
-  afterEach(cleanup);
-
   const firstPage = storePage(
     createPageCache<Track>(),
     0,

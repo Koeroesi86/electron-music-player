@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import CoverFade from './CoverFade';
 
 const loading: FakeImage[] = [];
@@ -23,7 +23,6 @@ describe('CoverFade', () => {
     vi.stubGlobal('Image', FakeImage);
   });
   afterEach(() => {
-    cleanup();
     vi.unstubAllGlobals();
   });
 

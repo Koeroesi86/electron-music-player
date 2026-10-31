@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import WindowBlur from './WindowBlur';
 
 describe('WindowBlur', () => {
-  afterEach(cleanup);
-
   it('shows nothing where the app blurs the window itself', () => {
     const { container } = render(<WindowBlur available={false} enabled={false} toggle={vi.fn()} />);
 

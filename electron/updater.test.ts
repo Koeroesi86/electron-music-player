@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { checkForUpdate, createMockUpdateSource, downloadUpdate, getUpdateUnavailableReason, installUpdate, runUpdate } from './updater';
 import type { UpdateSource } from './updater';
 
@@ -13,6 +13,10 @@ const createSource = (check: UpdateSource['checkForUpdates'], download: UpdateSo
 
   return source;
 };
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const available = () => Promise.resolve({ isUpdateAvailable: true, updateInfo: { version: '2.0.0' } });
 
@@ -110,8 +114,11 @@ describe('runUpdate', () => {
       return Promise.resolve();
     });
     const report = vi.fn();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     await expect(runUpdate(source, report, { installTimeout: 0 })).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('did not quit'));
 
     expect(source.autoDownload).toBe(false);
     expect(report.mock.calls.map(([progress]) => progress)).toEqual([
@@ -145,21 +152,27 @@ describe('runUpdate', () => {
     ['the check fails', () => Promise.reject(new Error('offline'))],
     ['the check does not answer in time', () => new Promise<never>(() => undefined)],
   ])('continues when %s', async (_name, check) => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     await expect(runUpdate(createSource(check), vi.fn(), { checkTimeout: 1 })).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith('Update failed, starting the installed version', expect.any(Error));
   });
 
   it('continues when the download stalls', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const source = createSource(available, () => new Promise<never>(() => undefined));
 
     await expect(runUpdate(source, vi.fn(), { downloadStallTimeout: 1 })).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith('Update failed, starting the installed version', expect.any(Error));
 
     expect(source.quitAndInstall).not.toHaveBeenCalled();
   });
 
   it('keeps a slow download going while it makes progress', async () => {
+    vi.useFakeTimers();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const source = createSource(available, () =>
       [20, 40, 60].reduce<Promise<unknown>>(
         (previous, percent) => previous.then(() => new Promise((resolve) => setTimeout(resolve, 15))).then(() => source.emit('download-progress', { percent })),
@@ -167,16 +180,22 @@ describe('runUpdate', () => {
       )
     );
 
-    await runUpdate(source, vi.fn(), { downloadStallTimeout: 40, installTimeout: 0 });
+    const update = runUpdate(source, vi.fn(), { downloadStallTimeout: 40, installTimeout: 0 });
+    await vi.runAllTimersAsync();
+    await update;
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('did not quit'));
 
     expect(source.quitAndInstall).toHaveBeenCalledOnce();
   });
 
   it('continues when the download fails', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const source = createSource(available, () => Promise.reject(new Error('disk full')));
 
     await expect(runUpdate(source, vi.fn())).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith('Update failed, starting the installed version', expect.objectContaining({ message: 'disk full' }));
 
     expect(source.quitAndInstall).not.toHaveBeenCalled();
   });

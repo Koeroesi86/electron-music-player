@@ -92,8 +92,9 @@ export const steadyLevel = async (page: Page) => {
 export const longestGap = async (page: Page) => {
   const { sampleRate, windows } = await probeOf(page);
   const sounds = windows.map((window, index) => (window.peak > 0.001 ? index : -1)).filter((index) => index >= 0);
-  const first = sounds.at(0) ?? 0;
-  const last = sounds.at(-1) ?? 0;
+  const first = sounds.at(0);
+  const last = sounds.at(-1);
+  if (first === undefined || last === undefined) throw new Error('Nothing was heard, so there is no gap to measure');
   const gaps = windows
     .slice(first, last + 1)
     .reduce<number[]>((runs, window) => (window.peak > 0.001 ? [...runs, 0] : [...runs.slice(0, -1), (runs.at(-1) ?? 0) + window.frames]), [0]);

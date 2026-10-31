@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { render } from '@testing-library/react';
 import Slider from './Slider';
 
 describe('Slider', () => {
-  afterEach(cleanup);
-
   it.each([
     [-12, 0],
     [0, 50],

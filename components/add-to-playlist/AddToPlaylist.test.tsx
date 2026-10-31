@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { Track } from '../../types/library';
 import AddToPlaylist from './AddToPlaylist';
 
@@ -10,8 +10,6 @@ const playlists = [
 ];
 
 describe('AddToPlaylist', () => {
-  afterEach(cleanup);
-
   const renderButton = (add = vi.fn(), create = vi.fn(), onRowClick = vi.fn()) => {
     render(
       <div onClick={onRowClick}>

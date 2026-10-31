@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import Confirm from './Confirm';
 
 describe('Confirm', () => {
-  afterEach(cleanup);
-
   it('renders the message with default labels', () => {
     render(<Confirm message="Delete?" cancel={() => {}} />);
 

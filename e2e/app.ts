@@ -46,7 +46,16 @@ export const quit = async (app: ElectronApplication) => {
   })();
   if (!child) return;
 
-  const closed = await Promise.race([app.close().then(() => true), new Promise<boolean>((done) => setTimeout(() => done(false), 30_000))]).catch(() => true);
+  let timer: NodeJS.Timeout | undefined;
+  const closed = await Promise.race([
+    app.close().then(() => true),
+    new Promise<boolean>((done) => {
+      timer = setTimeout(() => done(false), 30_000);
+    }),
+  ])
+    // a close that failed leaves the process alive: it is killed below
+    .catch(() => false)
+    .finally(() => clearTimeout(timer));
   if (closed || !child.pid) return;
 
   if (process.platform === 'win32') spawnSync('taskkill', ['/pid', `${child.pid}`, '/T', '/F']);
@@ -130,6 +139,7 @@ export const launchApp = async ({ home, radioDirectory, initScripts }: LaunchOpt
       '--lang=en-US',
       `--user-data-dir=${join(home, 'user-data')}`,
       // Linux draws without a display server: a window on a desktop session gets no frames while the compositor does not ask for them (a locked screen, another workspace)
+      // the chromium sandbox needs user namespaces that the runners of CI (containers, locked down images) do not give; macOS and Windows run it
       ...(process.platform === 'linux' ? ['--no-sandbox', '--ozone-platform=headless'] : []),
     ],
     env: {
@@ -150,6 +160,9 @@ export const launchApp = async ({ home, radioDirectory, initScripts }: LaunchOpt
   // the init scripts run on the next load; the first one may have been before them
   if (!(await page.evaluate(() => Boolean(window.activeAudio)))) await page.reload();
   await page.waitForFunction(() => (document.getElementById('root')?.childElementCount ?? 0) > 0);
+  // the tests measure the page through them: without them a check would pass on defaults
+  const installed = await page.evaluate(() => Boolean(window.activeAudio) && Boolean(window.audioProbe));
+  if (!installed) throw new Error('The init scripts (window.activeAudio, window.audioProbe) did not run on the page, even after a reload');
   return { app, page };
 };
 

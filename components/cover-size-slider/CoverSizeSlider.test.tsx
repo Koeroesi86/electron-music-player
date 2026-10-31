@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import CoverSizeSlider from './CoverSizeSlider';
 
 describe('CoverSizeSlider', () => {
-  afterEach(cleanup);
-
   it('shows the width and sets the size it is moved to', () => {
     const setSize = vi.fn();
     render(<CoverSizeSlider size={180} setSize={setSize} />);

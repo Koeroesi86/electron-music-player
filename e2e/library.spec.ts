@@ -1,7 +1,9 @@
 import { rename, rm } from 'fs/promises';
 import { join } from 'path';
 import { addFolder, expect, libraryTracks, navigate, quit, test } from './app';
+import { expectTone } from './audio';
 import { albums, writeTrack } from './library';
+import { player } from './player';
 
 test('lists the albums and the songs of a scanned folder', async ({ session: { page } }) => {
   await navigate(page, 'Albums');
@@ -84,4 +86,7 @@ test('marks a folder that cannot be reached and plays again once it is back', as
   const back = await start();
   await navigate(back.page, 'Folders');
   await expect(back.page.getByText('Unavailable').filter({ visible: true })).toHaveCount(0);
+  // the check may not have run yet: a track of the folder that plays is what shows the folder is reachable again
+  await player(back.page).playAlbum('Pitch Perfect');
+  await expectTone(back.page, 440);
 });

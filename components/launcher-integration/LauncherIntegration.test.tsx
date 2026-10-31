@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import LauncherIntegration from './LauncherIntegration';
 
 describe('LauncherIntegration', () => {
-  afterEach(cleanup);
-
   it('shows nothing where the app can not add itself to the menu', () => {
     const { container } = render(<LauncherIntegration available={false} enabled={false} setEnabled={vi.fn()} />);
 

@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import type { RadioStation } from '../../types/radio';
@@ -12,8 +12,6 @@ const station: RadioStation = { uuid: 'abc', name: 'Jazz FM', country: 'Hungary'
 const item = stationFavourite(station);
 
 describe('FavouriteButton', () => {
-  afterEach(cleanup);
-
   it('adds the item when it is not a favourite and removes its key when it is', () => {
     const add = vi.fn();
     const remove = vi.fn();

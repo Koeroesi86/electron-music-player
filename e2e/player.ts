@@ -35,7 +35,12 @@ export const player = (page: Page) => {
     },
     /** The title in the player bar */
     title: () => page.locator('[class*="PlayerControls__title"]'),
-    currentTime: () => page.evaluate(() => window.activeAudio?.()?.currentTime ?? 0),
+    currentTime: () =>
+      page.evaluate(() => {
+        const element = window.activeAudio?.();
+        if (!element) throw new Error('There is no audio element');
+        return element.currentTime;
+      }),
     /** Jumps the element to the last seconds of the track, so its end does not take the length of the track to reach */
     skipToEnd: async (secondsLeft = 0.7) => {
       // the length is not known until the element has read the file
@@ -46,6 +51,6 @@ export const player = (page: Page) => {
       }, secondsLeft);
     },
     expectPlaying: () => expect.poll(() => page.evaluate(() => window.activeAudio?.()?.paused)).toBe(false),
-    expectPaused: () => expect.poll(() => page.evaluate(() => window.activeAudio?.()?.paused ?? true)).toBe(true),
+    expectPaused: () => expect.poll(() => page.evaluate(() => window.activeAudio?.()?.paused)).toBe(true),
   };
 };

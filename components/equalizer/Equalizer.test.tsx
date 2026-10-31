@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import Equalizer from './Equalizer';
 import { defaultGains, equalizerBands, equalizerPresets } from '../../client/audio/equalizer';
 
@@ -36,8 +36,6 @@ const setup = (gains = defaultGains) => {
 };
 
 describe('Equalizer', () => {
-  afterEach(cleanup);
-
   it('chains the filters in series from the source to the destination', () => {
     const { props, filters, mount } = setup();
     mount();

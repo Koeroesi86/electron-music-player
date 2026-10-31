@@ -1,7 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { applyMiddleware, createStore } from 'redux';
 
-const setup = async (fetchImpl: (url: string) => Promise<unknown> = () => Promise.reject(new Error('no server'))) => {
+const setup = async (
+  fetchImpl: (url: string) => Promise<unknown> = () => Promise.resolve({ ok: true, json: () => Promise.resolve({ items: [], total: 0 }) })
+) => {
   const send = vi.fn();
   const on = vi.fn();
   vi.resetModules();
@@ -19,10 +21,6 @@ const setup = async (fetchImpl: (url: string) => Promise<unknown> = () => Promis
 };
 
 describe('connection middleware', () => {
-  beforeEach(() => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
   it('asks the main process for the state when it starts', async () => {
     const { send } = await setup();
 
@@ -224,6 +222,18 @@ describe('connection middleware', () => {
       expect(send).toHaveBeenCalledWith('HISTORY_CLEAR');
       expect(store.getState().history).toEqual([]);
     });
+  });
+
+  it('logs a page that could not be fetched, and asks for it again on the next request', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { store, fetchMock } = await setup(() => Promise.reject(new Error('no server')));
+
+    store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'tracks', page: 0 } });
+    await vi.waitFor(() => expect(error).toHaveBeenCalledWith(expect.objectContaining({ message: 'no server' })));
+    const failed = fetchMock.mock.calls.length;
+    store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'tracks', page: 0 } });
+
+    await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(failed));
   });
 
   describe('the sort and the folders of the library', () => {

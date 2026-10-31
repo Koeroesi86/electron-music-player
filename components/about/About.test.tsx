@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { UpdateState, UpdateStatus } from '../../types/update';
 import About from './About';
 
@@ -15,8 +15,6 @@ const setup = (overrides: Partial<UpdateState> = {}, isPlaying = false) => {
 const withStatus = (status: UpdateStatus) => ({ status });
 
 describe('About', () => {
-  afterEach(cleanup);
-
   it('shows nothing before the main process reports', () => {
     const { container } = render(<About update={null} isPlaying={false} check={vi.fn()} install={vi.fn()} openReleases={vi.fn()} />);
 

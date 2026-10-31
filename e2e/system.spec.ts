@@ -1,3 +1,5 @@
+import { rmSync, writeFileSync } from 'fs';
+import { basename, dirname, join } from 'path';
 import { expect, libraryTracks, navigate, quit, test } from './app';
 import { player } from './player';
 
@@ -20,6 +22,9 @@ test('tells the desktop what plays', async ({ session: { page } }) => {
 
 test('serves a track in ranges, and nothing outside of the library', async ({ session: { page }, music }) => {
   const [track] = await libraryTracks(page);
+  // a real file next to the library: a missing one would be a 404 on every system, whether or not the request was refused
+  const secret = join(dirname(music), `${basename(music)}-secret.txt`);
+  writeFileSync(secret, 'secret');
   const url = (path: string) => `emusic://app/track?path=${encodeURIComponent(path)}`;
 
   const answers = await page.evaluate(
@@ -35,8 +40,9 @@ test('serves a track in ranges, and nothing outside of the library', async ({ se
         refused: refused.status,
       };
     },
-    [url(track.path), url(`${music}/../../etc/hostname`)]
+    [url(track.path), url(`${music}/../${basename(secret)}`)]
   );
+  rmSync(secret, { force: true });
 
   expect(answers.whole).toBe(200);
   expect(answers.part).toBe(206);
@@ -60,11 +66,9 @@ test('closes the window with the close button, and quits the app where closing t
   await page.locator('[class*="WindowControls__button"][aria-label="Close"]').click();
 
   await windowClosed;
-  // waited for before the quit, as the app can exit before the answer of the quit arrives, and the event would be gone by the time it is waited for
-  const appClosed = app.waitForEvent('close', { timeout: 60_000 });
-  // macOS keeps the app running without a window (index.ts), so it is quit here, as the test run would wait for it otherwise; the process may end before it answers
-  if (process.platform === 'darwin') await app.evaluate(({ app: electronApp }) => electronApp.quit()).catch(() => undefined);
-  await appClosed;
+  // macOS keeps the app running without a window (index.ts): it is quit here, as the test run would wait for it otherwise, and killed when it does not quit
+  if (process.platform === 'darwin') return quit(app);
+  await app.waitForEvent('close', { timeout: 60_000 });
 });
 
 test('speaks the language that is picked, and keeps it after a restart', async ({ start, session }) => {

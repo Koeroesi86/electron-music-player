@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { AlbumSummary } from '../../types/library';
 import AlbumViewThumbnail from './AlbumViewThumbnail';
@@ -25,8 +25,6 @@ const renderTile = (props: Partial<Parameters<typeof AlbumViewThumbnail>[0]> = {
   render(<AlbumViewThumbnail album={album} offlineFolders={[]} selectAlbum={vi.fn()} playAlbum={vi.fn()} {...props} />);
 
 describe('AlbumViewThumbnail', () => {
-  afterEach(cleanup);
-
   it('shows the title and the artist, then the year, the number of tracks and the length', () => {
     renderTile();
 

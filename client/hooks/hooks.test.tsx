@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, renderHook } from '@testing-library/react';
+import { act, fireEvent, render, renderHook } from '@testing-library/react';
 import { useAudioListener } from './use-audio-listener';
 import { useDelayedValue } from './use-delayed-value';
 import { useLastDefined } from './use-last-defined';
@@ -8,7 +8,6 @@ import { useUpdateEffect } from './use-update-effect';
 
 describe('hooks', () => {
   afterEach(() => {
-    cleanup();
     vi.useRealTimers();
   });
 
