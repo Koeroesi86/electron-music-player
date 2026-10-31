@@ -15,7 +15,7 @@ import Slider from '../slider/Slider';
 import type { Track } from '../../types/library';
 import { toNowPlaying } from '../../client/now-playing';
 import { radioUuidOf } from '../../client/radio-track';
-import { useMediaSession } from '../../client/hooks/use-media-session';
+import { useMediaSession, useMediaSessionActions } from '../../client/hooks/use-media-session';
 import { useAudioListener } from '../../client/hooks/use-audio-listener';
 import { useUpdateEffect } from '../../client/hooks/use-update-effect';
 import { useTranslation } from '../../client/i18n';
@@ -195,6 +195,8 @@ const VolumeControls = ({ volume, setVolume, openEqualizer }: Pick<PlayerControl
 
 const PlayerControls = (props: PlayerControlsProps) => {
   const { currentSong, currentTime, isPlaying, seek, play, pause, setCurrentTime, setPlaying, addPlayStatusListener, addTimeChangeListener } = props;
+
+  useMediaSessionActions({ play, pause, previousSong: props.previousSong, nextSong: props.nextSong });
 
   useAudioListener(addPlayStatusListener, (playing) => {
     if (isPlaying !== playing) setPlaying(playing);

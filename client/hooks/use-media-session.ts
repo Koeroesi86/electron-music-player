@@ -45,3 +45,27 @@ export const useMediaSession = (info: MediaSessionInfo | undefined) => {
     };
   }, [info?.title, info?.artist, info?.album, info?.cover]);
 };
+
+interface MediaSessionActions {
+  play: () => void;
+  pause: () => void;
+  previousSong: () => void;
+  nextSong: () => void;
+}
+
+/** Lets the media keys and the OS media controls drive the player, as without a handler they have nothing to call */
+export const useMediaSessionActions = ({ play, pause, previousSong, nextSong }: MediaSessionActions) => {
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    const handlers: [MediaSessionAction, () => void][] = [
+      ['play', play],
+      ['pause', pause],
+      ['previoustrack', previousSong],
+      ['nexttrack', nextSong],
+    ];
+    handlers.forEach(([action, handler]) => navigator.mediaSession.setActionHandler(action, handler));
+
+    return () => handlers.forEach(([action]) => navigator.mediaSession.setActionHandler(action, null));
+  }, [play, pause, previousSong, nextSong]);
+};
