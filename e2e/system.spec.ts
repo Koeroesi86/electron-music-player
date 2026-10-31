@@ -66,11 +66,9 @@ test('closes the window with the close button, and quits the app where closing t
   await page.locator('[class*="WindowControls__button"][aria-label="Close"]').click();
 
   await windowClosed;
-  // waited for before the quit, as the app can exit before the answer of the quit arrives, and the event would be gone by the time it is waited for
-  const appClosed = app.waitForEvent('close', { timeout: 60_000 });
-  // macOS keeps the app running without a window (index.ts), so it is quit here, as the test run would wait for it otherwise; the process may end before it answers
-  if (process.platform === 'darwin') await app.evaluate(({ app: electronApp }) => electronApp.quit()).catch(() => undefined);
-  await appClosed;
+  // macOS keeps the app running without a window (index.ts): it is quit here, as the test run would wait for it otherwise, and killed when it does not quit
+  if (process.platform === 'darwin') return quit(app);
+  await app.waitForEvent('close', { timeout: 60_000 });
 });
 
 test('speaks the language that is picked, and keeps it after a restart', async ({ start, session }) => {

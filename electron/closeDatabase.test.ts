@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import closeDatabase from './closeDatabase';
 import connectDatabase from './connectDatabase';
 import executeQuery from './executeQuery';
@@ -13,9 +13,12 @@ describe('closeDatabase', () => {
   });
 
   it('resolves when the database is closed already', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const database = await connectDatabase(':memory:');
     await closeDatabase(database);
 
     await expect(closeDatabase(database)).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith(expect.objectContaining({ code: 'SQLITE_MISUSE' }));
   });
 });

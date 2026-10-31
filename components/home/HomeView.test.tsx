@@ -74,7 +74,11 @@ describe('HomeView', () => {
   });
 
   it('gives a track and a station the same cells, so the columns line up', () => {
-    renderView([played(trackFavourite(track)), played(stationFavourite(station)), played(trackFavourite(track), false)]);
+    renderView([
+      played(trackFavourite(track)),
+      played(stationFavourite(station)),
+      played(trackFavourite({ ...track, path: '/music/unavailable.flac' }), false),
+    ]);
 
     const cells = Array.from(document.querySelectorAll('.item')).map((row) => Array.from(row.children).map((cell) => cell.className.replace(/\s.*/, '')));
     expect(cells[1]).toEqual(cells[0]);

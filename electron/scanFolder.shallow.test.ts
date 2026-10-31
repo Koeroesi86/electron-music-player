@@ -22,7 +22,7 @@ describe('scanFolder that is not deep', () => {
     fs.writeFileSync(path.join(root, 'live', 'b.flac'), 'not audio');
     global._database = await createTestDatabase();
     global._appDataPath = root;
-    parsed.mockReset().mockResolvedValue({ common: { artist: 'Artist', album: 'Album', title: 'Title' }, format: { duration: 60 } } as never);
+    parsed.mockReset().mockResolvedValue({ common: { artist: 'Artist', album: 'Album', title: 'Title' }, native: {}, format: { duration: 60 } } as never);
   });
 
   afterEach(() => {

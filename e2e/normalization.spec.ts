@@ -32,7 +32,8 @@ test('levels the tracks by their ReplayGain tags, per album by default, and play
   await navigate(page, 'Settings');
   await page.getByRole('radio', { name: 'Off', exact: true }).click();
   await expect.poll(async () => (await levelNow(page)) / byAlbum).toBeCloseTo(4, 0);
-  const full = await levelNow(page);
+  // levelNow could still hold the audio from before the switch, and the ratios below are taken against this level
+  const full = await steadyLevel(page);
 
   await page.getByRole('radio', { name: 'Track', exact: true }).click();
   await expect.poll(async () => (await levelNow(page)) / full).toBeCloseTo(0.5, 1);

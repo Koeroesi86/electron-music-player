@@ -114,8 +114,11 @@ describe('runUpdate', () => {
       return Promise.resolve();
     });
     const report = vi.fn();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     await expect(runUpdate(source, report, { installTimeout: 0 })).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('did not quit'));
 
     expect(source.autoDownload).toBe(false);
     expect(report.mock.calls.map(([progress]) => progress)).toEqual([
@@ -169,6 +172,7 @@ describe('runUpdate', () => {
 
   it('keeps a slow download going while it makes progress', async () => {
     vi.useFakeTimers();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const source = createSource(available, () =>
       [20, 40, 60].reduce<Promise<unknown>>(
         (previous, percent) => previous.then(() => new Promise((resolve) => setTimeout(resolve, 15))).then(() => source.emit('download-progress', { percent })),
@@ -179,6 +183,8 @@ describe('runUpdate', () => {
     const update = runUpdate(source, vi.fn(), { downloadStallTimeout: 40, installTimeout: 0 });
     await vi.runAllTimersAsync();
     await update;
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('did not quit'));
 
     expect(source.quitAndInstall).toHaveBeenCalledOnce();
   });
