@@ -15,7 +15,7 @@ const types = {
 }
 
 const fetchRelease = async () => {
-  const response = await fetch('https://api.github.com/repos/Koeroesi86/electron-music-player/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+  const response = await fetch('https://api.github.com/repos/Koeroesi86/tunelle/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
   if (!response.ok) throw new Error(`GitHub answered ${response.status}`)
   return response.json()
 }

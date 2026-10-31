@@ -51,6 +51,6 @@ describe('registerUpdateListeners', () => {
   it('opens the releases page, a fixed address', () => {
     emit('OPEN_RELEASES');
 
-    expect(openExternal).toHaveBeenCalledExactlyOnceWith('https://github.com/Koeroesi86/electron-music-player/releases');
+    expect(openExternal).toHaveBeenCalledExactlyOnceWith('https://github.com/Koeroesi86/tunelle/releases');
   });
 });

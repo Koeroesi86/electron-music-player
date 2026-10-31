@@ -3,8 +3,8 @@ import { describeJob, failedJobs, firstError, parseRunId } from './ci-failure'
 
 describe('parseRunId', () => {
   it.each([
-    ['https://github.com/Koeroesi86/electron-music-player/actions/runs/123456/job/789', '123456'],
-    ['https://github.com/Koeroesi86/electron-music-player/actions/runs/123456', '123456'],
+    ['https://github.com/Koeroesi86/tunelle/actions/runs/123456/job/789', '123456'],
+    ['https://github.com/Koeroesi86/tunelle/actions/runs/123456', '123456'],
     ['123456', '123456'],
   ])('reads the run of %s', (value, expected) => {
     expect(parseRunId(value)).toBe(expected)

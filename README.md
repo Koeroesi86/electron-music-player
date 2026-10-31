@@ -2,14 +2,14 @@
 
 Open-Source Lossless Audio Player
 
-Website and downloads: <https://koeroesi86.github.io/electron-music-player/>
+Website and downloads: <https://koeroesi86.github.io/tunelle/>
 
-* [![Build](https://github.com/Koeroesi86/electron-music-player/actions/workflows/build.yml/badge.svg)](https://github.com/Koeroesi86/electron-music-player/actions/workflows/build.yml)
+* [![Build](https://github.com/Koeroesi86/tunelle/actions/workflows/build.yml/badge.svg)](https://github.com/Koeroesi86/tunelle/actions/workflows/build.yml)
 
 
 ### Install
 
-Windows, Linux and macOS builds exist for x64 (Intel/AMD) and arm64. Download the installer of your system and processor from the [latest release](https://github.com/Koeroesi86/electron-music-player/releases/latest); the app updates itself on start. On Linux the downloaded AppImage has to be made executable first: `chmod +x Tunelle-<version>-<arch>.AppImage`, then `./Tunelle-<version>-<arch>.AppImage` (or tick "Allow executing as a program" in the file manager). It needs FUSE 3: the kernel support and a `fusermount3` helper, which the `fuse3` package provides and desktop installs have. Without FUSE it runs with `APPIMAGE_EXTRACT_AND_RUN=1 ./Tunelle-<version>-<arch>.AppImage`. v26.10.2 and older also need FUSE 2 (`sudo dnf install fuse-libs` on Fedora, `sudo apt install libfuse2t64` on Ubuntu 24.04); without it nothing opens and the reason only shows when the AppImage is started from a terminal.
+Windows, Linux and macOS builds exist for x64 (Intel/AMD) and arm64. Download the installer of your system and processor from the [latest release](https://github.com/Koeroesi86/tunelle/releases/latest); the app updates itself on start. On Linux the downloaded AppImage has to be made executable first: `chmod +x Tunelle-<version>-<arch>.AppImage`, then `./Tunelle-<version>-<arch>.AppImage` (or tick "Allow executing as a program" in the file manager). It needs FUSE 3: the kernel support and a `fusermount3` helper, which the `fuse3` package provides and desktop installs have. Without FUSE it runs with `APPIMAGE_EXTRACT_AND_RUN=1 ./Tunelle-<version>-<arch>.AppImage`. v26.10.2 and older also need FUSE 2 (`sudo dnf install fuse-libs` on Fedora, `sudo apt install libfuse2t64` on Ubuntu 24.04); without it nothing opens and the reason only shows when the AppImage is started from a terminal.
 
 
 ### Window blur
