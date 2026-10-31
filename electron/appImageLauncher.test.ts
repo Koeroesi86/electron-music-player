@@ -249,6 +249,52 @@ describe('launcher on disk', () => {
       await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
     });
 
+    describe('from the entry of the name eMusic', () => {
+      const legacyFiles = () => [
+        join(folder, 'data/applications/emusic.desktop'),
+        join(folder, 'data/emusic/eMusic.AppImage'),
+        ...sizes.map((size) => join(folder, `data/icons/hicolor/${size}x${size}/apps/emusic.png`)),
+      ];
+
+      const createLegacyLauncher = async () => {
+        await Promise.all(legacyFiles().map((file) => mkdir(join(file, '..'), { recursive: true })));
+        await Promise.all(legacyFiles().map((file) => writeFile(file, file.endsWith('.desktop') ? 'Exec="/old/eMusic.AppImage" %U\n' : '')));
+      };
+
+      it('replaces it with the entry of the running AppImage, and removes what it left', async () => {
+        await createLegacyLauncher();
+
+        await syncLauncher(appImage(), options);
+
+        await expect(readLauncherTarget(options.dataHome)).resolves.toBe(appImage());
+        await expect(Promise.all(legacyFiles().map(exists))).resolves.toEqual(legacyFiles().map(() => false));
+        await expect(exists(join(folder, 'data/emusic'))).resolves.toBe(false);
+        await expect(exists(join(folder, 'data/icons/hicolor/16x16/apps/tunelle.png'))).resolves.toBe(true);
+        expect(refresh).toHaveBeenCalled();
+      });
+
+      it('removes it and keeps the entry that is there already', async () => {
+        const first = join(folder, 'first/Tunelle.AppImage');
+        await createAppImage(first);
+        await enableLauncher(first, options);
+        await createLegacyLauncher();
+
+        await syncLauncher(appImage(), options);
+
+        await expect(readLauncherTarget(options.dataHome)).resolves.toBe(first);
+        await expect(exists(legacyFiles()[0])).resolves.toBe(false);
+      });
+
+      it('is left alone when the app does not run from an AppImage', async () => {
+        await createLegacyLauncher();
+
+        await syncLauncher(undefined, options);
+
+        await expect(exists(legacyFiles()[0])).resolves.toBe(true);
+        await expect(isLauncherEnabled(options.dataHome)).resolves.toBe(false);
+      });
+    });
+
     it('drops the entry when its AppImage is gone and the app does not run from an AppImage', async () => {
       await enableLauncher(join(folder, 'old/Tunelle.AppImage'), options);
 
