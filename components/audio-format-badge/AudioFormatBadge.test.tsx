@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { render } from '@testing-library/react';
 import type { Track } from '../../types/library';
 import AudioFormatBadge from './AudioFormatBadge';
 
@@ -17,8 +17,6 @@ const track: Track = {
 };
 
 describe('AudioFormatBadge', () => {
-  afterEach(cleanup);
-
   it('shows the format of the track', () => {
     const { container } = render(<AudioFormatBadge track={{ ...track, codec: 'FLAC', lossless: 1, bitDepth: 24, sampleRate: 96000 }} />);
     expect(container.textContent).toBe('FLAC 24/96');

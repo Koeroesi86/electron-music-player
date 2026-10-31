@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { checkForUpdate, createMockUpdateSource, downloadUpdate, getUpdateUnavailableReason, installUpdate, runUpdate } from './updater';
 import type { UpdateSource } from './updater';
 
@@ -13,6 +13,10 @@ const createSource = (check: UpdateSource['checkForUpdates'], download: UpdateSo
 
   return source;
 };
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const available = () => Promise.resolve({ isUpdateAvailable: true, updateInfo: { version: '2.0.0' } });
 
@@ -160,6 +164,7 @@ describe('runUpdate', () => {
   });
 
   it('keeps a slow download going while it makes progress', async () => {
+    vi.useFakeTimers();
     const source = createSource(available, () =>
       [20, 40, 60].reduce<Promise<unknown>>(
         (previous, percent) => previous.then(() => new Promise((resolve) => setTimeout(resolve, 15))).then(() => source.emit('download-progress', { percent })),
@@ -167,7 +172,9 @@ describe('runUpdate', () => {
       )
     );
 
-    await runUpdate(source, vi.fn(), { downloadStallTimeout: 40, installTimeout: 0 });
+    const update = runUpdate(source, vi.fn(), { downloadStallTimeout: 40, installTimeout: 0 });
+    await vi.runAllTimersAsync();
+    await update;
 
     expect(source.quitAndInstall).toHaveBeenCalledOnce();
   });

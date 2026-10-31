@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Track } from '../../types/library';
 import AddToQueue from './AddToQueue';
 
@@ -18,7 +18,6 @@ const track: Track = {
 
 describe('AddToQueue', () => {
   afterEach(() => {
-    cleanup();
     vi.useRealTimers();
   });
 

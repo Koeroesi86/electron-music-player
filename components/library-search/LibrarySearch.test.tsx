@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import LibrarySearch from './LibrarySearch';
 
 const box = () => screen.getByRole<HTMLInputElement>('searchbox', { name: 'Search the library' });
@@ -8,7 +8,6 @@ describe('LibrarySearch', () => {
   beforeEach(() => vi.useFakeTimers());
 
   afterEach(() => {
-    cleanup();
     vi.useRealTimers();
   });
 

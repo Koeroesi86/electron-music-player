@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { applyMiddleware, createStore } from 'redux';
 
-const setup = async (fetchImpl: (url: string) => Promise<unknown> = () => Promise.reject(new Error('no server'))) => {
+const setup = async (fetchImpl: (url: string) => Promise<unknown> = () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) })) => {
   const send = vi.fn();
   const on = vi.fn();
   vi.resetModules();
@@ -19,10 +19,6 @@ const setup = async (fetchImpl: (url: string) => Promise<unknown> = () => Promis
 };
 
 describe('connection middleware', () => {
-  beforeEach(() => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
   it('asks the main process for the state when it starts', async () => {
     const { send } = await setup();
 

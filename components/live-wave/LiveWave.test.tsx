@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import LiveWave from './LiveWave';
 
 describe('LiveWave', () => {
@@ -22,7 +22,6 @@ describe('LiveWave', () => {
   });
 
   afterEach(() => {
-    cleanup();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });

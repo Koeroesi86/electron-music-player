@@ -1,12 +1,10 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import FolderManagement from './FolderManagement';
 
 const folders = [{ path: '/music/a', lastModified: 1 }];
 
 describe('FolderManagement', () => {
-  afterEach(cleanup);
-
   it('removes a folder only after it is confirmed', () => {
     const removeFolder = vi.fn();
     render(<FolderManagement folders={folders} offlineFolders={[]} addFolders={() => {}} removeFolder={removeFolder} />);

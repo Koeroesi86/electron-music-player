@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { Track } from '../../types/library';
 import NowPlaying from './NowPlaying';
 
@@ -52,8 +52,6 @@ const renderPage = (props: Partial<Parameters<typeof NowPlaying>[0]> = {}) =>
   );
 
 describe('NowPlaying', () => {
-  afterEach(cleanup);
-
   it('shows the format of the current song and of each track of the list', () => {
     renderPage();
 

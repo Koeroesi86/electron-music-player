@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import reducers from '../../client/redux/reducers';
@@ -23,8 +23,6 @@ const setup = (actions: AppAction[]) => {
 };
 
 describe('About connected to the store', () => {
-  afterEach(cleanup);
-
   it('shows nothing before the main process reported', () => {
     setup([]);
 

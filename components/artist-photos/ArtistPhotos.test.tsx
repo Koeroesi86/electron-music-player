@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import ArtistPhotos from './ArtistPhotos';
 
 describe('ArtistPhotos', () => {
-  afterEach(cleanup);
-
   it('says that the names of the artists are sent to Deezer, and shows it on', () => {
     const setEnabled = vi.fn();
     render(<ArtistPhotos enabled setEnabled={setEnabled} />);

@@ -78,6 +78,8 @@ test('seeks inside the track and goes on playing from there', async ({ session: 
   await expectTone(page, 440);
 
   await controls.seekTo(4);
+  // what was heard before the seek is not what plays after it
+  await clearProbe(page);
 
   await expect.poll(() => controls.currentTime()).toBeGreaterThan(3.9);
   await expectTone(page, 440);

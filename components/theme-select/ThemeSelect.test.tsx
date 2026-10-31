@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ThemeSettings } from '../../types/theme';
 import { accentPresets, defaultAccent } from '../../client/theme';
 import ThemeSelect from './ThemeSelect';
@@ -7,8 +7,6 @@ import ThemeSelect from './ThemeSelect';
 const system: ThemeSettings = { mode: 'system', accent: undefined };
 
 describe('ThemeSelect', () => {
-  afterEach(cleanup);
-
   it('offers the system, light and dark modes and marks the picked one', () => {
     render(<ThemeSelect theme={{ mode: 'light', accent: undefined }} setMode={vi.fn()} setAccent={vi.fn()} />);
 

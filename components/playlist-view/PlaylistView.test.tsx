@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Track } from '../../types/library';
 import type { Playlist } from '../../types/playlists';
 import PlaylistView from './PlaylistView';
@@ -38,7 +38,6 @@ const playlist: Playlist = {
 
 describe('PlaylistView', () => {
   afterEach(() => {
-    cleanup();
     queued.mockReset();
   });
 

@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { AlbumSummary } from '../../types/library';
 import { createPageCache, storePage } from '../../client/redux/library/pages';
 import AlbumView from './AlbumView';
@@ -30,8 +30,6 @@ const baseProps = {
 };
 
 describe('AlbumView', () => {
-  afterEach(cleanup);
-
   const empty = storePage(createPageCache<AlbumSummary>(), 0, [], 0);
   const nothing = /Nothing in the library/;
 

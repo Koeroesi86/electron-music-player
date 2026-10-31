@@ -4,6 +4,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   // one app at a time: a window per test, and the audio is measured against a clock that a second app would load
   workers: 1,
+  forbidOnly: Boolean(process.env.CI),
   fullyParallel: false,
   // a retry would hide the test that fails now and then
   retries: 0,

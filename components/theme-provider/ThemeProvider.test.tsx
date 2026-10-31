@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { accentTokens, defaultAccent, panelSurfaces } from '../../client/theme';
@@ -38,7 +38,6 @@ describe('ThemeProvider', () => {
   });
 
   afterEach(() => {
-    cleanup();
     vi.unstubAllGlobals();
     root.removeAttribute('data-theme');
     root.removeAttribute('style');

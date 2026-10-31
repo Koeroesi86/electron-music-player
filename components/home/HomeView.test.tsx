@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Favourite, HistoryItem } from '../../types/favourites';
 import type { Playlist } from '../../types/playlists';
 import type { Track } from '../../types/library';
@@ -40,8 +40,6 @@ const playlistOf = (id: number, name: string, tracks: Track[]): Playlist => ({
 const played = (item: ReturnType<typeof trackFavourite>, available = true): HistoryItem => ({ ...item, playedAt: 1, available });
 
 describe('HomeView', () => {
-  afterEach(cleanup);
-
   const renderView = (history: HistoryItem[], currentSong: Track | null = null, extra: Partial<ComponentProps<typeof HomeView>> = {}) => {
     const props = { playTracks: vi.fn(), playStation: vi.fn(), clearHistory: vi.fn(), resume: vi.fn(), addFolder: vi.fn() };
     render(<HomeView history={history} currentSong={currentSong} {...props} {...extra} />);

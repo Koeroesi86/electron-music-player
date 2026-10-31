@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import WindowControls from './WindowControls';
 
 const renderControls = (maximized = false) => {
@@ -9,8 +9,6 @@ const renderControls = (maximized = false) => {
 };
 
 describe('WindowControls', () => {
-  afterEach(cleanup);
-
   it('minimizes', () => {
     const { minimize } = renderControls();
 

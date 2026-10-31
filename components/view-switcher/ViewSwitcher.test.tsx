@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import ViewSwitcher from './ViewSwitcher';
 
 const views = [
@@ -8,8 +8,6 @@ const views = [
 ];
 
 describe('ViewSwitcher', () => {
-  afterEach(cleanup);
-
   it('shows a tab for each view and switches on click', () => {
     const setView = vi.fn();
     render(<ViewSwitcher views={views} current="one" setView={setView} />);

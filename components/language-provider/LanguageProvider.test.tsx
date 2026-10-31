@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import Confirm from '../confirm';
 import LanguageProvider from './LanguageProvider';
 
@@ -12,7 +12,6 @@ const renderConfirm = (language?: string) =>
 
 describe('LanguageProvider', () => {
   afterEach(() => {
-    cleanup();
     vi.restoreAllMocks();
   });
 

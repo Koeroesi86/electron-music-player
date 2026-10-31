@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import Switch from './Switch';
 
 describe('Switch', () => {
-  afterEach(cleanup);
-
   it('says whether it is on', () => {
     render(<Switch checked label="Artist photos" onChange={vi.fn()} />);
 

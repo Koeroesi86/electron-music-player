@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { act, cleanup, fireEvent, render } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { act, fireEvent, render } from '@testing-library/react';
 import { getRowWindow, useWindowedList } from './use-windowed-list';
 
 describe('getRowWindow', () => {
@@ -20,8 +20,6 @@ describe('getRowWindow', () => {
 });
 
 describe('useWindowedList', () => {
-  afterEach(cleanup);
-
   const Listing = ({
     itemCount,
     itemWidth,

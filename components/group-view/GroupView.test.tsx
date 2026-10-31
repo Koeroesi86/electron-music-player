@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
 import type { GroupSummary, Track } from '../../types/library';
@@ -45,8 +45,6 @@ const renderView = (props: Partial<ComponentProps<typeof GroupView>> = {}) => {
 };
 
 describe('GroupView', () => {
-  afterEach(cleanup);
-
   it('shows the genres as cards, the ones without a name as unknown', () => {
     renderView();
 

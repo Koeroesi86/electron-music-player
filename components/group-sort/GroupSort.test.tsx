@@ -1,13 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import GroupSort from './GroupSort';
 
 const open = () => fireEvent.click(screen.getByRole('button', { name: /^Sort by/ }));
 const item = (name: string) => screen.getByRole('menuitemradio', { name });
 
 describe('GroupSort', () => {
-  afterEach(cleanup);
-
   it('offers the name and the counts, with the direction out of reach until a field is picked', () => {
     render(<GroupSort sort={undefined} setSort={vi.fn()} />);
     open();

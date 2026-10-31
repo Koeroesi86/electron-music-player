@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
@@ -14,8 +14,6 @@ vi.mock('../../client/audio/context', () => ({
 }));
 
 describe('Home', () => {
-  afterEach(cleanup);
-
   it('plays the paused track and opens the page of what plays when resuming', () => {
     const actions: AppAction[] = [];
     const state = {

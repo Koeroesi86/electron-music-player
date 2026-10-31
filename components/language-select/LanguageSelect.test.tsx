@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import LanguageSelect from './LanguageSelect';
 
 describe('LanguageSelect', () => {
-  afterEach(cleanup);
-
   it('offers the system default and every language by its own name', () => {
     render(<LanguageSelect setLanguage={vi.fn()} />);
 

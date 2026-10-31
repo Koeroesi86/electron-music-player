@@ -1,3 +1,5 @@
+import { rmSync, writeFileSync } from 'fs';
+import { basename, dirname, join } from 'path';
 import { expect, libraryTracks, navigate, quit, test } from './app';
 import { player } from './player';
 
@@ -20,6 +22,9 @@ test('tells the desktop what plays', async ({ session: { page } }) => {
 
 test('serves a track in ranges, and nothing outside of the library', async ({ session: { page }, music }) => {
   const [track] = await libraryTracks(page);
+  // a real file next to the library: a missing one would be a 404 on every system, whether or not the request was refused
+  const secret = join(dirname(music), `${basename(music)}-secret.txt`);
+  writeFileSync(secret, 'secret');
   const url = (path: string) => `emusic://app/track?path=${encodeURIComponent(path)}`;
 
   const answers = await page.evaluate(
@@ -35,8 +40,9 @@ test('serves a track in ranges, and nothing outside of the library', async ({ se
         refused: refused.status,
       };
     },
-    [url(track.path), url(`${music}/../../etc/hostname`)]
+    [url(track.path), url(`${music}/../${basename(secret)}`)]
   );
+  rmSync(secret, { force: true });
 
   expect(answers.whole).toBe(200);
   expect(answers.part).toBe(206);

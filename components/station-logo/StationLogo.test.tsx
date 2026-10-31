@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { fireEvent, render } from '@testing-library/react';
 import StationLogo from './StationLogo';
 
 describe('StationLogo', () => {
-  afterEach(cleanup);
-
   it('shows the logo served for the uuid of the station', () => {
     const { container } = render(<StationLogo uuid="a b" hasLogo />);
 

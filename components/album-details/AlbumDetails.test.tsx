@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Album } from '../../types/library';
 import { getCoverUrl } from '../../client/cover-url';
 import { getImageTint } from '../../client/cover-tint';
@@ -33,7 +33,6 @@ const setup = (shown: Album) => render(<AlbumDetails album={shown} playTracks={v
 
 describe('AlbumDetails', () => {
   afterEach(() => {
-    cleanup();
     vi.mocked(getImageTint).mockReset();
     queued.mockReset();
   });

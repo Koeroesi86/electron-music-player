@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import type { Track } from '../../types/library';
 import { toRadioTrack } from '../../client/radio-track';
 import type { NormalizationMode } from '../../client/audio/loudness';
@@ -24,11 +24,11 @@ const renderAudio = (currentSong: Track | null, isPlaying = false) =>
   );
 
 describe('AudioComponent', () => {
-  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  let play: MockInstance<HTMLMediaElement['play']>;
 
-  beforeEach(() => play.mockClear());
-  afterEach(cleanup);
-
+  beforeEach(() => {
+    play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  });
   it('does not start a track by itself when it is loaded paused, as a restored track is', () => {
     const { container } = renderAudio(null);
 
@@ -118,8 +118,6 @@ describe('AudioComponent end of a track', () => {
     );
 
   beforeEach(() => trackEnded.mockClear());
-  afterEach(cleanup);
-
   it('steps to the next track once however often the end is reached', () => {
     const view = renderTrack(track);
 
@@ -165,15 +163,14 @@ describe('AudioComponent end of a track', () => {
 });
 
 describe('AudioComponent radio reconnect', () => {
-  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  let play: MockInstance<HTMLMediaElement['play']>;
 
   beforeEach(() => {
+    play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
     vi.useFakeTimers();
-    play.mockClear();
   });
 
   afterEach(() => {
-    cleanup();
     vi.useRealTimers();
   });
 
@@ -357,9 +354,7 @@ describe('AudioComponent gapless', () => {
   const second: Track = { ...station, path: '/music/b.flac' };
   const third: Track = { ...station, path: '/music/c.flac' };
   const sourceOfPath = (path: string) => `emusic://app/track?path=${encodeURIComponent(path)}`;
-  const load = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
-  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
-  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  let load: MockInstance<HTMLMediaElement['load']>;
   const trackEnded = vi.fn();
   const activateNode = vi.fn();
 
@@ -398,14 +393,15 @@ describe('AudioComponent gapless', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
-    load.mockClear();
+    load = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
     trackEnded.mockClear();
     activateNode.mockClear();
     setNormalization.mockClear();
   });
 
   afterEach(() => {
-    cleanup();
     vi.useRealTimers();
   });
 

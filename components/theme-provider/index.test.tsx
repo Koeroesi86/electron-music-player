@@ -43,7 +43,6 @@ describe('ThemeProvider connected to the store', () => {
   });
 
   afterEach(() => {
-    cleanup();
     vi.unstubAllGlobals();
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.removeAttribute('style');

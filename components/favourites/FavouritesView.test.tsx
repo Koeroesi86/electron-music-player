@@ -37,7 +37,6 @@ const openOnline = () => fireEvent.click(screen.getByRole('button', { name: /Onl
 
 describe('FavouritesView', () => {
   afterEach(() => {
-    cleanup();
     queued.mockReset();
     vi.unstubAllGlobals();
   });

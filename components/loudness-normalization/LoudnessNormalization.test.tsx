@@ -1,10 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import LoudnessNormalization from './LoudnessNormalization';
 
 describe('LoudnessNormalization', () => {
-  afterEach(cleanup);
-
   it('shows the mode that is on, with what it does', () => {
     render(<LoudnessNormalization mode="album" setMode={vi.fn()} />);
 
