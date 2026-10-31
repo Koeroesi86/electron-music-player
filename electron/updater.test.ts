@@ -149,16 +149,20 @@ describe('runUpdate', () => {
     ['the check fails', () => Promise.reject(new Error('offline'))],
     ['the check does not answer in time', () => new Promise<never>(() => undefined)],
   ])('continues when %s', async (_name, check) => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     await expect(runUpdate(createSource(check), vi.fn(), { checkTimeout: 1 })).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith('Update failed, starting the installed version', expect.any(Error));
   });
 
   it('continues when the download stalls', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const source = createSource(available, () => new Promise<never>(() => undefined));
 
     await expect(runUpdate(source, vi.fn(), { downloadStallTimeout: 1 })).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith('Update failed, starting the installed version', expect.any(Error));
 
     expect(source.quitAndInstall).not.toHaveBeenCalled();
   });
@@ -180,10 +184,12 @@ describe('runUpdate', () => {
   });
 
   it('continues when the download fails', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const source = createSource(available, () => Promise.reject(new Error('disk full')));
 
     await expect(runUpdate(source, vi.fn())).resolves.toBeUndefined();
+
+    expect(error).toHaveBeenCalledWith('Update failed, starting the installed version', expect.objectContaining({ message: 'disk full' }));
 
     expect(source.quitAndInstall).not.toHaveBeenCalled();
   });

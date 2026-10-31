@@ -87,7 +87,6 @@ describe('registerLauncherListeners', () => {
   });
 
   it.each([undefined, 'yes', {}, { enabled: 'yes' }])('ignores the request %j', async (payload) => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     (await registerLauncherListeners())(undefined, appImage());
 
     listeners.get('SET_LAUNCHER')?.(event, payload);
