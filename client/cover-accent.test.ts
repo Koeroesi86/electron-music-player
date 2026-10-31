@@ -48,8 +48,8 @@ describe('coverAccent', () => {
     vi.stubGlobal('fetch', fetchMock);
     stubCanvas(pixels(...repeat(10, [220, 40, 40])));
 
-    await expect(coverAccent('emusic://app/albumart/red-optimized.png')).resolves.toBe('#dc2828');
-    await expect(coverAccent('emusic://app/albumart/red-optimized.png')).resolves.toBe('#dc2828');
+    await expect(coverAccent('tunelle://app/albumart/red-optimized.png')).resolves.toBe('#dc2828');
+    await expect(coverAccent('tunelle://app/albumart/red-optimized.png')).resolves.toBe('#dc2828');
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -57,6 +57,6 @@ describe('coverAccent', () => {
   it('has no colour for a cover that cannot be read', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 404 })));
 
-    await expect(coverAccent('emusic://app/albumart/missing-optimized.png')).resolves.toBeUndefined();
+    await expect(coverAccent('tunelle://app/albumart/missing-optimized.png')).resolves.toBeUndefined();
   });
 });

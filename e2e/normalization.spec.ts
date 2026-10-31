@@ -12,7 +12,7 @@ const albumGain = '-12.04 dB';
 
 // the first track has the tags of an album that was levelled louder than the track, the second has none
 const folderWithGain = () => {
-  const folder = mkdtempSync(join(tmpdir(), 'emusic-normalization-'));
+  const folder = mkdtempSync(join(tmpdir(), 'tunelle-normalization-'));
   writeTrack(folder, albums[0], 0, 30, { REPLAYGAIN_TRACK_GAIN: trackGain, REPLAYGAIN_ALBUM_GAIN: albumGain });
   writeTrack(folder, albums[0], 1);
   return folder;

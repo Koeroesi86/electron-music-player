@@ -1,6 +1,6 @@
-// the window exists, and answers, before it has loaded the page: it shows the initial blank page until then, from which the emusic protocol is refused
+// the window exists, and answers, before it has loaded the page: it shows the initial blank page until then, from which the tunelle protocol is refused
 // (a fetch fails with "Failed to fetch"), and the context of that page is gone once the navigation commits, which fails an evaluation that was waiting in it
-const pageRendered = `location.href === 'emusic://app/index.html' && document.getElementById('root')?.childElementCount > 0`
+const pageRendered = `location.href === 'tunelle://app/index.html' && document.getElementById('root')?.childElementCount > 0`
 
 const wait = milliseconds => new Promise(done => setTimeout(done, milliseconds))
 

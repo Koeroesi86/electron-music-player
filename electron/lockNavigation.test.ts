@@ -30,19 +30,19 @@ describe('lockNavigation', () => {
     expect(navigate('file:///etc/passwd')).toHaveBeenCalled();
   });
 
-  it.each(['file:///etc/passwd', 'emusic://other/index.html', 'https://example.com/', 'http://localhost:3000/'])(
-    'refuses to leave the emusic origin for %s',
+  it.each(['file:///etc/passwd', 'tunelle://other/index.html', 'https://example.com/', 'http://localhost:3000/'])(
+    'refuses to leave the tunelle origin for %s',
     (url) => {
-      const { navigate } = setup('emusic://app/index.html');
+      const { navigate } = setup('tunelle://app/index.html');
 
       expect(navigate(url)).toHaveBeenCalled();
     }
   );
 
-  it('allows navigation within the emusic origin', () => {
-    const { navigate } = setup('emusic://app/index.html');
+  it('allows navigation within the tunelle origin', () => {
+    const { navigate } = setup('tunelle://app/index.html');
 
-    expect(navigate('emusic://app/loading.html')).not.toHaveBeenCalled();
+    expect(navigate('tunelle://app/loading.html')).not.toHaveBeenCalled();
   });
 
   it('allows navigation within the origin', () => {

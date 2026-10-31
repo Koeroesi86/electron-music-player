@@ -3,12 +3,12 @@ import { packagedExecutable, resourcesFolder, updateMetadata } from './dist-layo
 
 describe('packagedExecutable', () => {
   it.each([
-    ['linux', 'x64', 'dist/linux-unpacked/eMusic'],
-    ['linux', 'arm64', 'dist/linux-arm64-unpacked/eMusic'],
-    ['darwin', 'x64', 'dist/mac/eMusic.app/Contents/MacOS/eMusic'],
-    ['darwin', 'arm64', 'dist/mac-arm64/eMusic.app/Contents/MacOS/eMusic'],
-    ['win32', 'x64', 'dist/win-unpacked/eMusic.exe'],
-    ['win32', 'arm64', 'dist/win-arm64-unpacked/eMusic.exe']
+    ['linux', 'x64', 'dist/linux-unpacked/Tunelle'],
+    ['linux', 'arm64', 'dist/linux-arm64-unpacked/Tunelle'],
+    ['darwin', 'x64', 'dist/mac/Tunelle.app/Contents/MacOS/Tunelle'],
+    ['darwin', 'arm64', 'dist/mac-arm64/Tunelle.app/Contents/MacOS/Tunelle'],
+    ['win32', 'x64', 'dist/win-unpacked/Tunelle.exe'],
+    ['win32', 'arm64', 'dist/win-arm64-unpacked/Tunelle.exe']
   ])('finds the app of %s %s', (platform, arch, expected) => {
     expect(packagedExecutable(platform, arch)).toBe(expected)
   })
@@ -17,7 +17,7 @@ describe('packagedExecutable', () => {
 describe('resourcesFolder', () => {
   it.each([
     ['linux', 'arm64', 'dist/linux-arm64-unpacked/resources'],
-    ['darwin', 'arm64', 'dist/mac-arm64/eMusic.app/Contents/Resources'],
+    ['darwin', 'arm64', 'dist/mac-arm64/Tunelle.app/Contents/Resources'],
     ['win32', 'x64', 'dist/win-unpacked/resources']
   ])('finds the resources of %s %s', (platform, arch, expected) => {
     expect(resourcesFolder(platform, arch)).toBe(expected)

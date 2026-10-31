@@ -54,10 +54,10 @@ describe('assertNewer', () => {
 describe('stampVersion', () => {
   const folders = []
   const createPackage = () => {
-    const folder = mkdtempSync(join(tmpdir(), 'emusic-version-'))
+    const folder = mkdtempSync(join(tmpdir(), 'tunelle-version-'))
     folders.push(folder)
     const packagePath = join(folder, 'package.json')
-    writeFileSync(packagePath, JSON.stringify({ name: 'emusic', version: '1.0.0' }))
+    writeFileSync(packagePath, JSON.stringify({ name: 'tunelle', version: '1.0.0' }))
     return packagePath
   }
 
@@ -68,7 +68,7 @@ describe('stampVersion', () => {
 
     stampVersion(packagePath, '26.10.14')
 
-    expect(JSON.parse(readFileSync(packagePath, 'utf8'))).toEqual({ name: 'emusic', version: '26.10.14' })
+    expect(JSON.parse(readFileSync(packagePath, 'utf8'))).toEqual({ name: 'tunelle', version: '26.10.14' })
   })
 
   it.each(['1.0.0-master', '26.06.14', '26.13.1', '26.10.', 'v26.10.14', ''])('refuses %j', (version) => {

@@ -16,7 +16,7 @@ describe('scanFolder that is not deep', () => {
   const read = () => parsed.mock.calls.map(([file]) => path.relative(root, file)).sort();
 
   beforeEach(async () => {
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-scan-shallow-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-scan-shallow-'));
     fs.mkdirSync(path.join(root, 'live'));
     fs.writeFileSync(path.join(root, 'a.flac'), 'not audio');
     fs.writeFileSync(path.join(root, 'live', 'b.flac'), 'not audio');

@@ -12,7 +12,7 @@ describe('writeLibrary', () => {
   afterEach(() => rmSync(folder, { recursive: true, force: true }))
 
   it('writes the tracks of every album, tagged, with the cover of the album', async () => {
-    folder = mkdtempSync(join(tmpdir(), 'emusic-library-test-'))
+    folder = mkdtempSync(join(tmpdir(), 'tunelle-library-test-'))
 
     writeLibrary(folder)
 

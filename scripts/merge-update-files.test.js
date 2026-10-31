@@ -16,7 +16,7 @@ releaseDate: '2026-10-26T06:00:00.000Z'
 
 describe('splitEntries', () => {
   it('reads every file of the list', () => {
-    expect(splitEntries(metadata('26.10.1', 'eMusic-Setup.exe', 5))).toEqual(['  - url: eMusic-Setup.exe\n    sha512: hash-of-eMusic-Setup.exe\n    size: 5'])
+    expect(splitEntries(metadata('26.10.1', 'Tunelle-Setup.exe', 5))).toEqual(['  - url: Tunelle-Setup.exe\n    sha512: hash-of-Tunelle-Setup.exe\n    size: 5'])
   })
 
   it('reads nothing from a file without a list', () => {
@@ -26,24 +26,24 @@ describe('splitEntries', () => {
 
 describe('mergeUpdateFiles', () => {
   it('lists the installers of both architectures and keeps the rest of the first file', () => {
-    const merged = mergeUpdateFiles([metadata('26.10.1', 'eMusic-Setup-x64.exe', 5), metadata('26.10.1', 'eMusic-Setup-arm64.exe', 6)])
+    const merged = mergeUpdateFiles([metadata('26.10.1', 'Tunelle-Setup-x64.exe', 5), metadata('26.10.1', 'Tunelle-Setup-arm64.exe', 6)])
 
     expect(merged).toBe(`version: 26.10.1
 files:
-  - url: eMusic-Setup-x64.exe
-    sha512: hash-of-eMusic-Setup-x64.exe
+  - url: Tunelle-Setup-x64.exe
+    sha512: hash-of-Tunelle-Setup-x64.exe
     size: 5
-  - url: eMusic-Setup-arm64.exe
-    sha512: hash-of-eMusic-Setup-arm64.exe
+  - url: Tunelle-Setup-arm64.exe
+    sha512: hash-of-Tunelle-Setup-arm64.exe
     size: 6
-path: eMusic-Setup-x64.exe
-sha512: hash-of-eMusic-Setup-x64.exe
+path: Tunelle-Setup-x64.exe
+sha512: hash-of-Tunelle-Setup-x64.exe
 releaseDate: '2026-10-26T06:00:00.000Z'
 `)
   })
 
   it('lists a file once', () => {
-    const merged = mergeUpdateFiles([metadata('26.10.1', 'eMusic.zip', 5), metadata('26.10.1', 'eMusic.zip', 5)])
+    const merged = mergeUpdateFiles([metadata('26.10.1', 'Tunelle.zip', 5), metadata('26.10.1', 'Tunelle.zip', 5)])
 
     expect(merged.match(/url: /g)).toHaveLength(1)
   })
@@ -53,7 +53,7 @@ releaseDate: '2026-10-26T06:00:00.000Z'
   })
 
   it('keeps a file that is alone as it is', () => {
-    const single = metadata('26.10.1', 'eMusic.AppImage', 5)
+    const single = metadata('26.10.1', 'Tunelle.AppImage', 5)
 
     expect(mergeUpdateFiles([single])).toBe(single)
   })
@@ -64,7 +64,7 @@ describe('mergeArtifacts', () => {
   afterEach(() => folders.splice(0).forEach(folder => rmSync(folder, { recursive: true, force: true })))
 
   it('copies the installers and merges the update files of the same name', () => {
-    const root = mkdtempSync(join(tmpdir(), 'emusic-merge-'))
+    const root = mkdtempSync(join(tmpdir(), 'tunelle-merge-'))
     folders.push(root)
     const artifacts = join(root, 'artifacts')
     const release = join(root, 'release')

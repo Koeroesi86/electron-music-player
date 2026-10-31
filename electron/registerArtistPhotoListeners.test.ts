@@ -42,8 +42,8 @@ describe('registerArtistPhotoListeners', () => {
     expect(enqueue).toHaveBeenNthCalledWith(2, []);
   });
 
-  it('does not listen when EMUSIC_NO_ARTIST_PHOTOS is 1', () => {
-    registerArtistPhotoListeners(context, { EMUSIC_NO_ARTIST_PHOTOS: '1' });
+  it('does not listen when TUNELLE_NO_ARTIST_PHOTOS is 1', () => {
+    registerArtistPhotoListeners(context, { TUNELLE_NO_ARTIST_PHOTOS: '1' });
 
     expect(listeners.size).toBe(0);
   });

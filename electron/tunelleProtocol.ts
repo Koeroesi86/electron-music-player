@@ -10,17 +10,17 @@ import type { RadioStreamDeps } from './radioProxy';
 import type { RadioArtImage } from './radioArt';
 import { notFound, serveFile } from './serveFile';
 
-const scheme = 'emusic';
+const scheme = 'tunelle';
 const host = 'app';
 
 /** The page and everything it asks for is served from this origin, so no request is cross-origin */
-export const emusicOrigin = `${scheme}://${host}`;
+export const tunelleOrigin = `${scheme}://${host}`;
 
 /** Has to run before the app is ready */
-export const registerEmusicScheme = () =>
+export const registerTunelleScheme = () =>
   protocol.registerSchemesAsPrivileged([{ scheme, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } }]);
 
-export interface EmusicDeps {
+export interface TunelleDeps {
   getDatabase: () => Database | undefined;
   radio: RadioStreamDeps & { getArt?: (key: string) => RadioArtImage | undefined; getLogo?: (uuid: string) => Promise<RadioArtImage | undefined> };
   /** The folder of the built page */
@@ -36,7 +36,7 @@ const pageFile = (appRoot: string, pathname: string) => {
   return file.startsWith(appRoot + path.sep) ? file : undefined;
 };
 
-const route = async (request: Request, { getDatabase, radio, appRoot }: EmusicDeps) => {
+const route = async (request: Request, { getDatabase, radio, appRoot }: TunelleDeps) => {
   const { pathname, searchParams } = new URL(request.url);
   if (Object.hasOwn(libraryRoutes, pathname)) return libraryRoutes[pathname](getDatabase(), searchParams);
 
@@ -78,7 +78,7 @@ const allowDevOrigin = (request: Request, response: Response, devOrigin?: string
   return response;
 };
 
-export const handleEmusicRequest = (deps: EmusicDeps) => async (request: Request) => {
+export const handleTunelleRequest = (deps: TunelleDeps) => async (request: Request) => {
   if (new URL(request.url).hostname !== host) return notFound();
   if (request.method === 'OPTIONS') return allowDevOrigin(request, new Response(undefined, { status: 204 }), deps.devOrigin);
   if (request.method !== 'GET' && request.method !== 'HEAD') return new Response(undefined, { status: 405 });
@@ -87,4 +87,4 @@ export const handleEmusicRequest = (deps: EmusicDeps) => async (request: Request
   return allowDevOrigin(request, response, deps.devOrigin);
 };
 
-export const handleEmusicProtocol = (deps: EmusicDeps) => protocol.handle(scheme, handleEmusicRequest(deps));
+export const handleTunelleProtocol = (deps: TunelleDeps) => protocol.handle(scheme, handleTunelleRequest(deps));

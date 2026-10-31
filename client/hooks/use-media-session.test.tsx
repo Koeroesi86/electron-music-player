@@ -12,7 +12,7 @@ class FakeMediaMetadata {
   }
 }
 
-const info = { title: 'Song', artist: 'Artist', album: 'Album', cover: 'emusic://app/albumart/cover.png' };
+const info = { title: 'Song', artist: 'Artist', album: 'Album', cover: 'tunelle://app/albumart/cover.png' };
 
 describe('useMediaSession', () => {
   const fetchMock = vi.fn();

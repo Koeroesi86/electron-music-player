@@ -32,12 +32,12 @@ const registerLauncherListeners = async () => (await import('./registerLauncherL
 describe('registerLauncherListeners', () => {
   const send = vi.fn();
   const event = { sender: { send } } as unknown as IpcMainEvent;
-  const appImage = () => join(home, 'Apps/eMusic.AppImage');
-  const desktopFile = () => join(home, 'data/applications/emusic.desktop');
+  const appImage = () => join(home, 'Apps/Tunelle.AppImage');
+  const desktopFile = () => join(home, 'data/applications/tunelle.desktop');
   const lastState = () => new Promise((resolve) => send.mockImplementation((_channel, state) => resolve(state)));
 
   beforeEach(async () => {
-    home = (await mkdtemp(join(tmpdir(), 'emusic-listeners-'))).replaceAll('\\', '/');
+    home = (await mkdtemp(join(tmpdir(), 'tunelle-listeners-'))).replaceAll('\\', '/');
     await mkdir(join(home, 'icons'));
     await Promise.all([16, 24, 32, 48, 64, 128, 256, 512].map((size) => writeFile(join(home, 'icons', `${size}x${size}.png`), '')));
     vi.stubEnv('XDG_DATA_HOME', join(home, 'data'));
@@ -72,8 +72,8 @@ describe('registerLauncherListeners', () => {
     listeners.get('SET_LAUNCHER')?.(event, { enabled: true });
 
     await expect(state).resolves.toEqual({ available: true, enabled: true, offered: true });
-    await expect(readFile(desktopFile(), 'utf8')).resolves.toContain(`Exec="${join(home, 'data/emusic/eMusic.AppImage')}"`);
-    await expect(readlink(join(home, 'data/emusic/eMusic.AppImage')).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(appImage());
+    await expect(readFile(desktopFile(), 'utf8')).resolves.toContain(`Exec="${join(home, 'data/tunelle/Tunelle.AppImage')}"`);
+    await expect(readlink(join(home, 'data/tunelle/Tunelle.AppImage')).then((target) => target.replaceAll('\\', '/'))).resolves.toBe(appImage());
   });
 
   it('remembers it was asked when the user declines, and adds nothing', async () => {

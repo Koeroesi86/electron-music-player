@@ -8,7 +8,7 @@ describe('libraryChange', () => {
   let root: string;
 
   beforeEach(() => {
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-change-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-change-'));
     fs.mkdirSync(path.join(root, 'album'));
     fs.writeFileSync(path.join(root, 'album', 'one.flac'), '');
   });

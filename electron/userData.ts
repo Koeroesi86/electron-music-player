@@ -1,21 +1,15 @@
 import { cpSync, existsSync } from 'fs';
-import { basename } from 'path';
+import { basename, join } from 'path';
 
 // what a running app holds open or can rebuild: a copy of a lock would make the copy of the app look like a second instance
 const skipped = new Set(['SingletonLock', 'SingletonCookie', 'SingletonSocket', 'lockfile', 'Cache', 'Code Cache', 'GPUCache', 'DawnCache', 'GrShaderCache']);
 
 /** The name of the app that shows in the OS (the media controls, the dock): the folder of Electron's own data follows it */
-export const getAppName = (isDev: boolean) => `eMusic${isDev ? '-dev' : ''}`;
+export const getAppName = (isDev: boolean) => `Tunelle${isDev ? '-dev' : ''}`;
 
-/**
- * Copies the Electron data (window state, saved settings of the page) of the folder the app used before it was named, once.
- * The old folder stays where it is, and a copy that fails is ignored: the app starts as on a first run.
- */
-export const copyOldUserData = (oldFolder: string, newFolder: string) => {
-  if (existsSync(newFolder) || !existsSync(oldFolder)) return false;
-
+const copyFolder = (oldFolder: string, newFolder: string) => {
   try {
-    cpSync(oldFolder, newFolder, { recursive: true, filter: (source) => !skipped.has(basename(source)) });
+    cpSync(oldFolder, newFolder, { recursive: true, force: false, filter: (source) => !skipped.has(basename(source)) });
 
     return true;
   } catch (error) {
@@ -24,3 +18,17 @@ export const copyOldUserData = (oldFolder: string, newFolder: string) => {
     return false;
   }
 };
+
+/**
+ * Copies the Electron data (window state, saved settings of the page) of the folder the app used before it was renamed, once.
+ * The old folder stays where it is, and a copy that fails is ignored: the app starts as on a first run.
+ */
+export const copyOldUserData = (oldFolder: string, newFolder: string) => !existsSync(newFolder) && existsSync(oldFolder) && copyFolder(oldFolder, newFolder);
+
+/**
+ * Copies the library folder (the library, its backups, the covers) of the folder the app used before it was renamed, once.
+ * It is done when the library is there, not when the folder is: on macOS and Windows `tunelle` and `Tunelle` are one folder, which Electron's data
+ * has created by then. The old folder stays where it is, and a copy that fails is ignored: the app starts as on a first run.
+ */
+export const copyOldLibrary = (oldFolder: string, newFolder: string) =>
+  !existsSync(join(newFolder, 'library.sqlite')) && existsSync(oldFolder) && copyFolder(oldFolder, newFolder);

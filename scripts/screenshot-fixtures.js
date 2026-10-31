@@ -114,7 +114,7 @@ const json = (response, body) => response.writeHead(200, { 'content-type': 'appl
 
 /**
  * A station directory of the stations above, whose first station plays silence and announces a song with the cover of its album:
- * the app is pointed to it with EMUSIC_RADIO_DIRECTORY, so no real station and no search of an image on the internet is involved
+ * the app is pointed to it with TUNELLE_RADIO_DIRECTORY, so no real station and no search of an image on the internet is involved
  */
 const startDirectory = () => {
   const announcement = `${announced.album.artist} - ${announced.album.tracks[announced.track]}`

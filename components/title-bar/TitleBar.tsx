@@ -16,7 +16,7 @@ interface TitleBarProps {
 }
 
 /** The bar across the top of the window: the app, the track that plays in the middle, and the window buttons; the empty part of it drags the window */
-function TitleBar({ title = 'eMusic', currentSong = null, streamTitle = null, streamArt = null, openNowPlaying = () => {} }: TitleBarProps) {
+function TitleBar({ title = 'Tunelle', currentSong = null, streamTitle = null, streamArt = null, openNowPlaying = () => {} }: TitleBarProps) {
   const { t } = useTranslation();
   const shown = currentSong ? toNowPlaying(currentSong, streamTitle, streamArt) : undefined;
 

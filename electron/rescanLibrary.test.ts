@@ -30,7 +30,7 @@ describe('rescanLibrary', () => {
 
   beforeEach(async () => {
     vi.mocked(scanFolders).mockReset().mockResolvedValue(undefined);
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-rescan-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-rescan-'));
     database = await createTestDatabase();
     global._database = database;
   });

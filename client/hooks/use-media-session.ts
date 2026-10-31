@@ -21,7 +21,7 @@ export const useMediaSession = (info: MediaSessionInfo | undefined) => {
     navigator.mediaSession.metadata = metadata;
     if (!info.cover) return;
 
-    // an artwork can only be an http, https, data or blob address, so the cover of the emusic protocol goes in as a blob
+    // an artwork can only be an http, https, data or blob address, so the cover of the tunelle protocol goes in as a blob
     const controller = new AbortController();
     let objectUrl: string | undefined;
 

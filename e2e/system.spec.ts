@@ -25,7 +25,7 @@ test('serves a track in ranges, and nothing outside of the library', async ({ se
   // a real file next to the library: a missing one would be a 404 on every system, whether or not the request was refused
   const secret = join(dirname(music), `${basename(music)}-secret.txt`);
   writeFileSync(secret, 'secret');
-  const url = (path: string) => `emusic://app/track?path=${encodeURIComponent(path)}`;
+  const url = (path: string) => `tunelle://app/track?path=${encodeURIComponent(path)}`;
 
   const answers = await page.evaluate(
     async ([inside, outside]) => {

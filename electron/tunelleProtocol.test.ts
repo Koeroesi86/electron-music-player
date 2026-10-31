@@ -19,15 +19,15 @@ vi.mock('electron', () => ({
   },
 }));
 
-const { handleEmusicRequest } = await import('./emusicProtocol');
+const { handleTunelleRequest } = await import('./tunelleProtocol');
 
-describe('emusic protocol', () => {
+describe('tunelle protocol', () => {
   let database: Database;
   let folder: string;
   let appRoot: string;
   const libraryFile = () => path.join(folder, 'library.flac');
   const handle = (devOrigin?: string) =>
-    handleEmusicRequest({
+    handleTunelleRequest({
       getDatabase: () => database,
       appRoot,
       devOrigin,
@@ -38,13 +38,13 @@ describe('emusic protocol', () => {
         getArt: (key) => (key === 'abcdef0123456789' ? { type: 'image/png', data: Buffer.from('cover') } : undefined),
       },
     });
-  const get = (route: string, init?: RequestInit) => handle()(new Request(`emusic://app${route}`, init));
+  const get = (route: string, init?: RequestInit) => handle()(new Request(`tunelle://app${route}`, init));
   const track = (file: string, headers?: Record<string, string>) => get(`/track?path=${encodeURIComponent(file)}`, { headers });
   const insert = (file: string) =>
     new Promise<void>((resolve, reject) => database.run('INSERT INTO library (path) VALUES (?)', [file], (err) => (err ? reject(err) : resolve())));
 
   beforeAll(async () => {
-    folder = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-protocol-'));
+    folder = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-protocol-'));
     appRoot = path.join(folder, 'build');
     fs.mkdirSync(path.join(appRoot, 'bundle'), { recursive: true });
     fs.writeFileSync(path.join(appRoot, 'index.html'), '<html></html>');
@@ -83,7 +83,7 @@ describe('emusic protocol', () => {
 
   describe('the scheme', () => {
     it('does not serve another host', async () => {
-      expect((await handle()(new Request('emusic://other/index.html'))).status).toBe(404);
+      expect((await handle()(new Request('tunelle://other/index.html'))).status).toBe(404);
     });
 
     it.each(['POST', 'PUT', 'DELETE'])('does not take a %s', async (method) => {
@@ -93,7 +93,7 @@ describe('emusic protocol', () => {
 
   describe('cross-origin access of a development run', () => {
     const from = (origin: string, devOrigin?: string, method = 'GET') =>
-      handle(devOrigin)(new Request('emusic://app/library', { method, headers: { origin } }));
+      handle(devOrigin)(new Request('tunelle://app/library', { method, headers: { origin } }));
 
     it('allows the origin of the dev server', async () => {
       const response = await from('http://localhost:3000', 'http://localhost:3000');
@@ -137,11 +137,11 @@ describe('emusic protocol', () => {
     });
 
     it('does not serve before the database is connected', async () => {
-      const response = await handleEmusicRequest({
+      const response = await handleTunelleRequest({
         getDatabase: () => undefined,
         appRoot,
         radio: { resolveStream: () => Promise.reject(new Error('no radio')), onTitle: () => {} },
-      })(new Request(`emusic://app/track?path=${encodeURIComponent(libraryFile())}`));
+      })(new Request(`tunelle://app/track?path=${encodeURIComponent(libraryFile())}`));
 
       expect(response.status).toBe(404);
     });
@@ -245,11 +245,11 @@ describe('emusic protocol', () => {
     });
 
     it('is not served before the database is connected', async () => {
-      const response = await handleEmusicRequest({
+      const response = await handleTunelleRequest({
         getDatabase: () => undefined,
         appRoot,
         radio: { resolveStream: () => Promise.reject(new Error('no radio')), onTitle: () => {} },
-      })(new Request('emusic://app/library'));
+      })(new Request('tunelle://app/library'));
 
       expect(response.status).toBe(403);
     });

@@ -24,7 +24,7 @@ describe('backupLibrary', () => {
   let database: sqlite3.Database;
 
   beforeEach(async () => {
-    folder = await mkdtemp(join(tmpdir(), 'emusic-backup-'));
+    folder = await mkdtemp(join(tmpdir(), 'tunelle-backup-'));
     location = join(folder, 'library.sqlite');
     database = await open(location);
   });

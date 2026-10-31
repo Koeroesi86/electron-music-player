@@ -92,7 +92,7 @@ describe('AudioComponent', () => {
       />
     );
 
-    expect(view.container.querySelector('audio')?.src).toBe('emusic://app/radio/abc-1');
+    expect(view.container.querySelector('audio')?.src).toBe('tunelle://app/radio/abc-1');
   });
 });
 
@@ -353,7 +353,7 @@ describe('AudioComponent gapless', () => {
   const first: Track = { ...station, path: '/music/a.flac' };
   const second: Track = { ...station, path: '/music/b.flac' };
   const third: Track = { ...station, path: '/music/c.flac' };
-  const sourceOfPath = (path: string) => `emusic://app/track?path=${encodeURIComponent(path)}`;
+  const sourceOfPath = (path: string) => `tunelle://app/track?path=${encodeURIComponent(path)}`;
   let load: MockInstance<HTMLMediaElement['load']>;
   const trackEnded = vi.fn();
   const activateNode = vi.fn();

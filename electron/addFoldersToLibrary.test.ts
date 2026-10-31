@@ -27,7 +27,7 @@ describe('addFoldersToLibrary', () => {
   beforeEach(async () => {
     send.mockReset();
     vi.mocked(scanFolders).mockReset().mockResolvedValue(undefined);
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-add-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-add-'));
     database = await createTestDatabase();
   });
 

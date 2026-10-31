@@ -27,7 +27,7 @@ describe('drawCover', () => {
 })
 
 describe('writeFlac', () => {
-  const folder = mkdtempSync(join(tmpdir(), 'emusic-flac-test-'))
+  const folder = mkdtempSync(join(tmpdir(), 'tunelle-flac-test-'))
 
   const read = async options => {
     const file = join(folder, `${Math.random()}.flac`)

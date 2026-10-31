@@ -99,12 +99,12 @@ describe('ThemeProvider', () => {
   it('takes the accent from the cover in the automatic setting, and the default without one', async () => {
     coverAccent.mockResolvedValue('#0000ff');
     const { rerender } = render(
-      <ThemeProvider theme={{ mode: 'dark', accent: 'auto' }} cover="emusic://app/albumart/a-optimized.png">
+      <ThemeProvider theme={{ mode: 'dark', accent: 'auto' }} cover="tunelle://app/albumart/a-optimized.png">
         content
       </ThemeProvider>
     );
     await waitFor(() => expect(root.style.getPropertyValue('--accent')).toBe(accentTokens('#0000ff', 'dark')['--accent']));
-    expect(coverAccent).toHaveBeenCalledWith('emusic://app/albumart/a-optimized.png');
+    expect(coverAccent).toHaveBeenCalledWith('tunelle://app/albumart/a-optimized.png');
 
     rerender(<ThemeProvider theme={{ mode: 'dark', accent: 'auto' }}>content</ThemeProvider>);
     await waitFor(() => expect(root.style.getPropertyValue('--accent')).toBe(defaultAccent));
@@ -113,7 +113,7 @@ describe('ThemeProvider', () => {
   it('does not read the cover with a picked accent', () => {
     coverAccent.mockClear();
     render(
-      <ThemeProvider theme={{ mode: 'dark', accent: '#0000ff' }} cover="emusic://app/albumart/a-optimized.png">
+      <ThemeProvider theme={{ mode: 'dark', accent: '#0000ff' }} cover="tunelle://app/albumart/a-optimized.png">
         content
       </ThemeProvider>
     );

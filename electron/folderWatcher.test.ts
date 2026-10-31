@@ -58,7 +58,7 @@ describe('createFolderWatcher', () => {
   });
 
   it('takes the whole folder as changed when the watch gives no name', async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-watch-name-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-watch-name-'));
     const { folderWatcher, listeners, onChange } = setup({ [root]: 1 });
     await folderWatcher.update([root]);
 
@@ -240,7 +240,7 @@ describe('with the file system', () => {
   let root: string;
 
   beforeEach(() => {
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-watch-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-watch-'));
     fs.mkdirSync(path.join(root, 'artist', 'album'), { recursive: true });
   });
 

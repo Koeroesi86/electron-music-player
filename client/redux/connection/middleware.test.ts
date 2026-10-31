@@ -271,7 +271,7 @@ describe('connection middleware', () => {
       expect(store.getState().library.tracks).toEqual({ total: undefined, pages: {}, stale: [] });
       expect(store.getState().library.albums.total).toBe(5);
       store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'tracks', page: 0 } });
-      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/tracks?offset=0&limit=100&sort=title&dir=desc'));
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('tunelle://app/library/tracks?offset=0&limit=100&sort=title&dir=desc'));
     });
 
     it('drops the pages of both lists when the search changes, and fetches the first page of the search', async () => {
@@ -284,7 +284,7 @@ describe('connection middleware', () => {
       expect(store.getState().library.tracks.total).toBeUndefined();
       expect(store.getState().library.albums.total).toBeUndefined();
       store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'albums', page: 0 } });
-      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/albums?offset=0&limit=100&search=halo'));
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('tunelle://app/library/albums?offset=0&limit=100&search=halo'));
     });
 
     it('keeps the pages when the search only gains space around it', async () => {
@@ -330,7 +330,7 @@ describe('connection middleware', () => {
       store.dispatch({ type: 'SET_TRACK_SORT', payload: { sort: { field: 'artist', direction: 'asc' } } });
       resolvers[0]();
 
-      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/tracks?offset=0&limit=100&sort=artist&dir=asc'));
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('tunelle://app/library/tracks?offset=0&limit=100&sort=artist&dir=asc'));
       expect(store.getState().library.tracks.total).toBeUndefined();
     });
 
@@ -345,7 +345,7 @@ describe('connection middleware', () => {
       expect(store.getState().library.albums.total).toBe(5);
       store.dispatch({ type: 'SET_GROUP_SORT', payload: { sort: { field: 'trackCount', direction: 'desc' } } });
       store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'genre', page: 0 } });
-      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/groups?offset=0&limit=100&by=genre&sort=trackCount&dir=desc&q=bj'));
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('tunelle://app/library/groups?offset=0&limit=100&by=genre&sort=trackCount&dir=desc&q=bj'));
     });
 
     it('fetches the albums of the open group, and drops them when another group is opened', async () => {
@@ -357,7 +357,7 @@ describe('connection middleware', () => {
 
       expect(store.getState().library.groupAlbums.total).toBeUndefined();
       store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'groupAlbums', page: 0 } });
-      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/albums?offset=0&limit=100&by=artist&group=bea'));
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('tunelle://app/library/albums?offset=0&limit=100&by=artist&group=bea'));
       expect(store.getState().library.albums.total).toBeUndefined();
     });
 
@@ -457,7 +457,7 @@ describe('connection middleware', () => {
       expect(store.getState().uiState.libraryFolders).toEqual(['/m/a']);
       store.dispatch({ type: 'LOAD_LIBRARY_PAGE', payload: { kind: 'albums', page: 0 } });
 
-      await vi.waitFor(() => expect(requested(fetchMock)).toContain('emusic://app/library/albums?offset=0&limit=100&folder=%2Fm%2Fa'));
+      await vi.waitFor(() => expect(requested(fetchMock)).toContain('tunelle://app/library/albums?offset=0&limit=100&folder=%2Fm%2Fa'));
     });
 
     it('shows everything again when the only selected folder leaves the library', async () => {

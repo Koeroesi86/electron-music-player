@@ -70,7 +70,7 @@ describe('createArtistPhotoQueue', () => {
   beforeEach(async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     database = await createTestDatabase();
-    folder = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-photos-'));
+    folder = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-photos-'));
     clock = 1_000_000;
     onFound.mockReset();
   });

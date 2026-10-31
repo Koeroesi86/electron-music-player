@@ -22,7 +22,7 @@ describe('now playing', () => {
     const { track, cover } = toNowPlaying(station, 'Artist - Song', 'abcd');
 
     expect(track).toMatchObject({ title: 'Song', artist: 'Artist', album: 'Jazz FM', picture: null });
-    expect(cover).toBe('emusic://app/radio-art/abcd');
+    expect(cover).toBe('tunelle://app/radio-art/abcd');
   });
 
   it('shows the station without art while it is looked up', () => {
@@ -36,6 +36,6 @@ describe('now playing', () => {
   it('shows a library track as it is, whatever title is left', () => {
     const track = { ...station, path: '/music/a.flac', picture: '/art/x.png' };
 
-    expect(toNowPlaying(track, 'Artist - Song', null)).toEqual({ track, cover: 'emusic://app/albumart/x-optimized.png' });
+    expect(toNowPlaying(track, 'Artist - Song', null)).toEqual({ track, cover: 'tunelle://app/albumart/x-optimized.png' });
   });
 });

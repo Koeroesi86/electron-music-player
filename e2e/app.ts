@@ -62,7 +62,7 @@ export const quit = async (app: ElectronApplication) => {
   else child.kill('SIGKILL');
 };
 
-const pageUrl = 'emusic://app/index.html';
+const pageUrl = 'tunelle://app/index.html';
 
 // the splash window opens first, then the page: the one that has loaded the page is the one the tests use
 const findPage = async (app: ElectronApplication) => {
@@ -75,7 +75,7 @@ const findPage = async (app: ElectronApplication) => {
 
 export const test = base.extend<Fixtures>({
   music: async ({}, use) => {
-    const folder = mkdtempSync(join(tmpdir(), 'emusic-e2e-music-'));
+    const folder = mkdtempSync(join(tmpdir(), 'tunelle-e2e-music-'));
     writeLibrary(folder);
     await use(folder);
     rmSync(folder, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
@@ -95,7 +95,7 @@ export const test = base.extend<Fixtures>({
 
   start: async ({ directory }, use) => {
     // a clean profile, so the run does not touch the library of the machine
-    const home = mkdtempSync(join(tmpdir(), 'emusic-e2e-'));
+    const home = mkdtempSync(join(tmpdir(), 'tunelle-e2e-'));
     const running: ElectronApplication[] = [];
 
     await use(async () => {
@@ -146,11 +146,11 @@ export const launchApp = async ({ home, radioDirectory, initScripts }: LaunchOpt
       ...Object.fromEntries(Object.entries(inherited).filter((entry): entry is [string, string] => entry[1] !== undefined)),
       ...profile,
       NODE_ENV: 'production',
-      EMUSIC_NO_UPDATE: '1',
-      EMUSIC_NO_ARTIST_PHOTOS: '1',
+      TUNELLE_NO_UPDATE: '1',
+      TUNELLE_NO_ARTIST_PHOTOS: '1',
       // the library is in the profile of the run on every system, not in the app data folder of the user (macOS and Windows do not follow HOME there)
-      EMUSIC_APP_DATA: home,
-      EMUSIC_RADIO_DIRECTORY: radioDirectory,
+      TUNELLE_APP_DATA: home,
+      TUNELLE_RADIO_DIRECTORY: radioDirectory,
     },
   });
   await Promise.all([installNoNotifications, ...initScripts].map((script) => app.context().addInitScript(script)));
@@ -175,7 +175,7 @@ export const addFolder = async (page: Page, folder: string, tracks: number) => {
 };
 
 export const libraryTracks = (page: Page): Promise<{ path: string; title?: string }[]> =>
-  page.evaluate(() => fetch('emusic://app/library').then((response) => response.json()));
+  page.evaluate(() => fetch('tunelle://app/library').then((response) => response.json()));
 
 /** Opens a page from the navigation (the same words are headings of the pages themselves) */
 export const navigate = (page: Page, label: string) => page.locator('[class*="Navigation__label"]').getByText(label, { exact: true }).click();

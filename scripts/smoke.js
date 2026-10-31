@@ -8,9 +8,9 @@ const { packagedExecutable, resourcesFolder } = require('./dist-layout')
 const { waitForPage } = require('./wait-for-page')
 
 // usage: node scripts/smoke.js [--packaged | --flatpak]
-// starts the built app (out/index.js), the packaged one from dist/, or the installed flatpak (flatpak install dist/eMusic-*.flatpak), and checks that the window opens
-// and that the emusic protocol answers from the database, plays a track of the library with seeking and a station with its title: a missing file or a native module that does not load shows up here
-// the updater is turned off (EMUSIC_NO_UPDATE), so a newer release can not be downloaded and installed in the middle of the run
+// starts the built app (out/index.js), the packaged one from dist/, or the installed flatpak (flatpak install dist/Tunelle-*.flatpak), and checks that the window opens
+// and that the tunelle protocol answers from the database, plays a track of the library with seeking and a station with its title: a missing file or a native module that does not load shows up here
+// the updater is turned off (TUNELLE_NO_UPDATE), so a newer release can not be downloaded and installed in the middle of the run
 const root = resolve(__dirname, '..')
 const timeout = 60000
 
@@ -20,7 +20,7 @@ const executablePath = flatpak ? 'flatpak' : packaged ? resolve(root, packagedEx
 // the flatpak starts its own sandbox: zypak sets the chromium sandbox up, so --no-sandbox is not passed
 // elsewhere the sandbox of chromium needs user namespaces that the CI runners (containers, locked down images) do not give on Linux; macOS and Windows run it
 const args = flatpak
-  ? ['run', '--env=EMUSIC_NO_UPDATE=1', require('../package.json').build.appId]
+  ? ['run', '--env=TUNELLE_NO_UPDATE=1', require('../package.json').build.appId]
   : [...(packaged ? [] : [resolve(root, 'out/index.js')]), ...(process.platform === 'linux' ? ['--no-sandbox'] : [])]
 
 if (!flatpak && !existsSync(executablePath)) {
@@ -29,15 +29,15 @@ if (!flatpak && !existsSync(executablePath)) {
 }
 
 // a clean user data folder, so the run does not touch the library of the machine
-const home = mkdtempSync(join(tmpdir(), 'emusic-smoke-'))
+const home = mkdtempSync(join(tmpdir(), 'tunelle-smoke-'))
 const logFile = join(home, 'chromium.log')
 const { ELECTRON_RUN_AS_NODE, ...inherited } = process.env
 // windows keeps its profile folders (chromium needs them to start, and the app data folder does not follow the variables there), the other systems get the clean ones
 // the flatpak finds its user installation through HOME and keeps the data of the app in its own folder, so it keeps them too
 const env =
   process.platform === 'win32' || flatpak
-    ? { ...inherited, NODE_ENV: 'production', EMUSIC_NO_UPDATE: '1', EMUSIC_NO_ARTIST_PHOTOS: '1' }
-    : { ...inherited, HOME: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production', EMUSIC_NO_UPDATE: '1', EMUSIC_NO_ARTIST_PHOTOS: '1' }
+    ? { ...inherited, NODE_ENV: 'production', TUNELLE_NO_UPDATE: '1', TUNELLE_NO_ARTIST_PHOTOS: '1' }
+    : { ...inherited, HOME: home, XDG_CONFIG_HOME: home, NODE_ENV: 'production', TUNELLE_NO_UPDATE: '1', TUNELLE_NO_ARTIST_PHOTOS: '1' }
 
 const freePort = () =>
   new Promise((done, fail) => {
@@ -62,7 +62,7 @@ const findWindowUrl = async (port, child) => {
         return []
       }
     )
-    const target = targets.find(candidate => candidate.url === 'emusic://app/index.html')
+    const target = targets.find(candidate => candidate.url === 'tunelle://app/index.html')
     if (target) return target
     open = targets.map(candidate => candidate.url).join(', ') || open
     await new Promise(done => setTimeout(done, 500))
@@ -178,7 +178,7 @@ const checkTracks = async socketUrl => {
   let stored
   while (!stored && Date.now() < deadline) {
     await evaluateIn(socketUrl, `window.electronAPI.send('ADD_FOLDERS_TO_LIBRARY', [{ path: ${JSON.stringify(folder)}, lastModified: 0 }])`)
-    tracks = await evaluateIn(socketUrl, `fetch('emusic://app/library').then(response => response.json())`)
+    tracks = await evaluateIn(socketUrl, `fetch('tunelle://app/library').then(response => response.json())`)
     stored = tracks.find(track => /(^|[\\/])smoke\.wav$/.test(track.path))
     if (!stored) await new Promise(done => setTimeout(done, 1000))
   }
@@ -188,11 +188,11 @@ const checkTracks = async socketUrl => {
     socketUrl,
     `(async () => {
       ${audioHelpers}
-      const url = 'emusic://app/track?path=' + encodeURIComponent(${JSON.stringify(stored.path)})
+      const url = 'tunelle://app/track?path=' + encodeURIComponent(${JSON.stringify(stored.path)})
       const whole = await fetch(url)
       const part = await fetch(url, { headers: { range: 'bytes=100-199' } })
       const suffix = await fetch(url, { headers: { range: 'bytes=-50' } })
-      const outside = await fetch('emusic://app/track?path=' + encodeURIComponent(${JSON.stringify(join(home, 'other.wav'))}))
+      const outside = await fetch('tunelle://app/track?path=' + encodeURIComponent(${JSON.stringify(join(home, 'other.wav'))}))
       const audio = new Audio()
       audio.crossOrigin = 'anonymous'
       audio.src = url
@@ -210,8 +210,8 @@ const checkTracks = async socketUrl => {
     })()`
   )
   const expected = { whole: [200, 80044], part: [206, 'bytes 100-199/80044', 100], suffix: [206, 'bytes 79994-80043/80044', 50], outside: 404, seek: [10, 6] }
-  if (JSON.stringify(result) !== JSON.stringify(expected)) throw new Error(`A track over emusic answered ${JSON.stringify(result)}, expected ${JSON.stringify(expected)}`)
-  console.log(`tracks over emusic passed: ${JSON.stringify(result)}`)
+  if (JSON.stringify(result) !== JSON.stringify(expected)) throw new Error(`A track over tunelle answered ${JSON.stringify(result)}, expected ${JSON.stringify(expected)}`)
+  console.log(`tracks over tunelle passed: ${JSON.stringify(result)}`)
 }
 
 // a station is served as it arrives: the audio without the ICY metadata, the title reported, a connection to the station that ends with the player
@@ -222,7 +222,7 @@ const checkRadio = async (socketUrl, station) => {
       ${audioHelpers}
       const titles = []
       window.electronAPI.on('RADIO_STREAM_TITLE', payload => titles.push(payload.title))
-      const response = await fetch('emusic://app/radio/smoke-station')
+      const response = await fetch('tunelle://app/radio/smoke-station')
       const reader = response.body.getReader()
       const received = []
       let length = 0
@@ -243,7 +243,7 @@ const checkRadio = async (socketUrl, station) => {
 
       const audio = new Audio()
       audio.crossOrigin = 'anonymous'
-      audio.src = 'emusic://app/radio/smoke-station'
+      audio.src = 'tunelle://app/radio/smoke-station'
       audio.play().catch(() => undefined)
       const played = await new Promise(done => {
         const check = () => (audio.currentTime > 0.5 ? done('playing') : setTimeout(check, 100))
@@ -257,12 +257,12 @@ const checkRadio = async (socketUrl, station) => {
     })()`
   )
   const expected = { status: 200, type: 'audio/mpeg', metadataLeft: 0, titles: ['Smoke - Song'], played: 'playing' }
-  if (JSON.stringify(result) !== JSON.stringify(expected)) throw new Error(`The radio over emusic answered ${JSON.stringify(result)}, expected ${JSON.stringify(expected)}`)
+  if (JSON.stringify(result) !== JSON.stringify(expected)) throw new Error(`The radio over tunelle answered ${JSON.stringify(result)}, expected ${JSON.stringify(expected)}`)
 
   // the player gave up both connections: the cancelled fetch and the paused element
   for (let waited = 0; station.connections.open > 0 && waited < 10000; waited += 100) await new Promise(done => setTimeout(done, 100))
   if (station.connections.open > 0) throw new Error(`${station.connections.open} of ${station.connections.total} connections to the station are still open after the player stopped`)
-  console.log(`radio over emusic passed: ${JSON.stringify(result)}, ${station.connections.total} connections, all closed`)
+  console.log(`radio over tunelle passed: ${JSON.stringify(result)}, ${station.connections.total} connections, all closed`)
 }
 
 // taskkill also takes the helper processes down on windows
@@ -293,14 +293,14 @@ const run = async () => {
   const port = await freePort()
   const station = await startStation()
   const child = spawn(executablePath, [...args, `--remote-debugging-port=${port}`, '--enable-logging', `--log-file=${logFile}`, `--user-data-dir=${join(home, 'user-data')}`], {
-    env: { ...env, EMUSIC_RADIO_DIRECTORY: station.origin },
+    env: { ...env, TUNELLE_RADIO_DIRECTORY: station.origin },
     stdio: 'inherit'
   })
   try {
     const { url, webSocketDebuggerUrl } = await findWindowUrl(port, child)
     // the window exists before the page has loaded, which a slow runner shows: the library is asked from the page
     await waitForPage(expression => evaluateIn(webSocketDebuggerUrl, expression), Date.now() + timeout)
-    const library = await evaluateIn(webSocketDebuggerUrl, `fetch('emusic://app/library').then(response => (response.ok ? response.json() : Promise.reject(new Error('/library answered ' + response.status))))`)
+    const library = await evaluateIn(webSocketDebuggerUrl, `fetch('tunelle://app/library').then(response => (response.ok ? response.json() : Promise.reject(new Error('/library answered ' + response.status))))`)
     if (!Array.isArray(library)) throw new Error('/library did not answer a list')
     // the flatpak sandbox does not see the folder of the run
     if (!flatpak) await checkTracks(webSocketDebuggerUrl)

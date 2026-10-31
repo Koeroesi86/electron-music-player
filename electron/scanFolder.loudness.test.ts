@@ -27,7 +27,7 @@ describe('scanFolder loudness', () => {
 
   beforeEach(async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'emusic-scan-loudness-'));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'tunelle-scan-loudness-'));
     fs.writeFileSync(path.join(root, 'a.flac'), 'not audio');
     database = await createTestDatabase();
     global._database = database;

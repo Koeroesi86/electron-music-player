@@ -3,7 +3,7 @@ import { copyFile, mkdir, readFile, readlink, rename, rm, stat, symlink, utimes,
 import { join, posix } from 'path';
 import { catalog } from '../locales';
 
-const launcherName = 'emusic';
+const launcherName = 'tunelle';
 const iconSizes = [16, 24, 32, 48, 64, 128, 256, 512];
 
 export interface LauncherOptions {
@@ -20,7 +20,7 @@ const updateDesktopDatabase = (applicationsPath: string) => new Promise<void>((d
 const getApplicationsPath = (dataHome: string) => join(dataHome, 'applications');
 const getDesktopFile = (dataHome: string) => join(getApplicationsPath(dataHome), `${launcherName}.desktop`);
 // the desktop shell keeps the entry it read first and fails every start of an old path, so the entry always starts this link and the link follows the AppImage
-export const getLauncherLink = (dataHome: string) => posix.join(dataHome, launcherName, 'eMusic.AppImage');
+export const getLauncherLink = (dataHome: string) => posix.join(dataHome, launcherName, 'Tunelle.AppImage');
 const getIconFile = (dataHome: string, size: number) => join(dataHome, 'icons/hicolor', `${size}x${size}`, 'apps', `${launcherName}.png`);
 
 // the characters that would need escaping in the Exec key of a desktop entry; such a path is not worth the risk of a broken launcher
@@ -38,14 +38,14 @@ export const buildDesktopEntry = (appImage: string) => {
   return [
     '[Desktop Entry]',
     'Type=Application',
-    'Name=eMusic',
+    'Name=Tunelle',
     `Comment=${catalog.en['app.description']}`,
     ...localizedComments,
     `Exec="${appImage}" %U`,
     `Icon=${launcherName}`,
     'Terminal=false',
     'Categories=AudioVideo;Audio;Player;',
-    'StartupWMClass=eMusic',
+    'StartupWMClass=Tunelle',
     '',
   ].join('\n');
 };
